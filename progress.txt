@@ -1,0 +1,32 @@
+## Task 2.2 — Club Subscription Management (completed 2026-03-20)
+
+Files created:
+- src/app/(dashboard)/subscriptions/page.tsx — Subscriptions page with auth, active/inactive sections
+- src/components/dashboard/subscription-form-dialog.tsx — Create dialog with tier selection (grouped by program), accrual schedule builder (multi-phase), billing date tracking
+- src/components/dashboard/edit-subscription-dialog.tsx — Edit dialog for status, cost, dates, accrual schedule
+- src/lib/services/club-subscription.service.test.ts — 15 unit tests covering list, create, update, delete
+
+Files modified:
+- src/components/dashboard/subscription-card.tsx — Added edit button (EditSubscriptionDialog), fixed Decimal type compatibility
+
+All 123 tests pass. TypeScript compiles cleanly.
+
+## Task 2.4 — Credit Card Registry (completed 2026-03-20)
+
+Files created:
+- src/lib/validators/credit-card.schema.ts — Zod schemas for create/update/delete with type exports
+- src/lib/validators/credit-card.schema.test.ts — 17 validation tests
+- src/lib/services/credit-card.service.ts — CRUD service with ownership checks, Prisma.JsonNull for JSON fields
+- src/lib/services/credit-card.service.test.ts — 14 unit tests covering list, create, update, delete
+- src/actions/credit-cards.ts — Server actions (add, edit, remove) with auth and Zod validation
+- src/actions/credit-cards.test.ts — 15 action tests
+- src/app/(dashboard)/credit-cards/page.tsx — Page with auth, grouped by bank, empty state
+- src/components/dashboard/credit-card-card.tsx — Card display with bank badge, program, rates, benefits, fee
+- src/components/dashboard/credit-card-form-dialog.tsx — Create dialog with benefit tag input
+- src/components/dashboard/edit-credit-card-dialog.tsx — Edit dialog pre-populated with current values
+- src/components/dashboard/delete-credit-card-button.tsx — Confirmation dialog for deletion
+
+Files modified:
+- (TypeScript fixes) Fixed Decimal import path, Prisma.JsonNull for JSON null values
+
+All 212 tests pass. TypeScript compiles cleanly.
