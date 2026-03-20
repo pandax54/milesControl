@@ -82,7 +82,31 @@ import {
   editFamilyEnrollment,
   removeFamilyEnrollment,
 } from './family';
-import type { FamilyMember as FamilyMemberType } from '@/generated/prisma/client';
+import type { FamilyMember as FamilyMemberType, FamilyProgramEnrollment, ProgramType } from '@/generated/prisma/client';
+
+type EnrollmentWithProgram = FamilyProgramEnrollment & {
+  program: { id: string; name: string; type: ProgramType; currency: string };
+};
+
+function buildMockEnrollmentReturn(overrides: Partial<FamilyProgramEnrollment> = {}): EnrollmentWithProgram {
+  return {
+    id: 'enrollment-789',
+    familyMemberId: 'member-123',
+    programId: 'program-abc',
+    memberNumber: null,
+    currentBalance: 5000,
+    tier: null,
+    expirationDate: null,
+    balanceUpdatedAt: new Date(),
+    ...overrides,
+    program: {
+      id: 'program-abc',
+      name: 'Smiles',
+      type: 'AIRLINE' as ProgramType,
+      currency: 'miles',
+    },
+  };
+}
 
 function buildMockMemberReturn(overrides: Partial<FamilyMemberType> = {}): FamilyMemberType {
   return {
@@ -250,7 +274,7 @@ describe('addFamilyEnrollment', () => {
   });
 
   it('should create enrollment successfully', async () => {
-    mockCreateEnrollment.mockResolvedValue({} as never);
+    mockCreateEnrollment.mockResolvedValue(buildMockEnrollmentReturn());
 
     const result = await addFamilyEnrollment({
       familyMemberId: 'member-123',
@@ -340,7 +364,7 @@ describe('editFamilyEnrollment', () => {
   });
 
   it('should update enrollment successfully', async () => {
-    mockUpdateEnrollment.mockResolvedValue({} as never);
+    mockUpdateEnrollment.mockResolvedValue(buildMockEnrollmentReturn({ currentBalance: 8000 }));
 
     const result = await editFamilyEnrollment({
       enrollmentId: 'enr-123',

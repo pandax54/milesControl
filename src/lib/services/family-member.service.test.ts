@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { FamilyMember, FamilyProgramEnrollment, Program, ProgramType } from '@/generated/prisma/client';
 
+type ProgramSelect = Pick<Program, 'id' | 'name' | 'type' | 'currency' | 'logoUrl' | 'website'>;
+
+type EnrollmentWithProgram = FamilyProgramEnrollment & {
+  program: ProgramSelect;
+};
+
+type MemberWithEnrollments = FamilyMember & {
+  programEnrollments: EnrollmentWithProgram[];
+};
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     familyMember: {
@@ -105,11 +115,43 @@ function buildMockProgram(overrides: Partial<Program> = {}): Program {
   };
 }
 
+function buildMockProgramSelect(overrides: Partial<ProgramSelect> = {}): ProgramSelect {
+  return {
+    id: MOCK_PROGRAM_ID,
+    name: 'Smiles',
+    type: 'AIRLINE' as ProgramType,
+    currency: 'miles',
+    logoUrl: null,
+    website: 'https://smiles.com.br',
+    ...overrides,
+  };
+}
+
+function buildMockEnrollmentWithProgram(
+  overrides: Partial<FamilyProgramEnrollment> = {},
+  programOverrides: Partial<ProgramSelect> = {},
+): EnrollmentWithProgram {
+  return {
+    ...buildMockEnrollment(overrides),
+    program: buildMockProgramSelect(programOverrides),
+  };
+}
+
+function buildMockMemberWithEnrollments(
+  memberOverrides: Partial<FamilyMember> = {},
+  enrollments: EnrollmentWithProgram[] = [],
+): MemberWithEnrollments {
+  return {
+    ...buildMockMember(memberOverrides),
+    programEnrollments: enrollments,
+  };
+}
+
 describe('listFamilyMembers', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should return family members with enrollments for user', async () => {
-    mockMemberFindMany.mockResolvedValue([buildMockMember()] as never);
+    mockMemberFindMany.mockResolvedValue([buildMockMemberWithEnrollments()] as never);
 
     const result = await listFamilyMembers(MOCK_USER_ID);
 
@@ -249,7 +291,7 @@ describe('createFamilyEnrollment', () => {
     mockMemberFindFirst.mockResolvedValue(buildMockMember());
     mockProgramFindUnique.mockResolvedValue(buildMockProgram());
     mockEnrollmentFindUnique.mockResolvedValue(null);
-    mockEnrollmentCreate.mockResolvedValue(buildMockEnrollment() as never);
+    mockEnrollmentCreate.mockResolvedValue(buildMockEnrollmentWithProgram() as never);
 
     const result = await createFamilyEnrollment(MOCK_USER_ID, {
       familyMemberId: MOCK_MEMBER_ID,
@@ -312,7 +354,7 @@ describe('createFamilyEnrollment', () => {
     mockMemberFindFirst.mockResolvedValue(buildMockMember());
     mockProgramFindUnique.mockResolvedValue(buildMockProgram());
     mockEnrollmentFindUnique.mockResolvedValue(null);
-    mockEnrollmentCreate.mockResolvedValue(buildMockEnrollment({ currentBalance: 0 }) as never);
+    mockEnrollmentCreate.mockResolvedValue(buildMockEnrollmentWithProgram({ currentBalance: 0 }) as never);
 
     await createFamilyEnrollment(MOCK_USER_ID, {
       familyMemberId: MOCK_MEMBER_ID,
@@ -331,7 +373,7 @@ describe('updateFamilyEnrollment', () => {
   it('should update enrollment balance and set balanceUpdatedAt', async () => {
     mockMemberFindFirst.mockResolvedValue(buildMockMember());
     mockEnrollmentFindFirst.mockResolvedValue(buildMockEnrollment({ currentBalance: 5000 }));
-    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollment({ currentBalance: 8000 }) as never);
+    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollmentWithProgram({ currentBalance: 8000 }) as never);
 
     const result = await updateFamilyEnrollment(MOCK_USER_ID, {
       enrollmentId: MOCK_ENROLLMENT_ID,
@@ -347,7 +389,7 @@ describe('updateFamilyEnrollment', () => {
   it('should not update balanceUpdatedAt when balance unchanged', async () => {
     mockMemberFindFirst.mockResolvedValue(buildMockMember());
     mockEnrollmentFindFirst.mockResolvedValue(buildMockEnrollment({ currentBalance: 5000 }));
-    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollment() as never);
+    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollmentWithProgram() as never);
 
     await updateFamilyEnrollment(MOCK_USER_ID, {
       enrollmentId: MOCK_ENROLLMENT_ID,
@@ -385,7 +427,7 @@ describe('updateFamilyEnrollment', () => {
   it('should allow clearing expirationDate with null', async () => {
     mockMemberFindFirst.mockResolvedValue(buildMockMember());
     mockEnrollmentFindFirst.mockResolvedValue(buildMockEnrollment());
-    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollment({ expirationDate: null }) as never);
+    mockEnrollmentUpdate.mockResolvedValue(buildMockEnrollmentWithProgram({ expirationDate: null }) as never);
 
     await updateFamilyEnrollment(MOCK_USER_ID, {
       enrollmentId: MOCK_ENROLLMENT_ID,

@@ -20,13 +20,7 @@ import {
 } from '@/components/ui/select';
 import { addFamilyEnrollment } from '@/actions/family';
 import { Plus } from 'lucide-react';
-
-interface AvailableProgram {
-  id: string;
-  name: string;
-  type: string;
-  currency: string;
-}
+import type { AvailableProgram } from './family-member-card';
 
 interface FamilyEnrollmentFormDialogProps {
   familyMemberId: string;
