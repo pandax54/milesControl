@@ -178,3 +178,28 @@ Files modified:
 - src/app/(dashboard)/programs/page.tsx — Added calculatePotentialBalances to parallel data fetch, rendered PotentialBalanceCard section below banking enrollments.
 
 All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
+
+## Task 2.7 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.7_task_review.md:
+
+1. **Replaced `as never` casts with typed mocks** (Minor #1, Rec #1) — Imported
+   `ProgramEnrollment`, `ProgramType`, and `Prisma` types from `@/generated/prisma/client`.
+   Created `EnrollmentWithProgram` type alias matching the `findMany` return shape with
+   included program. Updated `buildEnrollment` to accept typed parameters (`ProgramType`,
+   `Prisma.JsonValue`) and return `EnrollmentWithProgram`. Removed all 12 `as never` casts.
+
+All 318 tests pass. TypeScript compiles cleanly.
+
+## Task 2.8 — One-Click Program Links (completed 2026-03-20)
+
+Files modified:
+- src/components/dashboard/enrollment-card.tsx — Added shadcn/ui Tooltip around ExternalLink button with aria-label for accessibility
+- src/components/dashboard/dashboard-balances.tsx — Added shadcn/ui Tooltip around ExternalLink button with aria-label for accessibility
+
+The one-click program links feature (PRD F1.12) was already partially implemented as part of earlier tasks (ExternalLink icon buttons linking to program websites). This task enhanced them with:
+1. Tooltip showing "Open {program name} website" on hover
+2. aria-label attribute for screen reader accessibility
+3. Consistent use of shadcn/ui Tooltip component (base-ui)
+
+All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
