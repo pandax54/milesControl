@@ -123,3 +123,24 @@ All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% 
 3. **`date-fns` dependency evaluation** (Minor #3, Rec #3) — Low priority, no action needed now.
 
 All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
+
+## Task 2.6 — Transfer Logging (completed 2026-03-20)
+
+Files created:
+- src/lib/validators/transfer.schema.ts — Zod schemas for create/update/delete transfers, TransferData interface
+- src/lib/validators/transfer.schema.test.ts — 21 validation tests
+- src/lib/services/transfer.service.ts — CRUD service with calculateCostPerMilheiro, TransferNotFoundError
+- src/lib/services/transfer.service.test.ts — 14 unit tests covering list, create, update, delete, cost calculation
+- src/actions/transfers.ts — Server actions (logTransfer, editTransfer, removeTransfer) with auth and Zod validation
+- src/actions/transfers.test.ts — 15 action tests
+- src/app/(dashboard)/transfers/page.tsx — Transfers page with table view, rating badges, edit/delete actions
+- src/components/dashboard/transfer-form-dialog.tsx — Create dialog with program selects, cost/bonus fields
+- src/components/dashboard/edit-transfer-dialog.tsx — Edit dialog with pre-populated form, typed updateField
+- src/components/dashboard/delete-transfer-button.tsx — Confirmation dialog for transfer deletion
+
+Review fixes applied:
+1. Moved TransferData interface from page to shared validator module
+2. Added typed FormField for edit dialog updateField parameter
+3. Added date validation (.refine) to transferDate in Zod schemas
+
+All 291 tests pass. TypeScript compiles cleanly. Coverage: 97.76% stmts, 90.1% branches.

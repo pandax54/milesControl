@@ -22,7 +22,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 2.3 Accrual projector service — Calculate projected balances at 3/6/12 months based on subscription schedules
 - [x] 2.4 Credit card registry — Add/edit/remove cards with bank, name, points program, rates, annual fee, benefits
 - [x] 2.5 Dashboard page — Consolidated view: balances, subscriptions, projections, recent transfers, staleness alerts
-- [ ] 2.6 Transfer logging — Log transfers with source/dest program, amount, bonus %, cost, linked promotion
+- [x] 2.6 Transfer logging — Log transfers with source/dest program, amount, bonus %, cost, linked promotion
 - [ ] 2.7 **Potential balance calculator** — "If you transferred all Livelo + Esfera to Smiles, you'd have X miles." Show per-airline consolidation options. [Inspired by Oktoplus]
 - [ ] 2.8 **One-click program links** — Direct link to each program's website from enrollment card. [Inspired by AwardWallet]
 - [ ] 2.9 **Balance change digest** — Weekly email: "This week: Smiles +2,000, Livelo -10,000, Esfera unchanged." Cron job + Resend template. [Inspired by AwardWallet]
