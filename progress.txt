@@ -166,3 +166,15 @@ Changes applied from 2.6_task_review.md:
    invalid `transferDate` on update schema, bringing `transfer.schema.ts` to 100% coverage.
 
 All 292 tests pass. TypeScript compiles cleanly. Coverage: 97.77% stmts, 90.1% branches.
+
+## Task 2.7 — Potential Balance Calculator (completed 2026-03-20)
+
+Files created:
+- src/lib/services/potential-balance.service.ts — Service with calculatePotentialBalances, parseTransferRatio, isValidTransferPartners. Queries user enrollments, groups by airline/banking, uses transferPartners JSON to compute consolidation options.
+- src/lib/services/potential-balance.service.test.ts — 26 unit tests covering: empty enrollments, airline-only, banking-only, single/multiple sources, multiple airlines, zero-balance skip, invalid transfer partners, non-1:1 ratios, floor rounding, currency passthrough.
+- src/components/dashboard/potential-balance-card.tsx — Card showing target airline, current balance, transfer sources with arrows, and potential total with gain summary.
+
+Files modified:
+- src/app/(dashboard)/programs/page.tsx — Added calculatePotentialBalances to parallel data fetch, rendered PotentialBalanceCard section below banking enrollments.
+
+All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
