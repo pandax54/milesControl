@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { QuickUpdateBalance } from './quick-update-balance';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
@@ -48,26 +48,24 @@ export function DashboardBalances({ enrollments }: DashboardBalancesProps) {
                     {enrollment.program.type === 'AIRLINE' ? 'Airline' : 'Banking'}
                   </Badge>
                   {enrollment.program.website && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger
-                          render={
-                            <a
-                              href={enrollment.program.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label={`Open ${enrollment.program.name} website`}
-                              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-accent"
-                            />
-                          }
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Open {enrollment.program.name} website
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <a
+                            href={enrollment.program.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Open ${enrollment.program.name} website`}
+                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-accent"
+                          />
+                        }
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Open {enrollment.program.name} website
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
                 <p className={`text-xs ${stalenessColor}`}>Updated {updatedAgo}</p>

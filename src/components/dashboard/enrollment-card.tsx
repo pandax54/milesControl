@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { EditEnrollmentDialog } from './edit-enrollment-dialog';
 import { DeleteEnrollmentButton } from './delete-enrollment-button';
 import { QuickUpdateBalance } from './quick-update-balance';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -63,26 +63,24 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
         </div>
         <div className="flex items-center gap-1">
           {enrollment.program.website && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <a
-                      href={enrollment.program.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Open ${enrollment.program.name} website`}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
-                    />
-                  }
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  Open {enrollment.program.name} website
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <a
+                    href={enrollment.program.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${enrollment.program.name} website`}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent"
+                  />
+                }
+              >
+                <ExternalLink className="h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent>
+                Open {enrollment.program.name} website
+              </TooltipContent>
+            </Tooltip>
           )}
           <EditEnrollmentDialog enrollment={enrollment} />
           <DeleteEnrollmentButton
