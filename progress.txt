@@ -111,3 +111,15 @@ Changes applied from 2.5_task_review.md:
    src/lib/utils/cost-rating.ts when calculator service is built.
 
 All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
+
+## Task 2.5 — Second Review Fixes (applied 2026-03-20)
+
+1. **Replaced duplicated `formatBalance` with `formatNumber`** (Minor #1, Rec #1) — Removed
+   local `formatBalance` function from `quick-update-balance.tsx` and replaced all usages
+   with the shared `formatNumber` from `@/lib/utils/format`, eliminating duplicated formatting logic.
+
+2. **Rating threshold extraction** (Minor #2, Rec #2) — Already deferred to task 3.6.
+
+3. **`date-fns` dependency evaluation** (Minor #3, Rec #3) — Low priority, no action needed now.
+
+All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
