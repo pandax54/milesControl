@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ProgramEnrollment, ProgramType, Prisma } from '@/generated/prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -28,14 +29,24 @@ const mockFindMany = vi.mocked(prisma.programEnrollment.findMany);
 
 const MOCK_USER_ID = 'user-123';
 
+type EnrollmentWithProgram = ProgramEnrollment & {
+  program: {
+    id: string;
+    name: string;
+    type: ProgramType;
+    currency: string;
+    transferPartners: Prisma.JsonValue;
+  };
+};
+
 function buildEnrollment(overrides: {
   programName: string;
-  programType: 'AIRLINE' | 'BANKING';
+  programType: ProgramType;
   currentBalance: number;
-  transferPartners?: unknown;
+  transferPartners?: Prisma.JsonValue;
   programId?: string;
   currency?: string;
-}) {
+}): EnrollmentWithProgram {
   const programId = overrides.programId ?? `prog-${overrides.programName.toLowerCase().replace(/\s+/g, '-')}`;
   return {
     id: `enr-${programId}`,
@@ -136,7 +147,7 @@ describe('calculatePotentialBalances', () => {
         currentBalance: 10000,
         transferPartners: [{ name: 'Livelo', defaultRatio: '1:1' }],
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -150,7 +161,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -170,7 +181,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -205,7 +216,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 3000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -233,7 +244,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -265,7 +276,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 0,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -288,7 +299,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -311,7 +322,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -333,7 +344,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -356,7 +367,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 5001,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -378,7 +389,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 2000,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
@@ -398,7 +409,7 @@ describe('calculatePotentialBalances', () => {
         programType: 'BANKING',
         currentBalance: 0,
       }),
-    ] as never);
+    ]);
 
     const result = await calculatePotentialBalances(MOCK_USER_ID);
 
