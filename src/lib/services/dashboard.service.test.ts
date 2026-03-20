@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Prisma } from '@/generated/prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -41,6 +42,10 @@ const mockFetchProjection = vi.mocked(fetchUserProjection);
 
 const MOCK_USER_ID = 'user-dash-1';
 
+type EnrollmentFindManyResult = Awaited<ReturnType<typeof mockEnrollmentFindMany>>;
+type SubscriptionFindManyResult = Awaited<ReturnType<typeof mockSubscriptionFindMany>>;
+type TransferFindManyResult = Awaited<ReturnType<typeof mockTransferFindMany>>;
+
 const mockProjection = {
   months: [],
   totalProjectedMiles: 6000,
@@ -49,7 +54,73 @@ const mockProjection = {
   balanceAt12Months: 34000,
 };
 
-function buildMockEnrollment(overrides: Record<string, unknown> = {}) {
+interface MockEnrollmentWithProgram {
+  id: string;
+  userId: string;
+  programId: string;
+  memberNumber: string | null;
+  currentBalance: number;
+  tier: string | null;
+  balanceUpdatedAt: Date;
+  expirationDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  program: {
+    id: string;
+    name: string;
+    type: string;
+    currency: string;
+    website: string | null;
+  };
+}
+
+interface MockSubscriptionWithTier {
+  id: string;
+  userId: string;
+  clubTierId: string;
+  status: 'ACTIVE' | 'CANCELLED' | 'EXPIRED' | 'PAUSED';
+  startDate: Date;
+  endDate: Date | null;
+  monthlyCost: Prisma.Decimal;
+  accrualSchedule: unknown;
+  totalMilesAccrued: number;
+  nextBillingDate: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  clubTier: {
+    id: string;
+    name: string;
+    programId: string;
+    monthlyPrice: Prisma.Decimal;
+    baseMonthlyMiles: number;
+    minimumStayMonths: number;
+    benefits: unknown;
+    createdAt: Date;
+    updatedAt: Date;
+    program: {
+      name: string;
+      currency: string;
+    };
+  };
+}
+
+interface MockTransferLog {
+  id: string;
+  userId: string;
+  sourceProgramName: string;
+  destProgramName: string;
+  pointsTransferred: number;
+  bonusPercent: number;
+  milesReceived: number;
+  totalCost: Prisma.Decimal | null;
+  costPerMilheiro: Prisma.Decimal | null;
+  promotionId: string | null;
+  notes: string | null;
+  transferDate: Date;
+  createdAt: Date;
+}
+
+function buildMockEnrollment(overrides: Partial<MockEnrollmentWithProgram> = {}): MockEnrollmentWithProgram {
   return {
     id: 'enr-1',
     userId: MOCK_USER_ID,
@@ -72,15 +143,15 @@ function buildMockEnrollment(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildMockSubscription(overrides: Record<string, unknown> = {}) {
+function buildMockSubscription(overrides: Partial<MockSubscriptionWithTier> = {}): MockSubscriptionWithTier {
   return {
     id: 'sub-1',
     userId: MOCK_USER_ID,
     clubTierId: 'tier-1',
-    status: 'ACTIVE' as const,
+    status: 'ACTIVE',
     startDate: new Date(),
     endDate: null,
-    monthlyCost: { toString: () => '39.90' } as unknown,
+    monthlyCost: new Prisma.Decimal('39.90'),
     accrualSchedule: [],
     totalMilesAccrued: 0,
     nextBillingDate: new Date('2026-04-01'),
@@ -90,7 +161,7 @@ function buildMockSubscription(overrides: Record<string, unknown> = {}) {
       id: 'tier-1',
       name: 'Clube Smiles 2.000',
       programId: 'prog-1',
-      monthlyPrice: { toString: () => '39.90' } as unknown,
+      monthlyPrice: new Prisma.Decimal('39.90'),
       baseMonthlyMiles: 2000,
       minimumStayMonths: 12,
       benefits: null,
@@ -105,7 +176,7 @@ function buildMockSubscription(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function buildMockTransfer(overrides: Record<string, unknown> = {}) {
+function buildMockTransfer(overrides: Partial<MockTransferLog> = {}): MockTransferLog {
   return {
     id: 'txr-1',
     userId: MOCK_USER_ID,
@@ -114,14 +185,33 @@ function buildMockTransfer(overrides: Record<string, unknown> = {}) {
     pointsTransferred: 10000,
     bonusPercent: 80,
     milesReceived: 18000,
-    totalCost: { toString: () => '280.00' } as unknown,
-    costPerMilheiro: { toString: () => '15.56' } as unknown,
+    totalCost: new Prisma.Decimal('280.00'),
+    costPerMilheiro: new Prisma.Decimal('15.56'),
     promotionId: null,
     notes: null,
     transferDate: new Date('2026-03-15'),
     createdAt: new Date(),
     ...overrides,
   };
+}
+
+function mockEnrollments(data: MockEnrollmentWithProgram[]) {
+  mockEnrollmentFindMany.mockResolvedValueOnce(data as unknown as EnrollmentFindManyResult);
+}
+
+function mockSubscriptions(data: MockSubscriptionWithTier[]) {
+  mockSubscriptionFindMany.mockResolvedValueOnce(data as unknown as SubscriptionFindManyResult);
+}
+
+function mockTransfers(data: MockTransferLog[]) {
+  mockTransferFindMany.mockResolvedValueOnce(data as unknown as TransferFindManyResult);
+}
+
+function mockEmptyPrisma() {
+  mockEnrollments([]);
+  mockSubscriptions([]);
+  mockTransfers([]);
+  mockFetchProjection.mockResolvedValueOnce(mockProjection);
 }
 
 beforeEach(() => {
@@ -174,9 +264,9 @@ describe('fetchDashboardData', () => {
       program: { id: 'p2', name: 'Livelo', type: 'BANKING', currency: 'points', website: null },
     });
 
-    mockEnrollmentFindMany.mockResolvedValueOnce([airlineEnrollment, bankingEnrollment] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
+    mockEnrollments([airlineEnrollment, bankingEnrollment]);
+    mockSubscriptions([]);
+    mockTransfers([]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -187,12 +277,12 @@ describe('fetchDashboardData', () => {
   });
 
   it('should count active subscriptions', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([
+    mockEnrollments([]);
+    mockSubscriptions([
       buildMockSubscription({ id: 'sub-1' }),
       buildMockSubscription({ id: 'sub-2' }),
-    ] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
+    ]);
+    mockTransfers([]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -202,9 +292,9 @@ describe('fetchDashboardData', () => {
   });
 
   it('should return recent transfers with numeric cost fields', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([buildMockTransfer()] as never);
+    mockEnrollments([]);
+    mockSubscriptions([]);
+    mockTransfers([buildMockTransfer()]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -217,11 +307,9 @@ describe('fetchDashboardData', () => {
   });
 
   it('should handle null cost fields in transfers', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([
-      buildMockTransfer({ totalCost: null, costPerMilheiro: null }),
-    ] as never);
+    mockEnrollments([]);
+    mockSubscriptions([]);
+    mockTransfers([buildMockTransfer({ totalCost: null, costPerMilheiro: null })]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -234,12 +322,12 @@ describe('fetchDashboardData', () => {
     const freshDate = new Date();
     const staleDate = new Date('2025-12-01');
 
-    mockEnrollmentFindMany.mockResolvedValueOnce([
+    mockEnrollments([
       buildMockEnrollment({ id: 'enr-fresh', balanceUpdatedAt: freshDate }),
       buildMockEnrollment({ id: 'enr-stale', balanceUpdatedAt: staleDate }),
-    ] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
+    ]);
+    mockSubscriptions([]);
+    mockTransfers([]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -250,10 +338,7 @@ describe('fetchDashboardData', () => {
   });
 
   it('should include projection data', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
-    mockFetchProjection.mockResolvedValueOnce(mockProjection);
+    mockEmptyPrisma();
 
     const result = await fetchDashboardData(MOCK_USER_ID);
 
@@ -263,9 +348,9 @@ describe('fetchDashboardData', () => {
   });
 
   it('should convert subscription monthlyCost to number', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([buildMockSubscription()] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
+    mockEnrollments([]);
+    mockSubscriptions([buildMockSubscription()]);
+    mockTransfers([]);
     mockFetchProjection.mockResolvedValueOnce(mockProjection);
 
     const result = await fetchDashboardData(MOCK_USER_ID);
@@ -274,10 +359,7 @@ describe('fetchDashboardData', () => {
   });
 
   it('should return empty arrays when user has no data', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
-    mockFetchProjection.mockResolvedValueOnce(mockProjection);
+    mockEmptyPrisma();
 
     const result = await fetchDashboardData(MOCK_USER_ID);
 
@@ -291,10 +373,7 @@ describe('fetchDashboardData', () => {
   });
 
   it('should call prisma with correct filters', async () => {
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never);
-    mockSubscriptionFindMany.mockResolvedValueOnce([] as never);
-    mockTransferFindMany.mockResolvedValueOnce([] as never);
-    mockFetchProjection.mockResolvedValueOnce(mockProjection);
+    mockEmptyPrisma();
 
     await fetchDashboardData(MOCK_USER_ID);
 

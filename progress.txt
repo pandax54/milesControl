@@ -91,3 +91,23 @@ Files modified:
 - src/app/(dashboard)/page.tsx — Replaced skeleton with real data-driven dashboard
 
 All 227 tests pass. TypeScript compiles cleanly.
+
+## Task 2.5 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.5_task_review.md:
+
+1. **Typed mock factories** (Minor #1, Rec #1) — Replaced all 27 `as never` casts in
+   dashboard.service.test.ts with typed interfaces (MockEnrollmentWithProgram,
+   MockSubscriptionWithTier, MockTransferLog) and Prisma.Decimal for Decimal fields.
+   Added typed helper functions (mockEnrollments, mockSubscriptions, mockTransfers)
+   for cleaner mock setup.
+
+2. **Format utility tests** (Minor #3, Rec #3) — Created src/lib/utils/format.test.ts
+   with 9 tests covering formatNumber and formatCurrency: pt-BR locale formatting,
+   zero, negative, decimal, and large number cases.
+
+3. **Rating threshold extraction** (Minor #2, Rec #2) — Deferred to task 3.6 as
+   recommended. Constants are already named and scoped; will extract to shared
+   src/lib/utils/cost-rating.ts when calculator service is built.
+
+All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
