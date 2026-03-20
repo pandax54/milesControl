@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
@@ -118,12 +120,10 @@ export function CreditCardFormFields({ values, onChange, idPrefix = '' }: Credit
           />
         </div>
         <div className="flex items-end space-x-2 pb-0.5">
-          <input
+          <Checkbox
             id={`${idPrefix}isWaivedFee`}
-            type="checkbox"
             checked={values.isWaivedFee}
-            onChange={(e) => onChange({ ...values, isWaivedFee: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300"
+            onCheckedChange={(checked) => onChange({ ...values, isWaivedFee: !!checked })}
           />
           <Label htmlFor={`${idPrefix}isWaivedFee`}>Fee waived</Label>
         </div>
@@ -145,18 +145,25 @@ interface BenefitsFieldProps {
 }
 
 function BenefitsField({ benefits, onAdd, onRemove }: BenefitsFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleAdd() {
+    if (!inputRef.current) return;
+    onAdd(inputRef.current.value);
+    inputRef.current.value = '';
+  }
+
   return (
     <div className="space-y-2">
       <Label>Benefits</Label>
       <div className="flex gap-2">
         <Input
+          ref={inputRef}
           placeholder="e.g., Sala VIP"
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault();
-              const input = e.currentTarget;
-              onAdd(input.value);
-              input.value = '';
+              handleAdd();
             }
           }}
         />
@@ -164,11 +171,7 @@ function BenefitsField({ benefits, onAdd, onRemove }: BenefitsFieldProps) {
           type="button"
           variant="outline"
           size="sm"
-          onClick={(e) => {
-            const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
-            onAdd(input.value);
-            input.value = '';
-          }}
+          onClick={handleAdd}
         >
           Add
         </Button>

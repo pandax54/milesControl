@@ -38,17 +38,38 @@ import {
   CreditCardNotFoundError,
 } from '@/lib/services/credit-card.service';
 import { addCreditCard, editCreditCard, removeCreditCard } from './credit-cards';
+import type { Session } from 'next-auth';
+import type { CreditCard } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = auth as unknown as ReturnType<typeof vi.fn<() => Promise<Session | null>>>;
 const mockCreateCreditCard = vi.mocked(createCreditCard);
 const mockUpdateCreditCard = vi.mocked(updateCreditCard);
 const mockDeleteCreditCard = vi.mocked(deleteCreditCard);
 const mockRevalidatePath = vi.mocked(revalidatePath);
 
-const MOCK_SESSION = {
-  user: { id: 'user-123', email: 'test@example.com', role: 'USER' as const },
+const MOCK_SESSION: Session = {
+  user: { id: 'user-123', email: 'test@example.com', role: 'USER' },
   expires: '2026-12-31',
 };
+
+function buildMockCard(overrides: Partial<CreditCard> = {}): CreditCard {
+  return {
+    id: 'card-123',
+    userId: 'user-123',
+    bankName: 'Itaú',
+    cardName: 'Azul Infinite',
+    pointsProgram: 'Livelo',
+    pointsPerReal: 2.0,
+    pointsPerDollar: null,
+    annualFee: new Prisma.Decimal(1200),
+    isWaivedFee: false,
+    benefits: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+    ...overrides,
+  };
+}
 
 const VALID_CARD_INPUT = {
   bankName: 'Itaú',
@@ -62,11 +83,11 @@ const VALID_CARD_INPUT = {
 describe('addCreditCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should create credit card successfully', async () => {
-    mockCreateCreditCard.mockResolvedValue({} as never);
+    mockCreateCreditCard.mockResolvedValue(buildMockCard());
 
     const result = await addCreditCard(VALID_CARD_INPUT);
 
@@ -107,7 +128,7 @@ describe('addCreditCard', () => {
   });
 
   it('should return authentication error when not logged in', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await addCreditCard(VALID_CARD_INPUT);
 
@@ -119,11 +140,11 @@ describe('addCreditCard', () => {
 describe('editCreditCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should update credit card successfully', async () => {
-    mockUpdateCreditCard.mockResolvedValue({} as never);
+    mockUpdateCreditCard.mockResolvedValue(buildMockCard());
 
     const result = await editCreditCard({
       cardId: 'card-123',
@@ -160,7 +181,7 @@ describe('editCreditCard', () => {
   });
 
   it('should return authentication error when not logged in', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await editCreditCard({ cardId: 'card-123', bankName: 'Test' });
 
@@ -172,7 +193,7 @@ describe('editCreditCard', () => {
 describe('removeCreditCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should delete credit card successfully', async () => {
@@ -211,7 +232,7 @@ describe('removeCreditCard', () => {
   });
 
   it('should return authentication error when not logged in', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await removeCreditCard('card-123');
 

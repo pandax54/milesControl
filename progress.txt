@@ -56,3 +56,20 @@ Changes applied from 2.4_task_review.md:
    Prisma.Decimal for annualFee.
 
 All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.
+
+## Task 2.4 — Second Review Fixes (applied 2026-03-20)
+
+Applied remaining 3 minor recommendations from 2.4_task_review.md:
+
+1. **Typed action test mocks** (Minor #1) — Replaced all `as never` casts in
+   credit-cards.test.ts with properly typed Session, typed `buildMockCard()`
+   factory, and typed auth mock via `ReturnType<typeof vi.fn>`.
+
+2. **useRef for benefit input** (Minor #2) — Replaced fragile DOM traversal
+   (`previousElementSibling`) in BenefitsField with a `useRef<HTMLInputElement>`
+   and extracted `handleAdd()` helper.
+
+3. **shadcn/ui Checkbox** (Minor #3) — Installed shadcn/ui Checkbox component
+   and replaced native `<input type="checkbox">` for visual consistency.
+
+All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.
