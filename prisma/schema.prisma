@@ -1,0 +1,525 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== AUTH & USERS ====================
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  image        String?
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  managedBy   User?   @relation("AdminClients", fields: [managedById], references: [id])
+  managedById String?
+  clients     User[]  @relation("AdminClients")
+
+  accounts           Account[]
+  sessions           Session[]
+  programEnrollments ProgramEnrollment[]
+  clubSubscriptions  ClubSubscription[]
+  creditCards        CreditCard[]
+  transferLogs       TransferLog[]
+  alertConfigs       AlertConfig[]
+  notifications      Notification[]
+  flightWatchlists   FlightWatchlist[]
+  auditLogs          AuditLog[]
+  trackedBenefits    TrackedBenefit[]
+  familyMembers      FamilyMember[]
+  pointsSales        PointsSale[]
+  savedFlightFilters SavedFlightFilter[]
+
+  @@index([managedById])
+  @@index([email])
+}
+
+// ==================== PROGRAMS & BALANCES ====================
+
+enum ProgramType {
+  AIRLINE
+  BANKING
+}
+
+model Program {
+  id               String      @id @default(cuid())
+  name             String      @unique
+  type             ProgramType
+  currency         String
+  logoUrl          String?
+  website          String?
+  transferPartners Json?
+
+  enrollments       ProgramEnrollment[]
+  familyEnrollments FamilyProgramEnrollment[]
+  clubs             ClubTier[]
+  promotions        Promotion[]              @relation("DestinationPromos")
+  sourcePromos      Promotion[]              @relation("SourcePromos")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProgramEnrollment {
+  id               String    @id @default(cuid())
+  userId           String
+  programId        String
+  memberNumber     String?
+  currentBalance   Int       @default(0)
+  tier             String?
+  balanceUpdatedAt DateTime  @default(now())
+  expirationDate   DateTime?
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program Program @relation(fields: [programId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, programId])
+  @@index([userId])
+}
+
+// ==================== CLUB SUBSCRIPTIONS ====================
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAUSED
+}
+
+model ClubTier {
+  id               String  @id @default(cuid())
+  programId        String
+  name             String
+  monthlyPrice     Float
+  baseMonthlyMiles Int
+  minimumStayMonths Int    @default(0)
+  benefits         Json?
+
+  program       Program            @relation(fields: [programId], references: [id])
+  subscriptions ClubSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([programId, name])
+}
+
+model ClubSubscription {
+  id              String             @id @default(cuid())
+  userId          String
+  clubTierId      String
+  status          SubscriptionStatus @default(ACTIVE)
+  startDate       DateTime
+  endDate         DateTime?
+  monthlyCost     Float
+  accrualSchedule Json
+  totalMilesAccrued Int              @default(0)
+  nextBillingDate DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clubTier ClubTier @relation(fields: [clubTierId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ==================== CREDIT CARDS ====================
+
+model CreditCard {
+  id              String  @id @default(cuid())
+  userId          String
+  bankName        String
+  cardName        String
+  pointsProgram   String
+  pointsPerReal   Float
+  pointsPerDollar Float?
+  annualFee       Float   @default(0)
+  isWaivedFee     Boolean @default(false)
+  benefits        Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ==================== TRANSFERS ====================
+
+model TransferLog {
+  id                String    @id @default(cuid())
+  userId            String
+  sourceProgramName String
+  destProgramName   String
+  pointsTransferred Int
+  bonusPercent      Float     @default(0)
+  milesReceived     Int
+  totalCost         Float?
+  costPerMilheiro   Float?
+  promotionId       String?
+  notes             String?
+  transferDate      DateTime  @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promotion Promotion? @relation(fields: [promotionId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([transferDate])
+}
+
+// ==================== PROMOTIONS ====================
+
+enum PromoType {
+  TRANSFER_BONUS
+  POINT_PURCHASE
+  CLUB_SIGNUP
+  MIXED
+}
+
+enum PromoStatus {
+  ACTIVE
+  EXPIRED
+  UPCOMING
+}
+
+model Promotion {
+  id                String      @id @default(cuid())
+  title             String
+  type              PromoType
+  status            PromoStatus @default(ACTIVE)
+  sourceProgramId   String?
+  destProgramId     String?
+  bonusPercent      Float?
+  purchaseDiscount  Float?
+  purchasePricePerK Float?
+  minimumTransfer   Int?
+  maxBonusCap       Int?
+  deadline          DateTime?
+  sourceUrl         String
+  sourceSiteName    String
+  rawContent        String?
+  costPerMilheiro   Float?
+  rating            String?
+  isVerified        Boolean     @default(false)
+  requiresClub      Boolean     @default(false)
+  clubExtraBonus    Float?
+
+  sourceProgram Program?      @relation("SourcePromos", fields: [sourceProgramId], references: [id])
+  destProgram   Program?      @relation("DestinationPromos", fields: [destProgramId], references: [id])
+  transferLogs  TransferLog[]
+
+  detectedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([status, deadline])
+  @@index([type])
+  @@index([detectedAt])
+}
+
+// ==================== ALERTS ====================
+
+enum AlertChannel {
+  IN_APP
+  EMAIL
+  TELEGRAM
+  WEB_PUSH
+}
+
+model AlertConfig {
+  id             String         @id @default(cuid())
+  userId         String
+  name           String
+  isActive       Boolean        @default(true)
+  channels       AlertChannel[]
+  telegramChatId String?
+
+  programNames       String[]
+  promoTypes         PromoType[]
+  minBonusPercent    Float?
+  maxCostPerMilheiro Float?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Notification {
+  id          String       @id @default(cuid())
+  userId      String
+  title       String
+  body        String
+  channel     AlertChannel
+  isRead      Boolean      @default(false)
+  promotionId String?
+  sentAt      DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([sentAt])
+}
+
+// ==================== FLIGHT WATCHLIST ====================
+
+model FlightWatchlist {
+  id               String    @id @default(cuid())
+  userId           String
+  origin           String
+  destination      String
+  earliestDate     DateTime?
+  latestDate       DateTime?
+  cabinClass       String    @default("ECONOMY")
+  passengers       Int       @default(1)
+  targetMilesPrice Int?
+  targetCashPrice  Float?
+  preferredProgram String?
+  isActive         Boolean   @default(true)
+  lastCheckedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+}
+
+// ==================== MILES CALENDAR ====================
+
+model MilesCalendarEvent {
+  id             String     @id @default(cuid())
+  title          String
+  description    String?
+  startDate      DateTime
+  endDate        DateTime?
+  programs       String[]
+  expectedType   PromoType?
+  historicalNote String?
+  isRecurring    Boolean    @default(false)
+  recurrenceRule String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startDate])
+}
+
+// ==================== ADMIN AUDIT ====================
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String
+  targetUserId String?
+  action       String
+  details      Json?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}
+
+// ==================== SCRAPER STATE ====================
+
+model ScraperRun {
+  id           String    @id @default(cuid())
+  sourceName   String
+  sourceUrl    String
+  status       String
+  itemsFound   Int       @default(0)
+  newPromos    Int       @default(0)
+  errorMessage String?
+  durationMs   Int?
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@index([sourceName, startedAt])
+}
+
+// ==================== BENEFIT TRACKING ====================
+
+enum BenefitType {
+  FREE_NIGHT
+  COMPANION_PASS
+  UPGRADE_CREDIT
+  LOUNGE_ACCESS
+  TRAVEL_CREDIT
+  OTHER
+}
+
+model TrackedBenefit {
+  id             String      @id @default(cuid())
+  userId         String
+  type           BenefitType
+  programOrCard  String
+  description    String
+  quantity       Int         @default(1)
+  remainingQty   Int         @default(1)
+  expirationDate DateTime?
+  isUsed         Boolean     @default(false)
+  usedAt         DateTime?
+  notes          String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isUsed])
+  @@index([expirationDate])
+}
+
+// ==================== FAMILY MEMBERS ====================
+
+model FamilyMember {
+  id           String  @id @default(cuid())
+  userId       String
+  name         String
+  relationship String?
+
+  programEnrollments FamilyProgramEnrollment[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model FamilyProgramEnrollment {
+  id               String    @id @default(cuid())
+  familyMemberId   String
+  programId        String
+  memberNumber     String?
+  currentBalance   Int       @default(0)
+  tier             String?
+  expirationDate   DateTime?
+  balanceUpdatedAt DateTime  @default(now())
+
+  familyMember FamilyMember @relation(fields: [familyMemberId], references: [id], onDelete: Cascade)
+  program      Program      @relation(fields: [programId], references: [id])
+
+  @@unique([familyMemberId, programId])
+  @@index([familyMemberId])
+}
+
+// ==================== POINTS MARKETPLACE (v2 UI — schema planned now) ====================
+
+enum SaleStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model PointsSale {
+  id            String     @id @default(cuid())
+  userId        String
+  programName   String
+  milesAmount   Int
+  agencyName    String?
+  pricePerK     Float?
+  totalReceived Float?
+  status        SaleStatus @default(PENDING)
+  notes         String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ==================== SAVED SEARCH FILTERS ====================
+
+model SavedFlightFilter {
+  id             String    @id @default(cuid())
+  userId         String
+  name           String
+  origin         String?
+  destination    String?
+  region         String?
+  cabinClass     String?
+  dateType       String?
+  dateRangeStart DateTime?
+  dateRangeEnd   DateTime?
+  maxMilesPrice  Int?
+  maxCashPrice   Float?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ==================== NEXTAUTH ACCOUNTS ====================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
