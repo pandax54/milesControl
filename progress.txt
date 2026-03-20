@@ -73,3 +73,21 @@ Applied remaining 3 minor recommendations from 2.4_task_review.md:
    and replaced native `<input type="checkbox">` for visual consistency.
 
 All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.
+
+## Task 2.5 — Dashboard Page (completed 2026-03-20)
+
+Files created:
+- src/lib/services/dashboard.service.ts — Service fetching all dashboard data in parallel (enrollments, subscriptions, transfers, projections) with staleness classification
+- src/lib/services/dashboard.service.test.ts — 15 unit tests covering staleness classification, data aggregation, empty states, Prisma filters, Decimal→number conversion
+- src/lib/utils/format.ts — Shared formatNumber and formatCurrency utilities
+- src/components/dashboard/dashboard-summary-cards.tsx — 4 metric cards: Total Miles, Total Points, Active Subscriptions, Stale Balances
+- src/components/dashboard/dashboard-balances.tsx — Program balances list with staleness indicators, quick-update, external links
+- src/components/dashboard/dashboard-projections.tsx — Balance projections at 3/6/12 months with month-by-month breakdown
+- src/components/dashboard/dashboard-subscriptions.tsx — Active subscriptions with cost and billing info
+- src/components/dashboard/dashboard-transfers.tsx — Recent transfers with bonus %, cost-per-milheiro rating
+- src/components/dashboard/dashboard-staleness-alerts.tsx — Alert banner for programs not updated in 30+ days
+
+Files modified:
+- src/app/(dashboard)/page.tsx — Replaced skeleton with real data-driven dashboard
+
+All 227 tests pass. TypeScript compiles cleanly.
