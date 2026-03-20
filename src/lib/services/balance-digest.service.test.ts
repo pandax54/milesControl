@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { BalanceSnapshot, ProgramEnrollment, User, UserRole } from '@/generated/prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -33,6 +34,52 @@ const mockSnapshotFindMany = vi.mocked(prisma.balanceSnapshot.findMany);
 const mockUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockUserFindMany = vi.mocked(prisma.user.findMany);
 const mockSendEmail = vi.mocked(sendEmail);
+
+type EnrollmentWithProgram = ProgramEnrollment & {
+  program: { name: string };
+};
+
+function buildMockEnrollment(
+  overrides: Partial<EnrollmentWithProgram> & { programId: string; currentBalance: number; program: { name: string } },
+): EnrollmentWithProgram {
+  const now = new Date();
+  return {
+    id: `enrollment-${overrides.programId}`,
+    userId: 'u1',
+    memberNumber: null,
+    tier: null,
+    balanceUpdatedAt: now,
+    expirationDate: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
+function buildMockSnapshot(
+  overrides: Partial<BalanceSnapshot> & { programId: string; balance: number; programName: string },
+): BalanceSnapshot {
+  return {
+    id: `snapshot-${overrides.programId}`,
+    userId: 'u1',
+    snapshotAt: new Date(),
+    ...overrides,
+  };
+}
+
+function buildMockUser(overrides: Partial<User> & { id: string; email: string }): User {
+  const now = new Date();
+  return {
+    name: null,
+    passwordHash: null,
+    image: null,
+    role: 'USER' as UserRole,
+    managedById: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -217,19 +264,9 @@ describe('buildDigestHtml', () => {
 describe('takeBalanceSnapshots', () => {
   it('should create snapshots for all enrollments', async () => {
     mockEnrollmentFindMany.mockResolvedValueOnce([
-      {
-        id: 'e1', userId: 'u1', programId: 'p1', currentBalance: 10000,
-        memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-        createdAt: new Date(), updatedAt: new Date(),
-        program: { name: 'Smiles' },
-      },
-      {
-        id: 'e2', userId: 'u1', programId: 'p2', currentBalance: 5000,
-        memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-        createdAt: new Date(), updatedAt: new Date(),
-        program: { name: 'Livelo' },
-      },
-    ] as never);
+      buildMockEnrollment({ programId: 'p1', currentBalance: 10000, program: { name: 'Smiles' } }),
+      buildMockEnrollment({ programId: 'p2', currentBalance: 5000, program: { name: 'Livelo' } }),
+    ]);
 
     mockSnapshotCreateMany.mockResolvedValueOnce({ count: 2 });
 
@@ -262,9 +299,7 @@ describe('sendDigestForUser', () => {
   });
 
   it('should skip digest when user has no enrollments', async () => {
-    mockUserFindUnique.mockResolvedValueOnce({
-      id: 'u1', email: 'test@example.com', name: 'Test',
-    } as never);
+    mockUserFindUnique.mockResolvedValueOnce(buildMockUser({ id: 'u1', email: 'test@example.com', name: 'Test' }));
     mockEnrollmentFindMany.mockResolvedValueOnce([]);
     mockSnapshotFindMany.mockResolvedValueOnce([]);
 
@@ -276,20 +311,13 @@ describe('sendDigestForUser', () => {
   });
 
   it('should send digest email with balance changes', async () => {
-    mockUserFindUnique.mockResolvedValueOnce({
-      id: 'u1', email: 'test@example.com', name: 'Maria',
-    } as never);
+    mockUserFindUnique.mockResolvedValueOnce(buildMockUser({ id: 'u1', email: 'test@example.com', name: 'Maria' }));
     mockEnrollmentFindMany.mockResolvedValueOnce([
-      {
-        id: 'e1', userId: 'u1', programId: 'p1', currentBalance: 15000,
-        memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-        createdAt: new Date(), updatedAt: new Date(),
-        program: { name: 'Smiles' },
-      },
-    ] as never);
+      buildMockEnrollment({ programId: 'p1', currentBalance: 15000, program: { name: 'Smiles' } }),
+    ]);
     mockSnapshotFindMany.mockResolvedValueOnce([
-      { id: 's1', userId: 'u1', programId: 'p1', programName: 'Smiles', balance: 10000, snapshotAt: new Date() },
-    ] as never);
+      buildMockSnapshot({ programId: 'p1', programName: 'Smiles', balance: 10000 }),
+    ]);
     mockSendEmail.mockResolvedValueOnce(true);
 
     const result = await sendDigestForUser('u1');
@@ -306,17 +334,10 @@ describe('sendDigestForUser', () => {
   });
 
   it('should handle email send failure gracefully', async () => {
-    mockUserFindUnique.mockResolvedValueOnce({
-      id: 'u1', email: 'test@example.com', name: 'Test',
-    } as never);
+    mockUserFindUnique.mockResolvedValueOnce(buildMockUser({ id: 'u1', email: 'test@example.com', name: 'Test' }));
     mockEnrollmentFindMany.mockResolvedValueOnce([
-      {
-        id: 'e1', userId: 'u1', programId: 'p1', currentBalance: 5000,
-        memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-        createdAt: new Date(), updatedAt: new Date(),
-        program: { name: 'Smiles' },
-      },
-    ] as never);
+      buildMockEnrollment({ programId: 'p1', currentBalance: 5000, program: { name: 'Smiles' } }),
+    ]);
     mockSnapshotFindMany.mockResolvedValueOnce([]);
     mockSendEmail.mockResolvedValueOnce(false);
 
@@ -325,39 +346,62 @@ describe('sendDigestForUser', () => {
     expect(result.sent).toBe(false);
     expect(result.changes).toHaveLength(1);
   });
+
+  it('should deduplicate multiple snapshots per program keeping the earliest', async () => {
+    mockUserFindUnique.mockResolvedValueOnce(buildMockUser({ id: 'u1', email: 'test@example.com', name: 'Test' }));
+    mockEnrollmentFindMany.mockResolvedValueOnce([
+      buildMockEnrollment({ programId: 'p1', currentBalance: 20000, program: { name: 'Smiles' } }),
+    ]);
+
+    // Snapshots ordered desc by snapshotAt — last in array is earliest
+    mockSnapshotFindMany.mockResolvedValueOnce([
+      buildMockSnapshot({
+        id: 'snap-recent',
+        programId: 'p1',
+        programName: 'Smiles',
+        balance: 15000,
+        snapshotAt: new Date('2026-03-19'),
+      }),
+      buildMockSnapshot({
+        id: 'snap-earliest',
+        programId: 'p1',
+        programName: 'Smiles',
+        balance: 10000,
+        snapshotAt: new Date('2026-03-14'),
+      }),
+    ]);
+    mockSendEmail.mockResolvedValueOnce(true);
+
+    const result = await sendDigestForUser('u1');
+
+    // Should use the earliest snapshot (10000), not the recent one (15000)
+    expect(result.changes).toHaveLength(1);
+    expect(result.changes[0].previousBalance).toBe(10000);
+    expect(result.changes[0].change).toBe(10000);
+  });
 });
 
 describe('sendAllDigests', () => {
   it('should process all users with enrollments', async () => {
     mockUserFindMany.mockResolvedValueOnce([
-      { id: 'u1' },
-      { id: 'u2' },
-    ] as never);
+      buildMockUser({ id: 'u1', email: 'u1@test.com', name: 'User1' }),
+      buildMockUser({ id: 'u2', email: 'u2@test.com', name: 'User2' }),
+    ]);
 
     mockUserFindUnique
-      .mockResolvedValueOnce({ id: 'u1', email: 'u1@test.com', name: 'User1' } as never)
-      .mockResolvedValueOnce({ id: 'u2', email: 'u2@test.com', name: 'User2' } as never);
+      .mockResolvedValueOnce(buildMockUser({ id: 'u1', email: 'u1@test.com', name: 'User1' }))
+      .mockResolvedValueOnce(buildMockUser({ id: 'u2', email: 'u2@test.com', name: 'User2' }));
 
     mockEnrollmentFindMany
       .mockResolvedValueOnce([
-        {
-          id: 'e1', userId: 'u1', programId: 'p1', currentBalance: 10000,
-          memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-          createdAt: new Date(), updatedAt: new Date(),
-          program: { name: 'Smiles' },
-        },
-      ] as never)
+        buildMockEnrollment({ programId: 'p1', currentBalance: 10000, program: { name: 'Smiles' } }),
+      ])
       .mockResolvedValueOnce([
-        {
-          id: 'e2', userId: 'u2', programId: 'p1', currentBalance: 5000,
-          memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-          createdAt: new Date(), updatedAt: new Date(),
-          program: { name: 'Smiles' },
-        },
-      ] as never)
-      .mockResolvedValueOnce([] as never); // takeBalanceSnapshots at end
+        buildMockEnrollment({ userId: 'u2', programId: 'p1', currentBalance: 5000, program: { name: 'Smiles' } }),
+      ])
+      .mockResolvedValueOnce([]); // takeBalanceSnapshots at end
 
-    mockSnapshotFindMany.mockResolvedValue([] as never);
+    mockSnapshotFindMany.mockResolvedValue([]);
     mockSendEmail.mockResolvedValue(true);
 
     const results = await sendAllDigests();
@@ -368,27 +412,22 @@ describe('sendAllDigests', () => {
 
   it('should continue processing when one user fails', async () => {
     mockUserFindMany.mockResolvedValueOnce([
-      { id: 'u1' },
-      { id: 'u2' },
-    ] as never);
+      buildMockUser({ id: 'u1', email: 'u1@test.com', name: 'User1' }),
+      buildMockUser({ id: 'u2', email: 'u2@test.com', name: 'User2' }),
+    ]);
 
     // u1 fails (not found)
     mockUserFindUnique
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'u2', email: 'u2@test.com', name: 'User2' } as never);
+      .mockResolvedValueOnce(buildMockUser({ id: 'u2', email: 'u2@test.com', name: 'User2' }));
 
     mockEnrollmentFindMany
       .mockResolvedValueOnce([
-        {
-          id: 'e2', userId: 'u2', programId: 'p1', currentBalance: 5000,
-          memberNumber: null, tier: null, balanceUpdatedAt: new Date(), expirationDate: null,
-          createdAt: new Date(), updatedAt: new Date(),
-          program: { name: 'Smiles' },
-        },
-      ] as never)
-      .mockResolvedValueOnce([] as never); // takeBalanceSnapshots at end
+        buildMockEnrollment({ userId: 'u2', programId: 'p1', currentBalance: 5000, program: { name: 'Smiles' } }),
+      ])
+      .mockResolvedValueOnce([]); // takeBalanceSnapshots at end
 
-    mockSnapshotFindMany.mockResolvedValue([] as never);
+    mockSnapshotFindMany.mockResolvedValue([]);
     mockSendEmail.mockResolvedValue(true);
 
     const results = await sendAllDigests();
@@ -400,7 +439,7 @@ describe('sendAllDigests', () => {
 
   it('should take snapshots after sending digests', async () => {
     mockUserFindMany.mockResolvedValueOnce([]);
-    mockEnrollmentFindMany.mockResolvedValueOnce([] as never); // takeBalanceSnapshots
+    mockEnrollmentFindMany.mockResolvedValueOnce([]); // takeBalanceSnapshots
 
     await sendAllDigests();
 
