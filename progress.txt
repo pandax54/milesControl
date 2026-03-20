@@ -328,3 +328,46 @@ Review fixes applied:
 3. Added test for invalid relationship value rejection
 
 All 492 tests pass. TypeScript compiles cleanly.
+
+## Task 2.11 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.11_task_review.md:
+
+1. **Replaced `as never` casts with typed mock factories in service test** (Minor #1) — Created
+   `MemberWithEnrollments`, `EnrollmentWithProgram`, `ProgramSelect` type aliases and
+   `buildMockMemberWithEnrollments()`, `buildMockEnrollmentWithProgram()`, `buildMockProgramSelect()`
+   typed factories in `family-member.service.test.ts`. Replaced all 6 `as never` casts on
+   `mockResolvedValue` calls with properly typed return values.
+
+2. **Replaced `as never` casts with typed mock factory in actions test** (Minor #2) — Created
+   `EnrollmentWithProgram` type alias and `buildMockEnrollmentReturn()` typed factory in
+   `family.test.ts` using `FamilyProgramEnrollment` and `ProgramType` from Prisma. Replaced
+   both `{} as never` casts with properly typed mock return values.
+
+3. **Extracted shared `AvailableProgram` interface** (Minor #3) — Removed duplicated
+   `AvailableProgram` interface from `family-enrollment-form-dialog.tsx` and replaced with
+   import from `family-member-card.tsx` where it is already exported.
+
+All 492 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Phase 2 — QA Report (completed 2026-03-20)
+
+QA report written to tasks/prd-milescontrol/qa-report-phase2.md.
+
+Status: APPROVED
+- 36 requirements verified, all PASSED
+- 492 tests passing (28 test files)
+- Coverage: 97.55% stmts, 90.24% branches, 97.26% functions, 97.50% lines
+- TypeScript: 0 errors
+- 0 bugs found
+
+Checks passed:
+- No console.log usage (Pino only)
+- No `as any` casts in source code
+- All actions authenticated via requireUserId/getServerSession
+- All mutations call revalidatePath
+- Cascade deletes on all user-owned entities
+- Zod validation on all inputs
+- Custom error classes for domain errors
+- No PII in logs
+- Cron endpoint auth gated on CRON_SECRET
