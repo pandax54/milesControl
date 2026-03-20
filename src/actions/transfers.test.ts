@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Session } from 'next-auth';
 
 vi.mock('@/lib/auth', () => ({
   auth: vi.fn(),
@@ -39,14 +40,14 @@ import {
 } from '@/lib/services/transfer.service';
 import { logTransfer, editTransfer, removeTransfer } from './transfers';
 
-const mockAuth = vi.mocked(auth);
+const mockAuth = auth as unknown as ReturnType<typeof vi.fn<() => Promise<Session | null>>>;
 const mockCreateTransfer = vi.mocked(createTransfer);
 const mockUpdateTransfer = vi.mocked(updateTransfer);
 const mockDeleteTransfer = vi.mocked(deleteTransfer);
 const mockRevalidatePath = vi.mocked(revalidatePath);
 
-const MOCK_SESSION = {
-  user: { id: 'user-123', email: 'test@example.com', role: 'USER' as const },
+const MOCK_SESSION: Session = {
+  user: { id: 'user-123', email: 'test@example.com', role: 'USER' },
   expires: '2026-12-31',
 };
 
@@ -62,11 +63,11 @@ const VALID_CREATE_INPUT = {
 describe('logTransfer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should create transfer successfully', async () => {
-    mockCreateTransfer.mockResolvedValue({} as never);
+    mockCreateTransfer.mockResolvedValue({} as Awaited<ReturnType<typeof createTransfer>>);
 
     const result = await logTransfer(VALID_CREATE_INPUT);
 
@@ -98,7 +99,7 @@ describe('logTransfer', () => {
   });
 
   it('should return error when not authenticated', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await logTransfer(VALID_CREATE_INPUT);
 
@@ -119,11 +120,11 @@ describe('logTransfer', () => {
 describe('editTransfer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should update transfer successfully', async () => {
-    mockUpdateTransfer.mockResolvedValue({} as never);
+    mockUpdateTransfer.mockResolvedValue({} as Awaited<ReturnType<typeof updateTransfer>>);
 
     const result = await editTransfer({
       transferId: 'transfer-123',
@@ -152,7 +153,7 @@ describe('editTransfer', () => {
   });
 
   it('should return error when not authenticated', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await editTransfer({ transferId: 'transfer-123' });
 
@@ -173,7 +174,7 @@ describe('editTransfer', () => {
 describe('removeTransfer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.mockResolvedValue(MOCK_SESSION as never);
+    mockAuth.mockResolvedValue(MOCK_SESSION);
   });
 
   it('should delete transfer successfully', async () => {
@@ -204,7 +205,7 @@ describe('removeTransfer', () => {
   });
 
   it('should return error when not authenticated', async () => {
-    mockAuth.mockResolvedValue(null as never);
+    mockAuth.mockResolvedValue(null);
 
     const result = await removeTransfer('transfer-123');
 

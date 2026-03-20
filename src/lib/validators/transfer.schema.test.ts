@@ -197,6 +197,14 @@ describe('updateTransferSchema', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('should reject invalid transferDate', () => {
+    const result = updateTransferSchema.safeParse({
+      transferId: 'transfer-123',
+      transferDate: 'not-a-date',
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe('deleteTransferSchema', () => {

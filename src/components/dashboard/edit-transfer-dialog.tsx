@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { editTransfer } from '@/actions/transfers';
 import { Pencil } from 'lucide-react';
 import type { TransferData } from '@/lib/validators/transfer.schema';
+import { parseTransferFormValues } from './transfer-form-utils';
 
 interface EditTransferDialogProps {
   transfer: TransferData;
@@ -55,29 +56,14 @@ export function EditTransferDialog({ transfer }: EditTransferDialogProps) {
   function handleSubmit() {
     setError(null);
 
-    const points = parseInt(formState.pointsTransferred, 10);
-    if (Number.isNaN(points) || points < 1) {
-      setError('Points transferred must be a positive whole number');
+    const parsed = parseTransferFormValues(formState);
+
+    if (!parsed.success) {
+      setError(parsed.error);
       return;
     }
 
-    const miles = parseInt(formState.milesReceived, 10);
-    if (Number.isNaN(miles) || miles < 1) {
-      setError('Miles received must be a positive whole number');
-      return;
-    }
-
-    const bonus = parseFloat(formState.bonusPercent);
-    if (Number.isNaN(bonus) || bonus < 0) {
-      setError('Bonus percent must be non-negative');
-      return;
-    }
-
-    const cost = formState.totalCost.trim() ? parseFloat(formState.totalCost) : null;
-    if (cost !== null && (Number.isNaN(cost) || cost < 0)) {
-      setError('Total cost must be non-negative');
-      return;
-    }
+    const { points, miles, bonus, cost } = parsed.data;
 
     startTransition(async () => {
       const result = await editTransfer({

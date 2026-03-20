@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Prisma } from '@/generated/prisma/client';
+import { Prisma, type TransferLog } from '@/generated/prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -40,23 +40,7 @@ const mockDelete = vi.mocked(prisma.transferLog.delete);
 
 const USER_ID = 'user-123';
 
-interface MockTransferLog {
-  id: string;
-  userId: string;
-  sourceProgramName: string;
-  destProgramName: string;
-  pointsTransferred: number;
-  bonusPercent: number;
-  milesReceived: number;
-  totalCost: Prisma.Decimal | null;
-  costPerMilheiro: Prisma.Decimal | null;
-  promotionId: string | null;
-  notes: string | null;
-  transferDate: Date;
-  createdAt: Date;
-}
-
-function buildMockTransfer(overrides: Partial<MockTransferLog> = {}): MockTransferLog {
+function buildMockTransfer(overrides: Partial<TransferLog> = {}): TransferLog {
   return {
     id: 'transfer-1',
     userId: USER_ID,
@@ -100,7 +84,7 @@ describe('listTransfers', () => {
 
   it('should return transfers for user ordered by date desc', async () => {
     const mockTransfers = [buildMockTransfer()];
-    mockFindMany.mockResolvedValue(mockTransfers as never);
+    mockFindMany.mockResolvedValue(mockTransfers);
 
     const result = await listTransfers(USER_ID);
 
@@ -127,7 +111,7 @@ describe('createTransfer', () => {
 
   it('should create transfer with cost per milheiro calculated', async () => {
     const created = buildMockTransfer();
-    mockCreate.mockResolvedValue(created as never);
+    mockCreate.mockResolvedValue(created);
 
     const result = await createTransfer(USER_ID, {
       sourceProgramName: 'Livelo',
@@ -155,7 +139,7 @@ describe('createTransfer', () => {
 
   it('should create transfer with null cost when totalCost is null', async () => {
     const created = buildMockTransfer({ totalCost: null, costPerMilheiro: null });
-    mockCreate.mockResolvedValue(created as never);
+    mockCreate.mockResolvedValue(created);
 
     await createTransfer(USER_ID, {
       sourceProgramName: 'Esfera',
@@ -175,7 +159,7 @@ describe('createTransfer', () => {
   });
 
   it('should use provided transferDate', async () => {
-    mockCreate.mockResolvedValue(buildMockTransfer() as never);
+    mockCreate.mockResolvedValue(buildMockTransfer());
 
     await createTransfer(USER_ID, {
       sourceProgramName: 'Livelo',
@@ -194,7 +178,7 @@ describe('createTransfer', () => {
   });
 
   it('should store promotionId when provided', async () => {
-    mockCreate.mockResolvedValue(buildMockTransfer({ promotionId: 'promo-1' }) as never);
+    mockCreate.mockResolvedValue(buildMockTransfer({ promotionId: 'promo-1' }));
 
     await createTransfer(USER_ID, {
       sourceProgramName: 'Livelo',
@@ -220,8 +204,8 @@ describe('updateTransfer', () => {
 
   it('should update transfer successfully', async () => {
     const existing = buildMockTransfer();
-    mockFindFirst.mockResolvedValue(existing as never);
-    mockUpdate.mockResolvedValue(existing as never);
+    mockFindFirst.mockResolvedValue(existing);
+    mockUpdate.mockResolvedValue(existing);
 
     const result = await updateTransfer(USER_ID, {
       transferId: 'transfer-1',
@@ -249,8 +233,8 @@ describe('updateTransfer', () => {
 
   it('should recalculate costPerMilheiro when totalCost changes', async () => {
     const existing = buildMockTransfer();
-    mockFindFirst.mockResolvedValue(existing as never);
-    mockUpdate.mockResolvedValue(existing as never);
+    mockFindFirst.mockResolvedValue(existing);
+    mockUpdate.mockResolvedValue(existing);
 
     await updateTransfer(USER_ID, {
       transferId: 'transfer-1',
@@ -268,8 +252,8 @@ describe('updateTransfer', () => {
 
   it('should set costPerMilheiro to null when totalCost is cleared', async () => {
     const existing = buildMockTransfer();
-    mockFindFirst.mockResolvedValue(existing as never);
-    mockUpdate.mockResolvedValue(existing as never);
+    mockFindFirst.mockResolvedValue(existing);
+    mockUpdate.mockResolvedValue(existing);
 
     await updateTransfer(USER_ID, {
       transferId: 'transfer-1',
@@ -287,8 +271,8 @@ describe('updateTransfer', () => {
 
   it('should update notes', async () => {
     const existing = buildMockTransfer();
-    mockFindFirst.mockResolvedValue(existing as never);
-    mockUpdate.mockResolvedValue(existing as never);
+    mockFindFirst.mockResolvedValue(existing);
+    mockUpdate.mockResolvedValue(existing);
 
     await updateTransfer(USER_ID, {
       transferId: 'transfer-1',
@@ -311,8 +295,8 @@ describe('deleteTransfer', () => {
 
   it('should delete transfer successfully', async () => {
     const existing = buildMockTransfer();
-    mockFindFirst.mockResolvedValue(existing as never);
-    mockDelete.mockResolvedValue(existing as never);
+    mockFindFirst.mockResolvedValue(existing);
+    mockDelete.mockResolvedValue(existing);
 
     await deleteTransfer(USER_ID, 'transfer-1');
 

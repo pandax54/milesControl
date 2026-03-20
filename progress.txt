@@ -144,3 +144,25 @@ Review fixes applied:
 3. Added date validation (.refine) to transferDate in Zod schemas
 
 All 291 tests pass. TypeScript compiles cleanly. Coverage: 97.76% stmts, 90.1% branches.
+
+## Task 2.6 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.6_task_review.md:
+
+1. **Typed mock returns in service test** (Minor #1) — Replaced `MockTransferLog` interface
+   and all `as never` casts in `transfer.service.test.ts` with `TransferLog` type from Prisma.
+   `buildMockTransfer()` now returns typed `TransferLog`.
+
+2. **Typed mock returns in actions test** (Minor #1) — Replaced `as never` casts in
+   `transfers.test.ts` with typed `Session` for auth mock and typed return casts for
+   service mocks. `mockAuth` typed via `ReturnType<typeof vi.fn>` pattern from credit-cards test.
+
+3. **Extracted shared `parseTransferFormValues`** (Minor #2) — Created
+   `src/components/dashboard/transfer-form-utils.ts` with shared parsing/validation logic.
+   Both `transfer-form-dialog.tsx` and `edit-transfer-dialog.tsx` now use this utility,
+   eliminating duplicated validation code.
+
+4. **Added `updateTransferSchema` date validation test** (Minor #3) — Added test for
+   invalid `transferDate` on update schema, bringing `transfer.schema.ts` to 100% coverage.
+
+All 292 tests pass. TypeScript compiles cleanly. Coverage: 97.77% stmts, 90.1% branches.

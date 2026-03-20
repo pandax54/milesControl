@@ -21,6 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { logTransfer } from '@/actions/transfers';
 import { Plus } from 'lucide-react';
+import { parseTransferFormValues } from './transfer-form-utils';
 
 interface ProgramOption {
   name: string;
@@ -61,29 +62,19 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
   function handleSubmit() {
     setError(null);
 
-    const points = parseInt(pointsTransferred, 10);
-    if (Number.isNaN(points) || points < 1) {
-      setError('Points transferred must be a positive whole number');
+    const parsed = parseTransferFormValues({
+      pointsTransferred,
+      bonusPercent,
+      milesReceived,
+      totalCost,
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error);
       return;
     }
 
-    const miles = parseInt(milesReceived, 10);
-    if (Number.isNaN(miles) || miles < 1) {
-      setError('Miles received must be a positive whole number');
-      return;
-    }
-
-    const bonus = parseFloat(bonusPercent);
-    if (Number.isNaN(bonus) || bonus < 0) {
-      setError('Bonus percent must be non-negative');
-      return;
-    }
-
-    const cost = totalCost.trim() ? parseFloat(totalCost) : null;
-    if (cost !== null && (Number.isNaN(cost) || cost < 0)) {
-      setError('Total cost must be non-negative');
-      return;
-    }
+    const { points, miles, bonus, cost } = parsed.data;
 
     startTransition(async () => {
       const result = await logTransfer({
