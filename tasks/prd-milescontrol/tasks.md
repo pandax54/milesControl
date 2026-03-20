@@ -26,8 +26,8 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 2.7 **Potential balance calculator** — "If you transferred all Livelo + Esfera to Smiles, you'd have X miles." Show per-airline consolidation options. [Inspired by Oktoplus]
 - [x] 2.8 **One-click program links** — Direct link to each program's website from enrollment card. [Inspired by AwardWallet]
 - [x] 2.9 **Balance change digest** — Weekly email: "This week: Smiles +2,000, Livelo -10,000, Esfera unchanged." Cron job + Resend template. [Inspired by AwardWallet]
-- [ ] 2.10 **Benefit tracking** — CRUD for TrackedBenefit: free nights, companion passes, upgrade credits, lounge access, travel credits. Expiration alerts. [Inspired by AwardWallet Plus]
-- [ ] 2.11 **Family member profiles** — Add family members with their own program enrollments. Manage balances under one account. [Inspired by both competitors]
+- [x] 2.10 **Benefit tracking** — CRUD for TrackedBenefit: free nights, companion passes, upgrade credits, lounge access, travel credits. Expiration alerts. [Inspired by AwardWallet Plus]
+- [x] 2.11 **Family member profiles** — Add family members with their own program enrollments. Manage balances under one account. [Inspired by both competitors]
 
 ### Phase 3: Promotions Engine
 

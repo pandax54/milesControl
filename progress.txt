@@ -236,3 +236,95 @@ Review fixes applied:
 3. Extracted magic color hex values to named constants (COLOR_POSITIVE, COLOR_NEGATIVE, COLOR_NEUTRAL)
 
 All 345 tests pass. TypeScript compiles cleanly.
+
+## Task 2.9 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.9_task_review.md:
+
+1. **Replaced `as never` casts with typed mock factories** (Minor #1, Rec #1) — Created
+   `buildMockEnrollment()`, `buildMockSnapshot()`, and `buildMockUser()` typed factory
+   functions in `balance-digest.service.test.ts`. Imported `BalanceSnapshot`,
+   `ProgramEnrollment`, `User`, and `UserRole` types from `@/generated/prisma/client`.
+   Removed all `as never` casts.
+
+2. **Added multi-snapshot deduplication test** (Minor #2, Rec #3) — Added test
+   `should deduplicate multiple snapshots per program keeping the earliest` to verify
+   that `fetchLatestSnapshots` correctly picks the earliest snapshot when multiple
+   snapshots exist for the same program (desc-ordered, last write wins).
+
+3. **Added cron route tests** (Minor #3, Rec #2) — Created
+   `src/app/api/cron/balance-digest/route.test.ts` with 6 tests covering: missing auth
+   header (401), wrong token (401), correct bearer token (200), service error (500),
+   dev fallback when CRON_SECRET is unset (200), and production rejection when
+   CRON_SECRET is unset (401).
+
+All 352 tests pass. TypeScript compiles cleanly. Coverage: 98.25% stmts, 91.76% branches.
+
+## Task 2.10 — Benefit Tracking (completed 2026-03-20)
+
+Files created:
+- src/lib/validators/benefit.schema.ts — Zod schemas for create/update/delete/markUsed with shared BENEFIT_TYPES and BENEFIT_TYPE_LABELS constants, date format validation
+- src/lib/validators/benefit.schema.test.ts — 19 validation tests including date format rejection
+- src/lib/services/tracked-benefit.service.ts — CRUD service: list, listExpiring, create, update, markUsed (partial consumption), delete, with ownership checks
+- src/lib/services/tracked-benefit.service.test.ts — 22 unit tests covering all operations, error paths, partial-use logic
+- src/actions/helpers.ts — Shared AuthenticationError, requireUserId, isAuthenticationError extracted from duplicated action patterns
+- src/actions/benefits.ts — Server actions (addBenefit, editBenefit, removeBenefit, useBenefit) using shared helpers
+- src/actions/benefits.test.ts — 22 action tests covering success, validation, auth, not-found, already-used
+- src/components/dashboard/benefit-card.tsx — Card with type badge, expiration status (expired/warning/ok), remaining count
+- src/components/dashboard/benefit-form-fields.tsx — Shared form fields using benefit type constants from schema
+- src/components/dashboard/benefit-form-dialog.tsx — Create dialog
+- src/components/dashboard/edit-benefit-dialog.tsx — Edit dialog with form reset on open
+- src/components/dashboard/delete-benefit-button.tsx — Delete confirmation dialog
+- src/components/dashboard/use-benefit-button.tsx — Mark-as-used confirmation dialog
+- src/app/(dashboard)/benefits/page.tsx — Benefits page with active/used sections, empty state
+
+Files modified:
+- src/components/app-sidebar.tsx — Added Benefits link with Gift icon
+
+Review fixes applied:
+1. Added date format validation (.refine) to expirationDate in Zod schemas
+2. Extracted BENEFIT_TYPES and BENEFIT_TYPE_LABELS to shared schema file, used by card and form components
+3. Extracted shared AuthenticationError/requireUserId/isAuthenticationError to src/actions/helpers.ts
+4. Extracted MILLISECONDS_PER_DAY named constant in benefit-card.tsx
+
+All 415 tests pass. TypeScript compiles cleanly. Coverage: 98.48% stmts, 91.79% branches.
+
+## Task 2.10 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.10_task_review.md:
+
+1. **Replaced `as never` casts with typed mock factory** (Minor #1, Rec #1) — Created
+   `buildMockBenefitReturn()` typed factory in `benefits.test.ts` using `TrackedBenefit`
+   and `BenefitType` from `@/generated/prisma/client`. Replaced all 3 `{} as never` casts
+   with properly typed mock return values, matching the pattern established in tasks 2.6–2.9.
+
+All 415 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 2.11 — Family Member Profiles (completed 2026-03-20)
+
+Files created:
+- src/lib/validators/family.schema.ts — Zod schemas for family member + enrollment CRUD with z.enum(RELATIONSHIPS) constraint, type exports
+- src/lib/validators/family.schema.test.ts — 23 validation tests including invalid relationship rejection
+- src/lib/services/family-member.service.ts — CRUD service for family members and their program enrollments with ownership verification, custom error classes
+- src/lib/services/family-member.service.test.ts — 22 unit tests covering list, create, update, delete for members and enrollments
+- src/actions/family.ts — Server actions (addFamilyMember, editFamilyMember, removeFamilyMember, addFamilyEnrollment, editFamilyEnrollment, removeFamilyEnrollment) using shared helpers
+- src/actions/family.test.ts — 25 action tests covering success, validation, auth, not-found, already-enrolled
+- src/components/dashboard/family-member-card.tsx — Card with relationship badge, enrollment list, filtered "Add Program" button
+- src/components/dashboard/family-enrollment-card.tsx — Enrollment display with balance, staleness indicator, type badges
+- src/components/dashboard/family-member-form-dialog.tsx — Create family member dialog with relationship select
+- src/components/dashboard/edit-family-member-dialog.tsx — Edit family member dialog with form reset on open
+- src/components/dashboard/delete-family-member-button.tsx — Delete confirmation dialog
+- src/components/dashboard/family-enrollment-form-dialog.tsx — Add program enrollment dialog for family members
+- src/components/dashboard/edit-family-enrollment-dialog.tsx — Edit enrollment dialog
+- src/components/dashboard/delete-family-enrollment-button.tsx — Delete enrollment confirmation
+- src/app/(dashboard)/family/page.tsx — Family page with auth, empty state, member grid, parallel data fetch
+
+Files modified:
+- src/components/app-sidebar.tsx — Added Family link with UsersRound icon
+
+Review fixes applied:
+1. Constrained relationship field with z.enum(RELATIONSHIPS) instead of z.string() for defense in depth
+2. Changed enrollment ordering from familyMemberId (meaningless) to balanceUpdatedAt desc
+3. Added test for invalid relationship value rejection
+
+All 492 tests pass. TypeScript compiles cleanly.
