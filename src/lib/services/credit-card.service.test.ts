@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { CreditCard } from '@/generated/prisma/client';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -40,26 +41,29 @@ const mockDelete = vi.mocked(prisma.creditCard.delete);
 const MOCK_USER_ID = 'user-123';
 const MOCK_CARD_ID = 'card-456';
 
-const mockCard = {
-  id: MOCK_CARD_ID,
-  userId: MOCK_USER_ID,
-  bankName: 'Itaú',
-  cardName: 'Azul Infinite',
-  pointsProgram: 'Livelo',
-  pointsPerReal: 2.0,
-  pointsPerDollar: 4.0,
-  annualFee: 1200,
-  isWaivedFee: false,
-  benefits: ['Sala VIP', 'Seguro viagem'],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+function buildMockCard(overrides: Partial<CreditCard> = {}): CreditCard {
+  return {
+    id: MOCK_CARD_ID,
+    userId: MOCK_USER_ID,
+    bankName: 'Itaú',
+    cardName: 'Azul Infinite',
+    pointsProgram: 'Livelo',
+    pointsPerReal: 2.0,
+    pointsPerDollar: 4.0,
+    annualFee: new Prisma.Decimal(1200),
+    isWaivedFee: false,
+    benefits: ['Sala VIP', 'Seguro viagem'],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
 
 describe('listCreditCards', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should return credit cards for user ordered by bank and card name', async () => {
-    mockFindMany.mockResolvedValue([mockCard] as never);
+    mockFindMany.mockResolvedValue([buildMockCard()]);
 
     const result = await listCreditCards(MOCK_USER_ID);
 
@@ -84,7 +88,7 @@ describe('createCreditCard', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should create credit card successfully', async () => {
-    mockCreate.mockResolvedValue(mockCard as never);
+    mockCreate.mockResolvedValue(buildMockCard());
 
     const result = await createCreditCard(MOCK_USER_ID, {
       bankName: 'Itaú',
@@ -107,7 +111,7 @@ describe('createCreditCard', () => {
   });
 
   it('should set pointsPerDollar to null when not provided', async () => {
-    mockCreate.mockResolvedValue(mockCard as never);
+    mockCreate.mockResolvedValue(buildMockCard());
 
     await createCreditCard(MOCK_USER_ID, {
       bankName: 'Bradesco',
@@ -123,7 +127,7 @@ describe('createCreditCard', () => {
   });
 
   it('should set benefits to null when not provided', async () => {
-    mockCreate.mockResolvedValue(mockCard as never);
+    mockCreate.mockResolvedValue(buildMockCard());
 
     await createCreditCard(MOCK_USER_ID, {
       bankName: 'Bradesco',
@@ -143,9 +147,8 @@ describe('updateCreditCard', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should update credit card fields', async () => {
-    mockFindFirst.mockResolvedValue(mockCard as never);
-    const updated = { ...mockCard, bankName: 'Bradesco' };
-    mockUpdate.mockResolvedValue(updated as never);
+    mockFindFirst.mockResolvedValue(buildMockCard());
+    mockUpdate.mockResolvedValue(buildMockCard({ bankName: 'Bradesco' }));
 
     const result = await updateCreditCard(MOCK_USER_ID, {
       cardId: MOCK_CARD_ID,
@@ -157,8 +160,8 @@ describe('updateCreditCard', () => {
   });
 
   it('should only include provided fields in update', async () => {
-    mockFindFirst.mockResolvedValue(mockCard as never);
-    mockUpdate.mockResolvedValue(mockCard as never);
+    mockFindFirst.mockResolvedValue(buildMockCard());
+    mockUpdate.mockResolvedValue(buildMockCard());
 
     await updateCreditCard(MOCK_USER_ID, {
       cardId: MOCK_CARD_ID,
@@ -173,8 +176,8 @@ describe('updateCreditCard', () => {
   });
 
   it('should allow clearing pointsPerDollar with null', async () => {
-    mockFindFirst.mockResolvedValue(mockCard as never);
-    mockUpdate.mockResolvedValue({ ...mockCard, pointsPerDollar: null } as never);
+    mockFindFirst.mockResolvedValue(buildMockCard());
+    mockUpdate.mockResolvedValue(buildMockCard({ pointsPerDollar: null }));
 
     await updateCreditCard(MOCK_USER_ID, {
       cardId: MOCK_CARD_ID,
@@ -186,8 +189,8 @@ describe('updateCreditCard', () => {
   });
 
   it('should allow clearing benefits with null', async () => {
-    mockFindFirst.mockResolvedValue(mockCard as never);
-    mockUpdate.mockResolvedValue({ ...mockCard, benefits: null } as never);
+    mockFindFirst.mockResolvedValue(buildMockCard());
+    mockUpdate.mockResolvedValue(buildMockCard({ benefits: null }));
 
     await updateCreditCard(MOCK_USER_ID, {
       cardId: MOCK_CARD_ID,
@@ -227,8 +230,9 @@ describe('deleteCreditCard', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('should delete credit card successfully', async () => {
-    mockFindFirst.mockResolvedValue(mockCard as never);
-    mockDelete.mockResolvedValue(mockCard as never);
+    const card = buildMockCard();
+    mockFindFirst.mockResolvedValue(card);
+    mockDelete.mockResolvedValue(card);
 
     await deleteCreditCard(MOCK_USER_ID, MOCK_CARD_ID);
 

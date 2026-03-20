@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EditCreditCardDialog } from './edit-credit-card-dialog';
 import { DeleteCreditCardButton } from './delete-credit-card-button';
-import type { Decimal } from '@prisma/client/runtime/client';
 
 export interface CreditCardData {
   id: string;
@@ -13,7 +12,7 @@ export interface CreditCardData {
   pointsProgram: string;
   pointsPerReal: number;
   pointsPerDollar: number | null;
-  annualFee: Decimal | number;
+  annualFee: number;
   isWaivedFee: boolean;
   benefits: string[] | null;
 }
@@ -22,17 +21,14 @@ interface CreditCardCardProps {
   card: CreditCardData;
 }
 
-function formatCurrency(value: Decimal | number): string {
-  const num = typeof value === 'number' ? value : Number(value);
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(num);
+  }).format(value);
 }
 
 export function CreditCardCard({ card }: CreditCardCardProps) {
-  const annualFeeNum = typeof card.annualFee === 'number' ? card.annualFee : Number(card.annualFee);
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -66,9 +62,9 @@ export function CreditCardCard({ card }: CreditCardCardProps) {
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>
-              Annual fee: {annualFeeNum === 0 ? 'Free' : formatCurrency(card.annualFee)}
+              Annual fee: {card.annualFee === 0 ? 'Free' : formatCurrency(card.annualFee)}
             </span>
-            {card.isWaivedFee && annualFeeNum > 0 && (
+            {card.isWaivedFee && card.annualFee > 0 && (
               <Badge variant="outline" className="text-green-600 dark:text-green-400">
                 Waived
               </Badge>

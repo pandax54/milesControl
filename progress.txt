@@ -30,3 +30,29 @@ Files modified:
 - (TypeScript fixes) Fixed Decimal import path, Prisma.JsonNull for JSON null values
 
 All 212 tests pass. TypeScript compiles cleanly.
+
+## Task 2.4 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.4_task_review.md:
+
+1. **Extracted shared CreditCardFormFields** (Issue #1, Rec #1) — Created
+   src/components/dashboard/credit-card-form-fields.tsx with shared form fields,
+   validation parsing, and completeness check. Both create and edit dialogs now
+   use this component, eliminating ~80% duplicated form markup.
+
+2. **Normalized Decimal at page boundary** (Issue #4, Rec #2) — Page now converts
+   Prisma Decimal to number via Number(card.annualFee) before passing to components.
+   CreditCardData.annualFee changed from `Decimal | number` to `number`. Removed
+   Prisma Decimal import from UI layer.
+
+3. **Edit dialog resets on open** (Issue #5) — Edit dialog now rebuilds form values
+   from the card prop each time it opens, preventing stale state.
+
+4. **Empty state hides top button** (Issue #6) — Top-level "Add Card" button
+   conditionally rendered only when cards exist, avoiding visual redundancy.
+
+5. **Type-safe test factories** (Issue #3, Rec #4) — Replaced all `as never` casts
+   with a typed `buildMockCard()` factory returning proper `CreditCard` type with
+   Prisma.Decimal for annualFee.
+
+All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.

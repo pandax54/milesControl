@@ -13,7 +13,13 @@ export default async function CreditCardsPage() {
 
   const cards = await listCreditCards(session.user.id);
 
-  const cardsByBank = cards.reduce<Record<string, typeof cards>>((acc, card) => {
+  const normalizedCards = cards.map((card) => ({
+    ...card,
+    annualFee: Number(card.annualFee),
+    benefits: card.benefits as string[] | null,
+  }));
+
+  const cardsByBank = normalizedCards.reduce<Record<string, typeof normalizedCards>>((acc, card) => {
     const bank = card.bankName;
     if (!acc[bank]) {
       acc[bank] = [];
@@ -23,6 +29,7 @@ export default async function CreditCardsPage() {
   }, {});
 
   const bankNames = Object.keys(cardsByBank).sort();
+  const hasCards = normalizedCards.length > 0;
 
   return (
     <div className="space-y-6">
@@ -33,10 +40,10 @@ export default async function CreditCardsPage() {
             Manage your credit cards and their points programs.
           </p>
         </div>
-        <CreditCardFormDialog />
+        {hasCards && <CreditCardFormDialog />}
       </div>
 
-      {cards.length === 0 ? (
+      {!hasCards ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
           <p className="text-lg font-medium">No credit cards yet</p>
           <p className="text-sm text-muted-foreground">
@@ -53,13 +60,7 @@ export default async function CreditCardsPage() {
               <h2 className="mb-4 text-xl font-semibold">{bank}</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {cardsByBank[bank].map((card) => (
-                  <CreditCardCard
-                    key={card.id}
-                    card={{
-                      ...card,
-                      benefits: card.benefits as string[] | null,
-                    }}
-                  />
+                  <CreditCardCard key={card.id} card={card} />
                 ))}
               </div>
             </section>
