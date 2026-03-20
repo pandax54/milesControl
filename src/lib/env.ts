@@ -10,6 +10,8 @@ const envSchema = z.object({
   SERPAPI_API_KEY: z.string().optional(),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional().default('MilesControl <noreply@milescontrol.com>'),
+  CRON_SECRET: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 
@@ -27,3 +29,5 @@ function loadEnv(): Env {
 }
 
 export const env = loadEnv();
+
+export const IS_DEVELOPMENT = env.NODE_ENV === 'development';

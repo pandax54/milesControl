@@ -42,6 +42,7 @@ model User {
   familyMembers      FamilyMember[]
   pointsSales        PointsSale[]
   savedFlightFilters SavedFlightFilter[]
+  balanceSnapshots   BalanceSnapshot[]
 
   @@index([managedById])
   @@index([email])
@@ -106,7 +107,7 @@ model ClubTier {
   id               String  @id @default(cuid())
   programId        String
   name             String
-  monthlyPrice     Float
+  monthlyPrice     Decimal @db.Decimal(10, 2)
   baseMonthlyMiles Int
   minimumStayMonths Int    @default(0)
   benefits         Json?
@@ -127,7 +128,7 @@ model ClubSubscription {
   status          SubscriptionStatus @default(ACTIVE)
   startDate       DateTime
   endDate         DateTime?
-  monthlyCost     Float
+  monthlyCost     Decimal @db.Decimal(10, 2)
   accrualSchedule Json
   totalMilesAccrued Int              @default(0)
   nextBillingDate DateTime?
@@ -152,7 +153,7 @@ model CreditCard {
   pointsProgram   String
   pointsPerReal   Float
   pointsPerDollar Float?
-  annualFee       Float   @default(0)
+  annualFee       Decimal @default(0) @db.Decimal(10, 2)
   isWaivedFee     Boolean @default(false)
   benefits        Json?
 
@@ -174,8 +175,8 @@ model TransferLog {
   pointsTransferred Int
   bonusPercent      Float     @default(0)
   milesReceived     Int
-  totalCost         Float?
-  costPerMilheiro   Float?
+  totalCost         Decimal? @db.Decimal(10, 2)
+  costPerMilheiro   Decimal? @db.Decimal(10, 2)
   promotionId       String?
   notes             String?
   transferDate      DateTime  @default(now())
@@ -213,14 +214,14 @@ model Promotion {
   destProgramId     String?
   bonusPercent      Float?
   purchaseDiscount  Float?
-  purchasePricePerK Float?
+  purchasePricePerK Decimal? @db.Decimal(10, 2)
   minimumTransfer   Int?
   maxBonusCap       Int?
   deadline          DateTime?
   sourceUrl         String
   sourceSiteName    String
   rawContent        String?
-  costPerMilheiro   Float?
+  costPerMilheiro   Decimal? @db.Decimal(10, 2)
   rating            String?
   isVerified        Boolean     @default(false)
   requiresClub      Boolean     @default(false)
@@ -259,7 +260,7 @@ model AlertConfig {
   programNames       String[]
   promoTypes         PromoType[]
   minBonusPercent    Float?
-  maxCostPerMilheiro Float?
+  maxCostPerMilheiro Decimal? @db.Decimal(10, 2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -297,7 +298,7 @@ model FlightWatchlist {
   cabinClass       String    @default("ECONOMY")
   passengers       Int       @default(1)
   targetMilesPrice Int?
-  targetCashPrice  Float?
+  targetCashPrice  Decimal? @db.Decimal(10, 2)
   preferredProgram String?
   isActive         Boolean   @default(true)
   lastCheckedAt    DateTime?
@@ -447,8 +448,8 @@ model PointsSale {
   programName   String
   milesAmount   Int
   agencyName    String?
-  pricePerK     Float?
-  totalReceived Float?
+  pricePerK     Decimal? @db.Decimal(10, 2)
+  totalReceived Decimal? @db.Decimal(10, 2)
   status        SaleStatus @default(PENDING)
   notes         String?
 
@@ -474,13 +475,29 @@ model SavedFlightFilter {
   dateRangeStart DateTime?
   dateRangeEnd   DateTime?
   maxMilesPrice  Int?
-  maxCashPrice   Float?
+  maxCashPrice   Decimal? @db.Decimal(10, 2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ==================== BALANCE SNAPSHOTS ====================
+
+model BalanceSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  programId   String
+  programName String
+  balance     Int
+  snapshotAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, snapshotAt])
+  @@index([snapshotAt])
 }
 
 // ==================== NEXTAUTH ACCOUNTS ====================

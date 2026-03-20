@@ -203,3 +203,36 @@ The one-click program links feature (PRD F1.12) was already partially implemente
 3. Consistent use of shadcn/ui Tooltip component (base-ui)
 
 All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
+
+## Task 2.8 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 2.8_task_review.md:
+
+1. **Moved TooltipProvider to dashboard layout** (Minor #1, Rec #1) — Removed per-link
+   `<TooltipProvider>` wrapping from `enrollment-card.tsx` and `dashboard-balances.tsx`.
+   Added a single `<TooltipProvider>` at the dashboard layout level
+   (`src/app/(dashboard)/layout.tsx`) so all tooltips share consistent hover delay grouping.
+
+All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
+
+## Task 2.9 — Balance Change Digest (completed 2026-03-20)
+
+Files created:
+- prisma/schema.prisma — Added BalanceSnapshot model for tracking periodic balance snapshots
+- src/lib/integrations/resend.ts — Resend email client wrapper with graceful degradation when API key is not configured
+- src/lib/integrations/resend.test.ts — 3 tests covering send success, missing API key, and API error
+- src/lib/services/balance-digest.service.ts — Core service: takeBalanceSnapshots, computeBalanceChanges (pure), buildDigestHtml, sendDigestForUser, sendAllDigests. Includes UserNotFoundError custom error class.
+- src/lib/services/balance-digest.service.test.ts — 24 tests covering balance computation, HTML generation, snapshot creation, per-user digest, and batch processing
+- src/app/api/cron/balance-digest/route.ts — Cron endpoint with Bearer token auth (CRON_SECRET), development fallback
+
+Files modified:
+- prisma/schema.prisma — Added BalanceSnapshot model with userId, programId, programName, balance, snapshotAt. Added relation on User model.
+- src/lib/env.ts — Added RESEND_FROM_EMAIL (with default) and CRON_SECRET env vars
+- .env.example — Documented new env vars
+
+Review fixes applied:
+1. Removed email addresses from log output to avoid PII leakage (logger redact config only covers `email` key)
+2. Gated verifyCronSecret fallback on IS_DEVELOPMENT (was allowing unauthenticated access in all environments)
+3. Extracted magic color hex values to named constants (COLOR_POSITIVE, COLOR_NEGATIVE, COLOR_NEUTRAL)
+
+All 345 tests pass. TypeScript compiles cleanly.
