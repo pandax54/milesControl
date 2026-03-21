@@ -72,7 +72,7 @@ describe('GET /api/cron/scrape-promos', () => {
 
     expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error).toEqual({ code: 'UNAUTHORIZED', message: 'Unauthorized' });
   });
 
   it('should return 401 when authorization header has wrong token', async () => {
@@ -80,7 +80,7 @@ describe('GET /api/cron/scrape-promos', () => {
 
     expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.error).toBe('Unauthorized');
+    expect(body.error).toEqual({ code: 'UNAUTHORIZED', message: 'Unauthorized' });
   });
 
   it('should succeed with correct bearer token and return scraper results', async () => {
@@ -111,7 +111,7 @@ describe('GET /api/cron/scrape-promos', () => {
 
     expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.error).toBe('Internal server error');
+    expect(body.error).toEqual({ code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' });
   });
 
   it('should allow unauthenticated access in development when CRON_SECRET is not set', async () => {

@@ -209,7 +209,7 @@ describe('runAllScrapers', () => {
   });
 
   it('should skip scraper with more than 3 consecutive failures', async () => {
-    mockCountConsecutiveFailures.mockResolvedValueOnce(3); // first scraper at ceiling
+    mockCountConsecutiveFailures.mockResolvedValueOnce(4); // strictly above the threshold of 3
     mockCountConsecutiveFailures.mockResolvedValue(0);
 
     mockRun.mockResolvedValue({ promotions: [], scraperRunId: 'run-1' });
@@ -218,7 +218,7 @@ describe('runAllScrapers', () => {
 
     const skipped = result.scrapers.filter((s) => s.skipped);
     expect(skipped).toHaveLength(1);
-    expect(skipped[0].skipReason).toBe('3 consecutive failures');
+    expect(skipped[0].skipReason).toBe('4 consecutive failures');
   });
 
   it('should not skip scraper with exactly 2 consecutive failures', async () => {

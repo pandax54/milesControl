@@ -5,7 +5,7 @@ import { sendAllDigests } from '@/lib/services/balance-digest.service';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
   }
 
   try {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     logger.error({ err: error }, 'Balance digest cron failed');
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Internal server error' } }, { status: 500 });
   }
 }
 

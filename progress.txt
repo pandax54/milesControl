@@ -788,3 +788,18 @@ Review fixes applied:
 2. Fixed test mock for consecutive failure ceiling: changed mock value from 5 to 3 (real DB ceiling from `take: 3`)
 
 All 951 tests pass. TypeScript compiles cleanly.
+
+## Review fixes for Task 3.11 — scrape-promos cron (applied 2026-03-21)
+
+Issues fixed from 3.11_task_review.md:
+
+**Minor #1 — Error envelope alignment (scrape-promos + balance-digest routes)**
+- src/app/api/cron/scrape-promos/route.ts — Changed flat `{ error: string }` to project envelope `{ error: { code, message } }` for both 401 and 500 responses
+- src/app/api/cron/balance-digest/route.ts — Same fix applied (same pre-existing pattern from task 2.9)
+- src/app/api/cron/scrape-promos/route.test.ts — Updated 3 assertions to use `toEqual({ code, message })`
+- src/app/api/cron/balance-digest/route.test.ts — Updated 3 assertions to use `toEqual({ code, message })`
+
+**Minor #2 — Misleading test description/mock value**
+- src/lib/services/scrape-promos.service.test.ts — Changed mock value from 3 → 4 in the "should skip scraper with more than 3 consecutive failures" test so the value matches the title (strictly-above-threshold scenario); skipReason expectation updated to '4 consecutive failures'
+
+All 951 tests pass. TypeScript compiles cleanly. Coverage: 98.46%.
