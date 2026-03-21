@@ -20,6 +20,11 @@ export const KNOWN_PROGRAMS = [
 /**
  * Regex patterns for extracting promotion metadata from article titles.
  */
+/**
+ * Pattern to extract Brazilian dates: "DD/MM/YYYY às HH:MM" or "DD/MM/YYYY"
+ */
+export const BR_DATE_PATTERN = /(\d{2})\/(\d{2})\/(\d{4})(?:\s+às\s+(\d{2}):(\d{2}))?/;
+
 export const BONUS_PERCENT_PATTERN = /(?:até\s+)?(\d+)%\s*(?:de\s+)?bônus/i;
 export const DISCOUNT_PERCENT_PATTERN = /(?:até\s+)?(\d+)%\s*(?:de\s+)?desconto/i;
 export const TRANSFER_KEYWORDS_PATTERN = /transfer[êe]ncia|bônus.*transfer|transfira/i;
@@ -132,4 +137,23 @@ export function extractPrograms(title: string): { source?: string; destination?:
   // This is acceptable since transfer direction is already handled by
   // explicit patterns above; this branch is for ambiguous titles.
   return { source: foundPrograms[0], destination: foundPrograms[1] };
+}
+
+/**
+ * Parses Brazilian date format "DD/MM/YYYY às HH:MM" or "DD/MM/YYYY" into a Date object.
+ */
+export function parseBrDate(text: string): Date | undefined {
+  if (!text) {
+    return undefined;
+  }
+
+  const match = text.match(BR_DATE_PATTERN);
+  if (!match) {
+    return undefined;
+  }
+
+  const [, day, month, year, hours, minutes] = match;
+  const timeStr = hours && minutes ? `T${hours}:${minutes}:00` : 'T00:00:00';
+  const date = new Date(`${year}-${month}-${day}${timeStr}`);
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }

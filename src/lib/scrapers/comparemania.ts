@@ -2,10 +2,12 @@ import type { CheerioAPI } from 'cheerio';
 import { BaseScraper } from './base-scraper';
 import type { CheerioSelection, ScrapedPromotion, ScraperConfig } from './types';
 import {
+  BR_DATE_PATTERN,
   classifyPromoType,
   extractBonusPercent,
   extractDiscountPercent,
   extractPrograms,
+  parseBrDate,
 } from './promotion-helpers';
 
 // ==================== Constants ====================
@@ -13,11 +15,6 @@ import {
 const SOURCE_NAME = 'Comparemania';
 const BASE_URL = 'https://www.comparemania.com.br';
 const SCRAPER_PATH = '/blog/';
-
-/**
- * Pattern to extract Brazilian dates: "DD/MM/YYYY"
- */
-const BR_DATE_PATTERN = /(\d{2})\/(\d{2})\/(\d{4})/;
 
 // ==================== Scraper class ====================
 
@@ -93,20 +90,3 @@ export function extractRawContent(card: CheerioSelection): string {
   return excerpt ? `${title} ${excerpt}` : title;
 }
 
-/**
- * Parses Brazilian date format "DD/MM/YYYY" into a Date object.
- */
-export function parseBrDate(text: string): Date | undefined {
-  if (!text) {
-    return undefined;
-  }
-
-  const match = text.match(BR_DATE_PATTERN);
-  if (!match) {
-    return undefined;
-  }
-
-  const [, day, month, year] = match;
-  const date = new Date(`${year}-${month}-${day}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}

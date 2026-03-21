@@ -6,6 +6,7 @@ import {
   extractBonusPercent,
   extractDiscountPercent,
   extractPrograms,
+  parseBrDate,
 } from './promotion-helpers';
 
 // ==================== Constants ====================
@@ -13,11 +14,6 @@ import {
 const SOURCE_NAME = 'Melhores Cartões';
 const BASE_URL = 'https://www.melhorescartoes.com.br';
 const SCRAPER_PATH = '/c/promocoes-milhas';
-
-/**
- * Pattern to extract Brazilian dates: "DD/MM/YYYY às HH:MM" or "DD/MM/YYYY"
- */
-const BR_DATE_PATTERN = /(\d{2})\/(\d{2})\/(\d{4})(?:\s+às\s+(\d{2}):(\d{2}))?/;
 
 // ==================== Scraper class ====================
 
@@ -97,21 +93,3 @@ export function extractDateText(container: CheerioSelection): string {
   return '';
 }
 
-/**
- * Parses Brazilian date format "DD/MM/YYYY às HH:MM" into a Date object.
- */
-export function parseBrDate(text: string): Date | undefined {
-  if (!text) {
-    return undefined;
-  }
-
-  const match = text.match(BR_DATE_PATTERN);
-  if (!match) {
-    return undefined;
-  }
-
-  const [, day, month, year, hours, minutes] = match;
-  const timeStr = hours && minutes ? `T${hours}:${minutes}:00` : 'T00:00:00';
-  const date = new Date(`${year}-${month}-${day}${timeStr}`);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}

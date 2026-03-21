@@ -7,7 +7,6 @@ import {
   extractCategory,
   extractDateText,
   extractRawContent,
-  parseBrDate,
 } from './comparemania';
 
 // ==================== Mocks ====================
@@ -285,58 +284,6 @@ describe('extractRawContent', () => {
     const content = extractRawContent(card);
 
     expect(content).toBe('Test Title');
-  });
-});
-
-// ==================== parseBrDate ====================
-
-describe('parseBrDate', () => {
-  it('should parse DD/MM/YYYY format', () => {
-    const date = parseBrDate('20/03/2026');
-
-    expect(date).toBeInstanceOf(Date);
-    expect(date?.getFullYear()).toBe(2026);
-    expect(date?.getMonth()).toBe(2); // March = 2 (0-indexed)
-    expect(date?.getDate()).toBe(20);
-  });
-
-  it('should parse date with leading zeros', () => {
-    const date = parseBrDate('01/01/2026');
-
-    expect(date).toBeInstanceOf(Date);
-    expect(date?.getFullYear()).toBe(2026);
-    expect(date?.getMonth()).toBe(0);
-    expect(date?.getDate()).toBe(1);
-  });
-
-  it('should parse end of year date', () => {
-    const date = parseBrDate('31/12/2025');
-
-    expect(date).toBeInstanceOf(Date);
-    expect(date?.getFullYear()).toBe(2025);
-    expect(date?.getMonth()).toBe(11);
-    expect(date?.getDate()).toBe(31);
-  });
-
-  it('should return undefined for empty string', () => {
-    expect(parseBrDate('')).toBeUndefined();
-  });
-
-  it('should return undefined for non-date text', () => {
-    expect(parseBrDate('not a date')).toBeUndefined();
-  });
-
-  it('should return undefined for invalid date values', () => {
-    expect(parseBrDate('99/99/9999')).toBeUndefined();
-  });
-
-  it('should extract date from text containing other content', () => {
-    const date = parseBrDate('Published on 15/06/2026 by Anni');
-
-    expect(date).toBeInstanceOf(Date);
-    expect(date?.getFullYear()).toBe(2026);
-    expect(date?.getMonth()).toBe(5);
-    expect(date?.getDate()).toBe(15);
   });
 });
 
