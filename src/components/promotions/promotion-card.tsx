@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { DeadlineCountdown } from './deadline-countdown';
 import { PromoCalculatorEmbed } from '@/components/dashboard/promo-calculator-embed';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
-import type { PromotionRating } from '@/lib/validators/cost-calculator.schema';
+import { PROMOTION_RATINGS, type PromotionRating } from '@/lib/validators/cost-calculator.schema';
 import { PROMO_TYPE_LABELS } from '@/lib/validators/promotion-feed.schema';
 import type { PromoType } from '@/generated/prisma/client';
+
+const DEFAULT_PURCHASE_PRICE_PER_POINT = 0.028; // R$28 per milheiro
 
 const TYPE_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'outline'> = {
   TRANSFER_BONUS: 'default',
@@ -34,7 +36,7 @@ function buildCalculatorDefaults(promotion: PromotionWithPrograms) {
   if (promotion.type === 'TRANSFER_BONUS' && promotion.bonusPercent != null) {
     return {
       transferBonusPercent: promotion.bonusPercent,
-      purchasePricePerPoint: 0.028,
+      purchasePricePerPoint: DEFAULT_PURCHASE_PRICE_PER_POINT,
       quantity: 10000,
       ...(promotion.clubExtraBonus != null ? { clubExclusiveBonusPercent: promotion.clubExtraBonus } : {}),
     };
@@ -54,7 +56,9 @@ function buildCalculatorDefaults(promotion: PromotionWithPrograms) {
 export function PromotionCard({ promotion }: PromotionCardProps) {
   const [showCalculator, setShowCalculator] = useState(false);
   const calculatorDefaults = buildCalculatorDefaults(promotion);
-  const rating = promotion.rating as PromotionRating | null;
+  const rating = (PROMOTION_RATINGS as readonly string[]).includes(promotion.rating ?? '')
+    ? (promotion.rating as PromotionRating)
+    : null;
   const costPerMilheiro = promotion.costPerMilheiro ? Number(promotion.costPerMilheiro) : null;
 
   return (

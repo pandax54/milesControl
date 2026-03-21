@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Clock } from 'lucide-react';
 import { computeTimeRemaining, formatTimeRemaining, type TimeRemaining } from './deadline-utils';
 
@@ -12,17 +12,18 @@ interface DeadlineCountdownProps {
 
 export function DeadlineCountdown({ deadline }: DeadlineCountdownProps) {
   const deadlineDate = deadline instanceof Date ? deadline : new Date(deadline);
+  const deadlineTimestamp = useMemo(() => deadlineDate.getTime(), [deadlineDate.getTime()]);
   const [time, setTime] = useState<TimeRemaining>(() => computeTimeRemaining(deadlineDate));
 
   useEffect(() => {
-    setTime(computeTimeRemaining(deadlineDate));
+    setTime(computeTimeRemaining(new Date(deadlineTimestamp)));
 
     const interval = setInterval(() => {
-      setTime(computeTimeRemaining(deadlineDate));
+      setTime(computeTimeRemaining(new Date(deadlineTimestamp)));
     }, COUNTDOWN_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [deadlineDate.getTime()]);
+  }, [deadlineTimestamp]);
 
   const colorClass = time.isExpired
     ? 'text-muted-foreground'

@@ -712,3 +712,23 @@ Review observations addressed:
 2. Simplified isUrgent: `days === 0` (removed tautological `hours < 24` condition)
 
 All 916 tests pass. TypeScript compiles cleanly. Coverage: 98.48% stmts, 92.7% branches.
+
+## Task 3.9 — Review Fixes (applied 2026-03-21)
+
+Changes applied from 3.9_task_review.md:
+
+1. **Extracted magic number** (Issue #1, Rec #1) — Replaced hardcoded `0.028` in
+   `buildCalculatorDefaults` with `DEFAULT_PURCHASE_PRICE_PER_POINT` named constant.
+
+2. **Runtime guard for rating** (Issue #2, Rec #3) — Replaced unsafe `as PromotionRating`
+   cast with runtime check against `PROMOTION_RATINGS` array. Unknown DB values now
+   gracefully fall back to `null` instead of rendering an invalid badge.
+
+3. **Type-safe filter handler** (Issue #3) — Replaced `(updated as Record<string, string>)[key]`
+   with a discriminated `switch` statement that assigns each filter key with its proper type.
+
+4. **Memoized useEffect dependency** (Issue #4) — Replaced `[deadlineDate.getTime()]` in
+   useEffect dependency array with a `useMemo`-derived `deadlineTimestamp` value, avoiding
+   potential ESLint `react-hooks/exhaustive-deps` warnings.
+
+All 916 tests pass. TypeScript compiles cleanly. Coverage thresholds met.

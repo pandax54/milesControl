@@ -32,7 +32,11 @@ export function PromotionFilters({
     if (!value || value === ALL_VALUE) {
       delete updated[key];
     } else {
-      (updated as Record<string, string>)[key] = value;
+      switch (key) {
+        case 'status': updated.status = value as PromotionFeedFilter['status']; break;
+        case 'type': updated.type = value as PromotionFeedFilter['type']; break;
+        case 'programId': updated.programId = value; break;
+      }
     }
     onFilterChange(updated);
   }
