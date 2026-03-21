@@ -407,7 +407,7 @@ describe('PassageiroDePrimeiraScraper', () => {
   }
 
   describe('constructor', () => {
-    it('should use default config values', () => {
+    it('should construct without triggering a run', () => {
       const scraper = new PassageiroDePrimeiraScraper();
 
       expect(createScraperRun).not.toHaveBeenCalled(); // not called until run()

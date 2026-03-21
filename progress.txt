@@ -430,3 +430,17 @@ Review fixes applied:
 4. Added edge-case tests for fallthrough paths in extractPrograms
 
 All 609 tests pass. TypeScript compiles cleanly. Coverage: 98.1% stmts, 90.86% branches.
+
+## Task 3.1 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.1_task_review.md:
+
+1. **Removed unreachable null-coalescing fallback** (Minor #1) — Simplified
+   `foundPrograms[1] ?? foundPrograms[0]` to `foundPrograms[1]` in `extractPrograms`
+   fallback (line 228). At that point `foundPrograms.length >= 2` is guaranteed, so
+   `foundPrograms[1]` is always defined. Eliminates an uncoverable branch.
+
+2. **Renamed constructor test** (Minor #2) — Renamed `should use default config values`
+   to `should construct without triggering a run` to match what the test actually asserts.
+
+All 609 tests pass. TypeScript compiles cleanly. Coverage: 98.1% stmts, 91.37% branches.

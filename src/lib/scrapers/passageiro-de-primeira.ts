@@ -225,7 +225,7 @@ export function extractPrograms(title: string): { source?: string; destination?:
   // Fallback order follows KNOWN_PROGRAMS array order, not title position.
   // This is acceptable since transfer direction is already handled by
   // explicit patterns above; this branch is for ambiguous titles.
-  return { source: foundPrograms[0], destination: foundPrograms[1] ?? foundPrograms[0] };
+  return { source: foundPrograms[0], destination: foundPrograms[1] };
 }
 
 export function parseDatetime(datetime: string): Date | undefined {
