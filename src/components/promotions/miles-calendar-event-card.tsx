@@ -2,7 +2,7 @@ import { CalendarDays, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { MilesCalendarEvent, PromoType } from '@/generated/prisma/client';
-import { PROMO_TYPE_LABELS } from '@/lib/services/miles-calendar.service';
+import { PROMO_TYPE_LABELS, getUtcMidnightToday } from '@/lib/services/miles-calendar.service';
 
 // ==================== Constants ====================
 
@@ -42,9 +42,7 @@ function formatDateRange(startDate: Date, endDate: Date | null): string {
 }
 
 function isEventUpcoming(startDate: Date): boolean {
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-  return new Date(startDate) >= today;
+  return new Date(startDate) >= getUtcMidnightToday();
 }
 
 // ==================== Component ====================

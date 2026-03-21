@@ -17,6 +17,18 @@ export interface CalendarEventFilters {
 
 const DEFAULT_UPCOMING_LIMIT = 50;
 
+// ==================== Date Utilities ====================
+
+/**
+ * Returns a Date object set to UTC midnight of the current day.
+ * Used consistently across service and UI components to determine "today".
+ */
+export function getUtcMidnightToday(): Date {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  return today;
+}
+
 // ==================== Queries ====================
 
 /**
@@ -77,9 +89,7 @@ function buildWhereClause(filters: {
   }
 
   if (upcomingOnly) {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    return { startDate: { gte: today } };
+    return { startDate: { gte: getUtcMidnightToday() } };
   }
 
   return {};

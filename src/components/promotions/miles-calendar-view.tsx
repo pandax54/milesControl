@@ -1,5 +1,5 @@
 import type { MilesCalendarEvent } from '@/generated/prisma/client';
-import { groupEventsByMonth } from '@/lib/services/miles-calendar.service';
+import { groupEventsByMonth, getUtcMidnightToday } from '@/lib/services/miles-calendar.service';
 import { MilesCalendarEventCard } from './miles-calendar-event-card';
 
 // ==================== Helpers ====================
@@ -8,8 +8,7 @@ function splitEventsByTimeline(events: MilesCalendarEvent[]): {
   upcoming: MilesCalendarEvent[];
   past: MilesCalendarEvent[];
 } {
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const today = getUtcMidnightToday();
 
   return events.reduce<{ upcoming: MilesCalendarEvent[]; past: MilesCalendarEvent[] }>(
     (acc, event) => {

@@ -1,8 +1,10 @@
 import { listCalendarEvents } from '@/lib/services/miles-calendar.service';
 import { MilesCalendarView } from '@/components/promotions/miles-calendar-view';
 
+const MAX_CALENDAR_PAGE_EVENTS = 100;
+
 export default async function MilesCalendarPage() {
-  const events = await listCalendarEvents({ limit: 100 });
+  const events = await listCalendarEvents({ limit: MAX_CALENDAR_PAGE_EVENTS });
 
   return (
     <div className="space-y-6">
