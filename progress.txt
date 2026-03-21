@@ -397,3 +397,14 @@ Review fixes applied:
 6. Added /logs to .gitignore
 
 All 555 tests pass. TypeScript compiles cleanly. Coverage: 97.93% stmts, 90.41% branches.
+
+## Task 3.0 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.0_task_review.md:
+
+1. **Replaced `as ScraperRun` casts with `buildMockScraperRun` factory** (Minor #1, Rec #1) — Replaced
+   all 8 `{ status: ... } as ScraperRun` partial casts in `countConsecutiveFailures` tests with
+   `buildMockScraperRun({ status: ... })` calls using the existing typed factory, consistent with the
+   project-wide convention established in tasks 2.6–2.11.
+
+All 555 tests pass. TypeScript compiles cleanly. Coverage thresholds met.

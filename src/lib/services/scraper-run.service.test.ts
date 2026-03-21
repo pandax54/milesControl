@@ -256,9 +256,9 @@ describe('getLatestRunBySource', () => {
 describe('countConsecutiveFailures', () => {
   it('should count consecutive failed runs', async () => {
     vi.mocked(prisma.scraperRun.findMany).mockResolvedValue([
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
-      { status: SCRAPER_RUN_STATUS.SUCCESS } as ScraperRun,
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.SUCCESS }),
     ]);
 
     const count = await countConsecutiveFailures('test-source');
@@ -268,8 +268,8 @@ describe('countConsecutiveFailures', () => {
 
   it('should return 0 when latest run is successful', async () => {
     vi.mocked(prisma.scraperRun.findMany).mockResolvedValue([
-      { status: SCRAPER_RUN_STATUS.SUCCESS } as ScraperRun,
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.SUCCESS }),
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
     ]);
 
     const count = await countConsecutiveFailures('test-source');
@@ -279,9 +279,9 @@ describe('countConsecutiveFailures', () => {
 
   it('should return 3 when all recent runs failed', async () => {
     vi.mocked(prisma.scraperRun.findMany).mockResolvedValue([
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
-      { status: SCRAPER_RUN_STATUS.FAILED } as ScraperRun,
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
+      buildMockScraperRun({ status: SCRAPER_RUN_STATUS.FAILED }),
     ]);
 
     const count = await countConsecutiveFailures('test-source');
