@@ -617,3 +617,30 @@ Changes applied from 3.6_task_review.md:
    coverage. This eliminates the only uncovered line (line 240) flagged in the review.
 
 All 824 tests pass. TypeScript compiles cleanly. Coverage: 100% on cost-calculator service.
+
+## Task 3.7 — Calculator UI Page (completed 2026-03-20)
+
+Files created:
+- src/actions/calculator.ts — Server actions (calculateCostPerMilheiroAction, compareScenariosAction) with Zod validation and error handling
+- src/actions/calculator.test.ts — 14 action tests covering valid/invalid input, service errors, edge cases for both single and compare actions
+- src/components/dashboard/calculator-result-card.tsx — Result card with cost/milheiro, total miles, total cost, miles-per-R$, rating badge + CompactCalculatorResult for inline use
+- src/components/dashboard/calculator-form.tsx — Interactive form with Tabs (Single Calculation / Compare Scenarios), preset scenario buttons, CalculatorFields with idPrefix for accessibility, scenario add/remove, comparison results with best/worst highlighting and savings summary
+- src/components/dashboard/promo-calculator-embed.tsx — Compact calculator for embedding in promotion cards (PRD F3.5), pre-fills from promo data, useId for unique IDs
+- src/app/(dashboard)/calculator/page.tsx — Calculator page with auth guard
+
+Key implementation details:
+- Uses existing calculateCostPerMilheiro, compareScenarios, PRESET_SCENARIOS from cost-calculator.service
+- Single mode: form with presets, instant calculation, result card with rating
+- Compare mode: up to 3 side-by-side scenario cards, each with own presets, comparison results with green/red highlights and savings amount
+- Embeddable PromoCalculatorEmbed component for future promo card integration (F3.5)
+- useRef for scenario ID counter (avoids module-level mutable state)
+- idPrefix on CalculatorFields prevents duplicate HTML IDs in compare mode
+
+Review fixes applied:
+1. Added idPrefix prop to CalculatorFields for unique IDs across multiple instances
+2. Replaced module-level scenarioIdCounter with useRef inside CompareCalculator
+3. Added error feedback in PromoCalculatorEmbed (was silently swallowing errors)
+4. Renamed `calculate` to `calculateCostPerMilheiroAction` for consistency with `compareScenariosAction`
+5. Replaced duplicate CalculationDisplayData type with CostCalculation from service layer
+
+All 838 tests pass. TypeScript compiles cleanly. Coverage: 98.46% stmts, 92.57% branches.
