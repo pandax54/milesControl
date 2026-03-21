@@ -34,7 +34,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 3.0 Base scraper infrastructure — Abstract scraper class, rate limiting, robots.txt, retry, logging, ScraperRun persistence
 - [x] 3.1 Passageiro de Primeira scraper
 - [x] 3.2 Melhores Cartões scraper
-- [ ] 3.3 Pontos Pra Voar scraper
+- [x] 3.3 Pontos Pra Voar scraper
 - [ ] 3.4 Comparemania scraper
 - [ ] 3.5 Promotion deduplication and storage
 - [ ] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios

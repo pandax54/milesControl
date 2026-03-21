@@ -488,3 +488,19 @@ Changes applied from 3.2_task_review.md:
    ownership and coverage attribution.
 
 All 641 tests pass. TypeScript compiles cleanly. Coverage: 98.17% stmts, 91.54% branches.
+
+## Task 3.3 — Pontos Pra Voar Scraper (completed 2026-03-20)
+
+Files created:
+- src/lib/scrapers/pontos-pra-voar.ts — Concrete scraper extending BaseScraper for the Pontos Pra Voar blog. Scrapes `/category/promocoes/`, parses `article` elements, extracts title from `h3.entry-title a`, category from `a.fancy-categories`, date from `.entry-meta a`. Handles both relative Portuguese dates ("2 horas atrás") and absolute Portuguese dates ("19 de março de 2026").
+- src/lib/scrapers/pontos-pra-voar.test.ts — 43 tests covering: extractCategory (4 cases), extractDateText (5 cases), extractRawContent (3 cases), parsePtDate (13 cases including all 12 Portuguese months, relative dates in minutes/hours/days, absolute dates, empty/invalid input), and full integration tests through BaseScraper.run() (18 cases: transfer bonus, point purchase, club signup, multiple articles, empty page, missing title/date/category, fallback URL, rawContent, mixed promos, bonus/discount extraction).
+
+Key implementation details:
+- Scrapes /category/promocoes/ (dedicated promotions category page)
+- Parses relative Portuguese dates: "X minutos atrás", "X horas atrás", "X dias atrás"
+- Parses absolute Portuguese dates: "DD de monthName de YYYY" with accented character support
+- Uses [\wÀ-ú]+ regex pattern for Portuguese month names with accented characters (e.g., março)
+- Reuses shared promotion-helpers.ts for type classification, bonus/discount extraction, program detection
+- All extraction helpers are pure functions, individually exported and testable
+
+All 684 tests pass. TypeScript compiles cleanly. Coverage: 98.26% stmts, 91.66% branches.
