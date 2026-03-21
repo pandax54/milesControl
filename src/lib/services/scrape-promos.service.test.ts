@@ -1,12 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { StorePromotionsResult } from '@/lib/services/promotion.service';
 import type { ScrapedPromotion } from '@/lib/scrapers/types';
+import type { ProcessNewPromotionsResult } from '@/lib/services/alert-matcher.service';
 
 // ==================== Mocks ====================
 
 vi.mock('@/lib/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   createChildLogger: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })),
+}));
+
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    promotion: {
+      findMany: vi.fn(),
+    },
+  },
+}));
+
+vi.mock('@/lib/services/alert-matcher.service', () => ({
+  processNewPromotions: vi.fn(),
 }));
 
 const mockRun = vi.fn();
@@ -46,10 +59,14 @@ vi.mock('@/lib/services/scraper-run.service', () => ({
 import { runAllScrapers } from './scrape-promos.service';
 import { storePromotions, markExpiredPromotions } from '@/lib/services/promotion.service';
 import { countConsecutiveFailures } from '@/lib/services/scraper-run.service';
+import { processNewPromotions } from '@/lib/services/alert-matcher.service';
+import { prisma } from '@/lib/prisma';
 
 const mockStorePromotions = vi.mocked(storePromotions);
 const mockMarkExpiredPromotions = vi.mocked(markExpiredPromotions);
 const mockCountConsecutiveFailures = vi.mocked(countConsecutiveFailures);
+const mockProcessNewPromotions = vi.mocked(processNewPromotions);
+const mockPromotionFindMany = vi.mocked(prisma.promotion.findMany);
 
 // ==================== Helpers ====================
 
@@ -78,10 +95,21 @@ function buildMockStorageResult(overrides?: Partial<StorePromotionsResult>): Sto
 
 // ==================== Tests ====================
 
+function buildMockAlertMatchResult(overrides?: Partial<ProcessNewPromotionsResult>): ProcessNewPromotionsResult {
+  return {
+    promotionsProcessed: 1,
+    totalMatches: 0,
+    notificationsCreated: 0,
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockCountConsecutiveFailures.mockResolvedValue(0);
   mockMarkExpiredPromotions.mockResolvedValue(0);
+  mockPromotionFindMany.mockResolvedValue([]);
+  mockProcessNewPromotions.mockResolvedValue(buildMockAlertMatchResult());
 });
 
 describe('runAllScrapers', () => {
@@ -229,5 +257,57 @@ describe('runAllScrapers', () => {
 
     expect(result.scrapers.every((s) => !s.skipped)).toBe(true);
     expect(mockRun).toHaveBeenCalledTimes(4);
+  });
+
+  it('should call processNewPromotions when new promotions are created', async () => {
+    const promo = buildMockPromotion();
+    mockRun.mockResolvedValue({ promotions: [promo], scraperRunId: 'run-1' });
+    mockStorePromotions.mockResolvedValue(buildMockStorageResult({ created: 1 }));
+    const mockNewPromo = { id: 'promo-1', sourceProgram: null, destProgram: null } as never;
+    mockPromotionFindMany.mockResolvedValue([mockNewPromo]);
+    mockProcessNewPromotions.mockResolvedValue(buildMockAlertMatchResult({ promotionsProcessed: 1, totalMatches: 2, notificationsCreated: 2 }));
+
+    const result = await runAllScrapers();
+
+    expect(mockPromotionFindMany).toHaveBeenCalledOnce();
+    expect(mockProcessNewPromotions).toHaveBeenCalledWith([mockNewPromo]);
+    expect(result.alertMatchResult).toEqual({ promotionsProcessed: 1, totalMatches: 2, notificationsCreated: 2 });
+  });
+
+  it('should not call processNewPromotions when no new promotions are created', async () => {
+    mockRun.mockResolvedValue({ promotions: [], scraperRunId: 'run-1' });
+
+    const result = await runAllScrapers();
+
+    expect(mockPromotionFindMany).not.toHaveBeenCalled();
+    expect(mockProcessNewPromotions).not.toHaveBeenCalled();
+    expect(result.alertMatchResult).toBeUndefined();
+  });
+
+  it('should not call processNewPromotions when promotion query returns empty', async () => {
+    const promo = buildMockPromotion();
+    mockRun.mockResolvedValue({ promotions: [promo], scraperRunId: 'run-1' });
+    mockStorePromotions.mockResolvedValue(buildMockStorageResult({ created: 1 }));
+    mockPromotionFindMany.mockResolvedValue([]);
+
+    const result = await runAllScrapers();
+
+    expect(mockPromotionFindMany).toHaveBeenCalledOnce();
+    expect(mockProcessNewPromotions).not.toHaveBeenCalled();
+    expect(result.alertMatchResult).toBeUndefined();
+  });
+
+  it('should handle processNewPromotions failure gracefully', async () => {
+    const promo = buildMockPromotion();
+    mockRun.mockResolvedValue({ promotions: [promo], scraperRunId: 'run-1' });
+    mockStorePromotions.mockResolvedValue(buildMockStorageResult({ created: 1 }));
+    mockPromotionFindMany.mockResolvedValue([{ id: 'promo-1' } as never]);
+    mockProcessNewPromotions.mockRejectedValue(new Error('Alert matching error'));
+
+    const result = await runAllScrapers();
+
+    // Should not throw — scrape completes even if alert matching fails
+    expect(result.totalCreated).toBe(4);
+    expect(result.alertMatchResult).toBeUndefined();
   });
 });

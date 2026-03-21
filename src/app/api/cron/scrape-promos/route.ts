@@ -29,6 +29,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         totalUpdated: result.totalUpdated,
         totalFailed: result.totalFailed,
         durationMs: result.durationMs,
+        alertMatchResult: result.alertMatchResult,
       },
     });
   } catch (error) {

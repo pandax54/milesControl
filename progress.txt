@@ -102,3 +102,12 @@ All 977 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
 Review file: tasks/prd-milescontrol/4.0_task_review.md — Status: APPROVED
 No critical, major, or minor issues found. No fixes required.
 Verification: 977 tests pass, TypeScript compiles cleanly, coverage thresholds met.
+
+## Task 4.1 — Review Fixes (2026-03-21)
+
+Review file: tasks/prd-milescontrol/4.1_task_review.md — Status: APPROVED WITH OBSERVATIONS
+Major issue resolved: integrated processNewPromotions() into runAllScrapers() post-storage step.
+- scrape-promos.service.ts — import prisma + processNewPromotions; after all scrapers run, fetch new promotions (createdAt >= runStartTime) and call processNewPromotions; add alertMatchResult to ScrapePromosResult
+- scrape-promos.service.test.ts — mocked prisma.promotion.findMany + processNewPromotions; 4 new tests covering alert matching trigger, skip when no creates, skip when query empty, graceful failure
+- scrape-promos route.ts — expose alertMatchResult in cron response
+Verification: 1025 tests pass, TypeScript compiles cleanly, coverage thresholds met.

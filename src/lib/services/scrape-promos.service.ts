@@ -1,3 +1,4 @@
+import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { PassageiroDePrimeiraScraper } from '@/lib/scrapers/passageiro-de-primeira';
 import { MelhoresCartoesScraper } from '@/lib/scrapers/melhores-cartoes';
@@ -5,8 +6,10 @@ import { PontosPraVoarScraper } from '@/lib/scrapers/pontos-pra-voar';
 import { ComparemaniaScraper } from '@/lib/scrapers/comparemania';
 import { storePromotions, markExpiredPromotions } from '@/lib/services/promotion.service';
 import { countConsecutiveFailures } from '@/lib/services/scraper-run.service';
+import { processNewPromotions } from '@/lib/services/alert-matcher.service';
 import type { BaseScraper } from '@/lib/scrapers/base-scraper';
 import type { StorePromotionsResult } from '@/lib/services/promotion.service';
+import type { ProcessNewPromotionsResult } from '@/lib/services/alert-matcher.service';
 
 // ==================== Constants ====================
 
@@ -30,6 +33,7 @@ export interface ScrapePromosResult {
   readonly totalUpdated: number;
   readonly totalFailed: number;
   readonly durationMs: number;
+  readonly alertMatchResult?: ProcessNewPromotionsResult;
 }
 
 // ==================== Scraper registry ====================
@@ -51,7 +55,7 @@ function buildScrapers(): BaseScraper[] {
  * above the threshold.
  */
 export async function runAllScrapers(): Promise<ScrapePromosResult> {
-  const startedAt = Date.now();
+  const runStartTime = new Date();
   const scrapers = buildScrapers();
   const results: ScraperRunResult[] = [];
 
@@ -72,7 +76,24 @@ export async function runAllScrapers(): Promise<ScrapePromosResult> {
   const totalCreated = results.reduce((sum, r) => sum + (r.storage?.created ?? 0), 0);
   const totalUpdated = results.reduce((sum, r) => sum + (r.storage?.updated ?? 0), 0);
   const totalFailed = results.reduce((sum, r) => sum + (r.storage?.failed ?? 0), 0);
-  const durationMs = Date.now() - startedAt;
+  const durationMs = Date.now() - runStartTime.getTime();
+
+  // Trigger alert matching for newly created promotions
+  let alertMatchResult: ProcessNewPromotionsResult | undefined;
+  if (totalCreated > 0) {
+    try {
+      const newPromotions = await prisma.promotion.findMany({
+        where: { createdAt: { gte: runStartTime } },
+        include: { sourceProgram: true, destProgram: true },
+      });
+      if (newPromotions.length > 0) {
+        alertMatchResult = await processNewPromotions(newPromotions);
+        logger.info({ alertMatchResult }, 'Alert matching completed after scrape');
+      }
+    } catch (error) {
+      logger.error({ err: error }, 'Alert matching failed after scrape');
+    }
+  }
 
   logger.info(
     { totalCreated, totalUpdated, totalFailed, expiredCount, durationMs },
@@ -86,6 +107,7 @@ export async function runAllScrapers(): Promise<ScrapePromosResult> {
     totalUpdated,
     totalFailed,
     durationMs,
+    alertMatchResult,
   };
 }
 
