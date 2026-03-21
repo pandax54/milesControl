@@ -831,3 +831,13 @@ Key implementation details:
 
 Review: APPROVED WITH OBSERVATIONS — all 5 minor issues fixed before commit.
 All 964 tests pass. TypeScript compiles cleanly.
+
+## Task 3.12 — Review Fixes Applied (2026-03-21)
+
+Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED
+
+Minor issues resolved (commit 483cb8f):
+1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100` constant in calendar page
+2. Duplicated UTC midnight boundary (`new Date(); today.setUTCHours(0,0,0,0)`) extracted to exported `getUtcMidnightToday()` in miles-calendar.service.ts — used by both miles-calendar-event-card.tsx and miles-calendar-view.tsx (and internally by buildWhereClause)
+
+Verification: 964 tests pass, TypeScript compiles cleanly, coverage thresholds met.
