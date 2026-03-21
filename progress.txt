@@ -444,3 +444,26 @@ Changes applied from 3.1_task_review.md:
    to `should construct without triggering a run` to match what the test actually asserts.
 
 All 609 tests pass. TypeScript compiles cleanly. Coverage: 98.1% stmts, 91.37% branches.
+
+## Task 3.2 — Melhores Cartões Scraper (completed 2026-03-20)
+
+Files created:
+- src/lib/scrapers/promotion-helpers.ts — Shared promotion extraction helpers extracted from PdP scraper: KNOWN_PROGRAMS, regex patterns, classifyPromoType, extractBonusPercent, extractDiscountPercent, extractPrograms. Pure functions reusable across all scrapers.
+- src/lib/scrapers/melhores-cartoes.ts — Concrete scraper extending BaseScraper for the Melhores Cartões blog. Scrapes `/c/promocoes-milhas`, parses `div.post-promo-home-container` elements, extracts title from `h3 a`, category from `.label-card`, date from `.date` or `.fim-card`. Handles Brazilian date format (DD/MM/YYYY às HH:MM).
+- src/lib/scrapers/melhores-cartoes.test.ts — 32 tests covering: extractCategory, extractDateText, parseBrDate (7 cases), and full integration tests through BaseScraper.run() (transfer bonus, point purchase, club signup, mixed, multiple articles, missing title/date/category/href, external links, rawContent).
+
+Files modified:
+- src/lib/scrapers/passageiro-de-primeira.ts — Updated to import shared helpers from promotion-helpers.ts and re-export them for backward compatibility with existing PdP tests.
+
+Key implementation details:
+- Scrapes /c/promocoes-milhas (dedicated promotions page)
+- Parses Brazilian date format "DD/MM/YYYY às HH:MM" via parseBrDate
+- Handles external links to melhoresdestinos.com.br (syndicated content)
+- Shared helpers extracted to promotion-helpers.ts for DRY reuse across scrapers
+- All extraction helpers are pure functions, individually exported and testable
+
+Review fixes applied:
+1. Removed unused `$: CheerioAPI` parameter from extractCategory and extractDateText
+2. Fixed misleading comment describing non-existent fallback logic in extractCategory
+
+All 641 tests pass. TypeScript compiles cleanly. Coverage: 98.17% stmts, 91.54% branches.
