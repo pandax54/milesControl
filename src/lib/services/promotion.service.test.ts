@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Promotion, PromoType, PromoStatus } from '@/generated/prisma/client';
+import type { Promotion, PromoType, PromoStatus, ScraperRun, Program, ProgramType } from '@/generated/prisma/client';
 import { Prisma } from '@/generated/prisma/client';
 import type { ScrapedPromotion } from '@/lib/scrapers/types';
 
@@ -88,6 +88,37 @@ function buildMockPromotion(overrides: Partial<Promotion> = {}): Promotion {
   };
 }
 
+function buildMockProgram(overrides: Partial<Program> = {}): Program {
+  return {
+    id: 'prog-default',
+    name: 'Default Program',
+    type: 'AIRLINE' as ProgramType,
+    currency: 'miles',
+    logoUrl: null,
+    website: null,
+    transferPartners: null,
+    createdAt: new Date('2026-03-20T10:00:00Z'),
+    updatedAt: new Date('2026-03-20T10:00:00Z'),
+    ...overrides,
+  };
+}
+
+function buildMockScraperRun(overrides: Partial<ScraperRun> = {}): ScraperRun {
+  return {
+    id: 'run-1',
+    sourceName: 'test-source',
+    sourceUrl: 'https://example.com/blog',
+    status: 'SUCCESS',
+    itemsFound: 0,
+    newPromos: 0,
+    errorMessage: null,
+    durationMs: null,
+    startedAt: new Date('2026-03-20T10:00:00Z'),
+    completedAt: null,
+    ...overrides,
+  };
+}
+
 function buildScrapedPromotion(overrides: Partial<ScrapedPromotion> = {}): ScrapedPromotion {
   return {
     sourceUrl: 'https://blog.example.com/promo-new',
@@ -117,7 +148,7 @@ afterEach(() => {
 
 describe('resolveProgramId', () => {
   it('should return the program id for a matching name', async () => {
-    mockProgramFindFirst.mockResolvedValue({ id: 'prog-smiles' } as never);
+    mockProgramFindFirst.mockResolvedValue(buildMockProgram({ id: 'prog-smiles', name: 'Smiles' }));
 
     const result = await resolveProgramId('Smiles');
 
@@ -433,7 +464,7 @@ describe('storePromotions', () => {
     mockPromoFindUnique.mockResolvedValue(null);
     mockPromoFindFirst.mockResolvedValue(null);
     mockPromoCreate.mockResolvedValue(buildMockPromotion());
-    mockScraperRunUpdate.mockResolvedValue({} as never);
+    mockScraperRunUpdate.mockResolvedValue(buildMockScraperRun({ id: 'run-123' }));
 
     const scraped = buildScrapedPromotion();
     await storePromotions([scraped], 'run-123');

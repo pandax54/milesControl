@@ -570,3 +570,15 @@ Changes applied from 3.5_task_review.md:
    results are returned when `scraperRun.update` rejects.
 
 All 757 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 3.5 — Third Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.5_task_review.md (final minor issues):
+
+1. **Replaced `as never` casts with typed mock factories** (Minor #1) — Created
+   `buildMockProgram()` and `buildMockScraperRun()` typed factories in
+   `promotion.service.test.ts` using `Program`, `ProgramType`, and `ScraperRun`
+   from `@/generated/prisma/client`. Replaced both `as never` casts (lines 120, 436)
+   with properly typed mock return values, matching the project-wide convention.
+
+All 757 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
