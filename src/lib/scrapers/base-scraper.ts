@@ -105,6 +105,10 @@ export abstract class BaseScraper {
     }
   }
 
+  get scraperName(): string {
+    return this.name;
+  }
+
   protected abstract extractPromotions($: CheerioAPI): Promise<ScrapedPromotion[]> | ScrapedPromotion[];
 
   protected buildUrl(): string {

@@ -772,3 +772,19 @@ Review observations addressed:
 2. Extracted module-level EMPTY_ENROLLMENTS constant to prevent useMemo invalidation
 
 All 932 tests pass. TypeScript compiles cleanly. Coverage: 100% on promo-matcher service.
+
+## Task 3.11 — Cron job: scrape-promos — Vercel Cron every 30 min (completed 2026-03-21)
+
+Files created/modified:
+- src/app/api/cron/scrape-promos/route.ts — Next.js Route Handler, Bearer token auth via CRON_SECRET, calls runAllScrapers(), returns structured results with per-scraper breakdown. maxDuration=300 for Vercel function timeout.
+- src/app/api/cron/scrape-promos/route.test.ts — 6 tests: auth rejection, correct token, 500 on failure, dev bypass, error field mapping
+- src/lib/services/scrape-promos.service.ts — Orchestrates all 4 scrapers sequentially, skips scrapers with 3+ consecutive failures, marks expired promotions, aggregates totals/created/updated/failed/duration
+- src/lib/services/scrape-promos.service.test.ts — 11 tests covering full orchestration, skipping, empty runs, error resilience, aggregation
+- src/lib/scrapers/base-scraper.ts — Added public getter `scraperName` to replace protected `name` bracket-access hack
+- vercel.json — Cron schedule "*/30 * * * *" for /api/cron/scrape-promos
+
+Review fixes applied:
+1. Added `get scraperName()` public getter to BaseScraper — removes `scraper['name'] as string` bracket hack
+2. Fixed test mock for consecutive failure ceiling: changed mock value from 5 to 3 (real DB ceiling from `take: 3`)
+
+All 951 tests pass. TypeScript compiles cleanly.
