@@ -582,3 +582,26 @@ Changes applied from 3.5_task_review.md (final minor issues):
    with properly typed mock return values, matching the project-wide convention.
 
 All 757 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 3.6 — Cost Calculator Service (completed 2026-03-20)
+
+Files created:
+- src/lib/validators/cost-calculator.schema.ts — Zod schemas: calculatorInputSchema (purchasePricePerPoint, quantity, transferBonusPercent, clubMonthlyCost, clubExclusiveBonusPercent), compareInputSchema (2-3 scenarios), PromotionRating type
+- src/lib/validators/cost-calculator.schema.test.ts — 14 validation tests covering valid/invalid inputs, defaults, boundaries
+- src/lib/services/cost-calculator.service.ts — Pure calculation functions: calculateTotalMiles, calculateTotalCost, computeCostPerMilheiro, rateByThreshold, calculateCostPerMilheiro (main), ratePromotion (TRANSFER_BONUS/POINT_PURCHASE), compareScenarios (2-3 scenarios with best/worst/savings), PRESET_SCENARIOS (5 common Brazilian scenarios), error classes (InsufficientScenariosError, TooManyScenariosError)
+- src/lib/services/cost-calculator.service.test.ts — 37 unit tests covering all pure functions, promotion rating by type, scenario comparison, presets, edge cases
+
+Key implementation details:
+- Rating thresholds: EXCELLENT (<R$12), GOOD (R$12-16), ACCEPTABLE (R$16-20), AVOID (>=R$20 or <=0)
+- ratePromotion uses standard Livelo baseline (R$0.028/point) for transfer bonus evaluation
+- compareScenarios returns bestIndex, worstIndex, and savingsVsWorst (R$ saved at best scenario's volume)
+- 5 preset scenarios: Livelo→Smiles 90/100%, Esfera→Smiles 80%, Livelo→Azul 70%, Clube Smiles + Livelo 90%
+- All functions are pure (no DB calls, no side effects) — logger.debug only in compareScenarios and ratePromotion fallback
+- Uses PromoType from Prisma for type safety in ratePromotion
+
+Review fixes applied:
+1. Extracted duplicated STANDARD_PRICE_PER_POINT to module-level constant
+2. Imported PromoType from @/generated/prisma/client instead of inline string union
+3. Clarified docstring boundary conditions for rating thresholds
+
+All 824 tests pass. TypeScript compiles cleanly. Coverage: 100% on new files.
