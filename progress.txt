@@ -504,3 +504,29 @@ Key implementation details:
 - All extraction helpers are pure functions, individually exported and testable
 
 All 684 tests pass. TypeScript compiles cleanly. Coverage: 98.26% stmts, 91.66% branches.
+
+## Task 3.3 — Review (applied 2026-03-20)
+
+Review status: APPROVED with zero issues and zero recommendations.
+No code changes required — implementation was production-ready as submitted.
+
+All 684 tests pass. TypeScript compiles cleanly. Coverage: 98.26% stmts, 91.66% branches.
+
+## Task 3.4 — Comparemania Scraper (completed 2026-03-20)
+
+Files created:
+- src/lib/scrapers/comparemania.ts — Concrete scraper extending BaseScraper for the Comparemania blog. Scrapes `/blog/`, parses `.jet-listing-grid__item` elements (Elementor/JetEngine layout), extracts title from `.elementor-heading-title a`, category from `a[href*="/categoria/"]`, date from DD/MM/YYYY pattern in card text. Handles missing excerpts, categories, and dates gracefully.
+- src/lib/scrapers/comparemania.test.ts — 37 tests covering: extractCategory (4 cases), extractDateText (3 cases), extractRawContent (3 cases), parseBrDate (7 cases), and full integration tests through BaseScraper.run() (20 cases: transfer bonus, point purchase, club signup, mixed, multiple cards, empty page, missing title/date/category, fallback URL, rawContent with/without excerpt, bonus/discount extraction, Cashback category).
+
+Key implementation details:
+- Scrapes /blog/ (main blog page with all categories)
+- Uses Elementor/JetEngine CSS selectors (.jet-listing-grid__item, .elementor-heading-title)
+- Parses Brazilian date format DD/MM/YYYY via parseBrDate
+- Extracts category from links matching /categoria/ path
+- Reuses shared promotion-helpers.ts for type classification, bonus/discount extraction, program detection
+- All extraction helpers are pure functions, individually exported and testable
+
+Review status: APPROVED with zero critical issues.
+Note: parseBrDate duplication with melhores-cartoes.ts can be consolidated in task 3.5.
+
+All 721 tests pass. TypeScript compiles cleanly. Coverage: 98.31% stmts, 91.75% branches.

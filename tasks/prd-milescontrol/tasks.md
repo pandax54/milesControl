@@ -35,7 +35,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 3.1 Passageiro de Primeira scraper
 - [x] 3.2 Melhores Cartões scraper
 - [x] 3.3 Pontos Pra Voar scraper
-- [ ] 3.4 Comparemania scraper
+- [x] 3.4 Comparemania scraper
 - [ ] 3.5 Promotion deduplication and storage
 - [ ] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios
 - [ ] 3.7 Calculator UI page — Interactive form, presets, comparison, embedded in promo cards
