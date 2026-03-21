@@ -1,0 +1,17 @@
+Task 2.6 is complete. Here's a summary:
+
+**Task 2.6 — Transfer Logging** committed as `933f1c2`.
+
+**Files created (10):**
+- `src/lib/validators/transfer.schema.ts` — Zod schemas + `TransferData` interface
+- `src/lib/validators/transfer.schema.test.ts` — 21 validation tests
+- `src/lib/services/transfer.service.ts` — CRUD with `calculateCostPerMilheiro`
+- `src/lib/services/transfer.service.test.ts` — 14 service tests
+- `src/actions/transfers.ts` — `logTransfer`, `editTransfer`, `removeTransfer` actions
+- `src/actions/transfers.test.ts` — 15 action tests
+- `src/app/(dashboard)/transfers/page.tsx` — Table view with ratings, edit/delete
+- `src/components/dashboard/transfer-form-dialog.tsx` — Create dialog with program selects
+- `src/components/dashboard/edit-transfer-dialog.tsx` — Edit dialog with typed form
+- `src/components/dashboard/delete-transfer-button.tsx` — Delete confirmation
+
+**Verification:** 291 tests passing, TypeScript clean, 97.76% statement coverage.

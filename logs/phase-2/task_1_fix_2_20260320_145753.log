@@ -1,0 +1,7 @@
+All 3 minor review issues fixed and committed:
+
+1. **Typed action test mocks** — Replaced all `as never` casts with typed `Session`, `buildMockCard()` factory, and properly typed auth mock
+2. **useRef for benefit input** — Replaced fragile DOM traversal (`previousElementSibling`) with `useRef<HTMLInputElement>` 
+3. **shadcn/ui Checkbox** — Installed and used the design system Checkbox instead of native `<input type="checkbox">`
+
+All 212 tests pass, TypeScript clean, coverage at 97.19% stmts / 91% branches.

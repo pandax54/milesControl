@@ -1,0 +1,9 @@
+All done. Here's a summary of what was applied:
+
+1. **Minor #1 — Typed mock returns**: Replaced all `as never` casts in `transfer.service.test.ts` (using `TransferLog` from Prisma) and `transfers.test.ts` (using typed `Session` and typed return casts).
+
+2. **Minor #2 — Shared form validation**: Extracted `parseTransferFormValues()` into `transfer-form-utils.ts`, used by both the create and edit transfer dialogs.
+
+3. **Minor #3 — Schema coverage gap**: Added test for invalid `transferDate` on `updateTransferSchema`, bringing `transfer.schema.ts` to 100% coverage.
+
+**Results**: 292 tests passing, 97.77% statement coverage, TypeScript clean.

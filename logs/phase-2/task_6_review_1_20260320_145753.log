@@ -1,0 +1,7 @@
+**Task 2.8 Review: APPROVED**
+
+All 318 tests pass, TypeScript compiles cleanly, coverage at 97.94% stmts / 90.9% branches.
+
+The implementation correctly fulfills PRD F1.12 — tooltips with `aria-label` were added to ExternalLink buttons in both `enrollment-card.tsx` and `dashboard-balances.tsx`. One minor observation: `TooltipProvider` is wrapped per-link rather than at a shared layout level, but this is non-blocking.
+
+Review committed as `abd7a36`.

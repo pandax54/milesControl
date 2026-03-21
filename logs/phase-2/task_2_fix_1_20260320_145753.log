@@ -1,0 +1,9 @@
+All review fixes for task 2.5 applied. Here's what was done:
+
+**Minor #1 / Rec #1 — Typed mock factories**: Replaced all 27 `as never` casts in `dashboard.service.test.ts` with typed interfaces (`MockEnrollmentWithProgram`, `MockSubscriptionWithTier`, `MockTransferLog`) using `Prisma.Decimal` for Decimal fields. Added typed helper functions (`mockEnrollments`, `mockSubscriptions`, `mockTransfers`, `mockEmptyPrisma`) for cleaner mock setup.
+
+**Minor #3 / Rec #3 — Format utility tests**: Created `src/lib/utils/format.test.ts` with 9 tests covering `formatNumber` and `formatCurrency` (pt-BR locale, zero, negative, decimal, large numbers).
+
+**Minor #2 / Rec #2 — Rating threshold extraction**: Deferred to task 3.6 as the review recommended ("No action needed now").
+
+Results: 236 tests passing, TypeScript clean, coverage 97.37% stmts / 91.38% branches.

@@ -1,0 +1,16 @@
+## Task 2.11 Complete
+
+**Files created (15):**
+- `src/lib/validators/family.schema.ts` — Zod schemas with `z.enum(RELATIONSHIPS)` constraint
+- `src/lib/validators/family.schema.test.ts` — 23 validation tests
+- `src/lib/services/family-member.service.ts` — CRUD for members + enrollments with ownership verification
+- `src/lib/services/family-member.service.test.ts` — 22 service tests
+- `src/actions/family.ts` — 6 server actions using shared helpers
+- `src/actions/family.test.ts` — 25 action tests
+- 8 UI components (cards, dialogs, form, delete buttons)
+- `src/app/(dashboard)/family/page.tsx` — Family page with empty state
+
+**Files modified (1):**
+- `src/components/app-sidebar.tsx` — Added Family link with UsersRound icon
+
+**Results:** 492 tests pass, TypeScript compiles cleanly, review approved with fixes applied.

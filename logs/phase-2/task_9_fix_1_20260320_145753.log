@@ -1,0 +1,7 @@
+All 3 review issues fixed:
+
+1. **Minor #1** — Replaced 6 `as never` casts in `family-member.service.test.ts` with typed factories (`MemberWithEnrollments`, `EnrollmentWithProgram`, `buildMockMemberWithEnrollments()`, `buildMockEnrollmentWithProgram()`)
+2. **Minor #2** — Replaced 2 `{} as never` casts in `family.test.ts` with typed `buildMockEnrollmentReturn()` factory
+3. **Minor #3** — Removed duplicated `AvailableProgram` interface from `family-enrollment-form-dialog.tsx`, now imports from `family-member-card.tsx`
+
+All 492 tests pass, TypeScript compiles cleanly, coverage thresholds met.

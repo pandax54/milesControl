@@ -1,0 +1,5 @@
+Done. The only actionable fix was replacing the duplicated `formatBalance` function in `quick-update-balance.tsx` with the shared `formatNumber` from `@/lib/utils/format`. The other two review items were already deferred (rating thresholds to task 3.6, date-fns evaluation is low priority).
+
+- TypeScript: clean
+- Tests: 236 passing
+- Coverage: 97.37% stmts, 91.38% branches

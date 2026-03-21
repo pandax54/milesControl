@@ -1,0 +1,24 @@
+Task 2.10 is complete. Here's a summary:
+
+## Task 2.10 — Benefit Tracking ✓
+
+**Implemented full CRUD for TrackedBenefit** with all 6 benefit types (free nights, companion passes, upgrade credits, lounge access, travel credits, other).
+
+### Files created (14 new files):
+- **Validation**: `benefit.schema.ts` + tests (Zod schemas with date format validation, shared type constants)
+- **Service**: `tracked-benefit.service.ts` + tests (list, listExpiring, create, update, markUsed with partial consumption, delete)
+- **Actions**: `benefits.ts` + tests, `helpers.ts` (shared auth helpers extracted from duplicated patterns)
+- **UI**: benefit-card, benefit-form-fields, benefit-form-dialog, edit-benefit-dialog, delete-benefit-button, use-benefit-button
+- **Page**: `(dashboard)/benefits/page.tsx` with active/used sections
+
+### Files modified:
+- `app-sidebar.tsx` — Added Benefits nav link
+
+### Review fixes applied:
+1. Date format validation on `expirationDate` fields
+2. Shared `BENEFIT_TYPES` / `BENEFIT_TYPE_LABELS` constants (single source of truth)
+3. Extracted `AuthenticationError` / `requireUserId` to shared `helpers.ts`
+4. Named `MILLISECONDS_PER_DAY` constant
+
+### Verification:
+- **415 tests pass**, TypeScript clean, coverage 98.48% stmts / 91.79% branches

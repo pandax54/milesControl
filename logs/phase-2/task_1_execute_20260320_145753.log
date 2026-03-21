@@ -1,0 +1,18 @@
+Task 2.4 is complete. Here's a summary:
+
+**Task 2.4 — Credit Card Registry**
+
+**What was done:**
+- Fixed 3 TypeScript errors in existing code:
+  - `Decimal` import path (`@prisma/client/runtime/client` instead of `library`)
+  - JSON null handling using `Prisma.JsonNull` for Prisma's JSON fields (create + update)
+  - Updated 2 tests to match `Prisma.JsonNull` behavior
+
+**Files (all pre-existing, fixes applied):**
+- Validators: `src/lib/validators/credit-card.schema.ts` + tests (17 tests)
+- Service: `src/lib/services/credit-card.service.ts` + tests (14 tests)
+- Actions: `src/actions/credit-cards.ts` + tests (15 tests)
+- Page: `src/app/(dashboard)/credit-cards/page.tsx` (grouped by bank, empty state)
+- Components: card display, form dialog, edit dialog, delete button
+
+**Verification:** 212/212 tests pass, TypeScript compiles cleanly, review approved.

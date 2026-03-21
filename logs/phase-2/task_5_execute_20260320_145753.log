@@ -1,0 +1,13 @@
+Task 2.7 is complete. Here's the summary:
+
+**Task 2.7 — Potential Balance Calculator**
+
+**Files created:**
+- `src/lib/services/potential-balance.service.ts` — Service that queries user enrollments, maps banking programs to airline programs via `transferPartners` JSON, and calculates potential consolidated totals per airline
+- `src/lib/services/potential-balance.service.test.ts` — 26 unit tests covering all edge cases
+- `src/components/dashboard/potential-balance-card.tsx` — Card showing current balance, transfer sources with arrows, and potential total
+
+**Files modified:**
+- `src/app/(dashboard)/programs/page.tsx` — Added potential balances section below banking enrollments
+
+**Results:** 318 tests pass, TypeScript compiles cleanly, review approved. Committed as `ffe1c05`.

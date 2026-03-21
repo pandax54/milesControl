@@ -1,0 +1,10 @@
+Task 2.8 is complete. Here's what was done:
+
+**Task 2.8 — One-Click Program Links**
+
+The ExternalLink buttons already existed in both `enrollment-card.tsx` and `dashboard-balances.tsx`. This task enhanced them with:
+
+1. **Tooltip on hover** — Shows "Open {program name} website" using shadcn/ui Tooltip (base-ui)
+2. **aria-label** — Screen reader accessible with `aria-label="Open {program name} website"`
+
+All 318 tests pass. TypeScript compiles cleanly. Committed as `8152a8d`.

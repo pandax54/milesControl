@@ -1,0 +1,17 @@
+Task 2.9 is complete. Here's a summary:
+
+**Task 2.9 — Balance Change Digest** (committed as `faed5fc`)
+
+**What was built:**
+- **BalanceSnapshot model** — Stores periodic balance snapshots per user/program for week-over-week comparison
+- **Resend integration** (`src/lib/integrations/resend.ts`) — Email client wrapper with graceful degradation when API key is missing
+- **Balance digest service** (`src/lib/services/balance-digest.service.ts`) — Core logic with pure `computeBalanceChanges()`, HTML template builder in Portuguese, per-user and batch digest sending
+- **Cron endpoint** (`src/app/api/cron/balance-digest/route.ts`) — `GET /api/cron/balance-digest` with Bearer token auth, dev-only fallback
+
+**Key design decisions:**
+- Snapshots are taken after each digest run (for next week's comparison)
+- HTML email template shows program name, current balance, and color-coded change (+green, -red, neutral gray)
+- Batch processing continues even if individual user digests fail
+- No PII (email addresses) in log output
+
+**Tests:** 27 new tests (24 service + 3 integration), all 345 total passing.

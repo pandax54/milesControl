@@ -1,0 +1,3 @@
+Review complete. **Task 2.8 — APPROVED**.
+
+All 318 tests pass, TypeScript compiles cleanly, coverage at 97.94% stmts / 90.9% branches. No issues remain — the initial TooltipProvider observation was already fixed. The review artifact has been updated and committed.

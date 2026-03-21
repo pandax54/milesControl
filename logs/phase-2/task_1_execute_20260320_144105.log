@@ -1,0 +1,17 @@
+Task 2.3 is complete. Here's a summary:
+
+**Task 2.3: Accrual projector service** — Done
+
+**What was implemented:**
+
+1. **`parseAccrualSchedule()`** — Safely parses JSON accrual schedules from DB with Zod validation, warning on invalid phases
+2. **`fetchUserProjection()`** — Fetches user's subscriptions + enrollments from Prisma, converts to projection input, runs `projectAccrual()` pure function
+3. **`getAccrualProjection()` server action** — Authenticates user and exposes projection to the UI
+
+**Files modified:**
+- `src/lib/services/accrual-projector.service.ts` — Added DB integration layer (3 functions)
+- `src/actions/subscriptions.ts` — Added server action
+- `src/lib/services/accrual-projector.service.test.ts` — Added 10 new tests (parseAccrualSchedule + fetchUserProjection)
+- `src/actions/subscriptions.test.ts` — Added 4 new tests for getAccrualProjection
+
+**Results:** 166/166 tests passing, TypeScript clean, 97.92% statement coverage.

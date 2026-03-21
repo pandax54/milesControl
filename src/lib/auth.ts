@@ -1,11 +1,11 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { signInSchema } from '@/lib/validators/auth.schema';
 import type { UserRole } from '@/generated/prisma/client';
+import { authConfig } from '@/lib/auth.config';
 
 declare module 'next-auth' {
   interface User {
@@ -24,25 +24,12 @@ declare module 'next-auth' {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/login',
-  },
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-          role: 'USER' as UserRole,
-        };
-      },
-    }),
+    ...authConfig.providers.filter(
+      (p) => (p as { id?: string }).id !== 'credentials'
+    ),
     Credentials({
       credentials: {
         email: { type: 'email' },
@@ -81,18 +68,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.role = (user.role as UserRole) ?? 'USER';
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.id = token.id as string;
-      session.user.role = token.role as UserRole;
-      return session;
-    },
-  },
 });

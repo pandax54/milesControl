@@ -1,0 +1,9 @@
+All review fixes for task 2.9 have been applied:
+
+1. **Typed mock factories** — Replaced all `as never` casts with `buildMockEnrollment()`, `buildMockSnapshot()`, and `buildMockUser()` using proper Prisma types.
+
+2. **Multi-snapshot deduplication test** — Verifies `fetchLatestSnapshots` keeps the earliest snapshot when multiple exist per program.
+
+3. **Cron route tests** — 6 new tests in `route.test.ts` covering auth (401), success (200), error (500), and dev fallback behavior.
+
+Results: 352 tests passing, 98.25% statement coverage, 91.76% branch coverage. Committed as `fix(phase2): apply review fixes for task 2.9`.

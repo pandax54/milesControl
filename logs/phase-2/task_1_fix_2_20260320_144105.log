@@ -1,0 +1,10 @@
+I've reviewed the project context. You're working on MilesControl — a miles & points management platform for the Brazilian market. 
+
+**Current status:**
+- Phase 1 (Foundation) — complete
+- Phase 2 tasks 2.0–2.3 — complete
+- Next up: task 2.4 (Credit card registry)
+
+Task 2.3 (Accrual Projector) was approved with 3 minor observations (DB query filter, log message timing, missing warn log).
+
+What would you like to do next?

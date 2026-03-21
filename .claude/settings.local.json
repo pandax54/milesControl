@@ -1,0 +1,76 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(grep -n \"name\\\\b\" /Users/fernandapenna/Documents/repo/own-studies/ai-workflows/basic-setup-test/src/config/firebase.ts 2>&1; node -e \"const admin = require\\('firebase-admin'\\); console.log\\(Object.keys\\(admin\\)\\);\" 2>&1 | head -5)",
+      "Bash(npm install:*)",
+      "Bash(nvm use:*)",
+      "Bash(pnpm create:*)",
+      "Bash(mv /Users/fernandapenna/Documents/repo/pet-projects/milesControl/MilesControl/competitive-analysis.md /Users/fernandapenna/Documents/repo/pet-projects/milesControl/tasks/prd-milescontrol/)",
+      "Bash(rmdir /Users/fernandapenna/Documents/repo/pet-projects/milesControl/MilesControl)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm install:*)",
+      "Bash(echo [\"\"@prisma/engines\"\",\"\"esbuild\"\",\"\"prisma\"\"])",
+      "Bash(python3 -c \":*)",
+      "Bash(mv package.json.tmp package.json)",
+      "Bash(pnpm prisma:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(pnpm test:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker compose:*)",
+      "Bash(psql:*)",
+      "Bash(npx vitest:*)",
+      "Bash(ls /Users/fernandapenna/Documents/repo/pet-projects/milesControl/milescontrol/.env*)",
+      "Skill(update-config)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill:*)",
+      "Bash(ls:*)",
+      "Bash(npx shadcn@latest add select table textarea -y)",
+      "Bash(npx shadcn@latest add popover -y)",
+      "Bash(tail:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/track-session-ports.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/cleanup-session-ports.sh",
+            "timeout": 10,
+            "statusMessage": "Cleaning up session processes..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/cleanup-session-ports.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

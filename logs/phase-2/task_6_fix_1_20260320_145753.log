@@ -1,0 +1,5 @@
+Done. Applied the one recommendation from the 2.8 review:
+
+- **Moved `TooltipProvider` to dashboard layout** — Removed per-link `<TooltipProvider>` wrapping from `enrollment-card.tsx` and `dashboard-balances.tsx`, added a single shared `<TooltipProvider>` at `src/app/(dashboard)/layout.tsx` so all tooltips share consistent hover delay grouping.
+
+All 318 tests pass, TypeScript compiles cleanly, coverage maintained at 97.94% stmts / 90.9% branches.

@@ -1,0 +1,11 @@
+All done. Here's a summary of what was fixed:
+
+| # | Issue | Fix |
+|---|-------|-----|
+| 1 | Duplicated form logic (create/edit dialogs) | Extracted shared `CreditCardFormFields` component with `parseAndValidateForm` and `isFormComplete` helpers |
+| 2 | `annualFee` Decimal leaking into UI | Normalized to `number` at page boundary with `Number(card.annualFee)`; removed Prisma Decimal import from component |
+| 3 | `as never` type casts in tests | Replaced with typed `buildMockCard()` factory returning proper `CreditCard` with `Prisma.Decimal` |
+| 4 | Edit dialog stale state on prop change | Dialog rebuilds form values from card prop each time it opens |
+| 5 | Empty state renders Add Card button twice | Top button conditionally shown only when cards exist |
+
+All 212 tests pass, TypeScript compiles cleanly, coverage at 97%+.

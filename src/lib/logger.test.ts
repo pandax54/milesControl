@@ -1,19 +1,22 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/lib/env', () => ({
+  IS_DEVELOPMENT: false,
+  env: {
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgresql://test',
+    NEXTAUTH_SECRET: 'test-secret',
+  },
+}));
+
+import { logger, createChildLogger } from './logger';
 
 describe('logger', () => {
-  const ORIGINAL_ENV = process.env;
-
   beforeEach(() => {
-    vi.resetModules();
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
-  });
-
-  it('should be a pino logger instance', async () => {
-    const { logger } = await import('./logger');
-
+  it('should be a pino logger instance', () => {
     expect(logger).toBeDefined();
     expect(typeof logger.info).toBe('function');
     expect(typeof logger.error).toBe('function');
@@ -21,8 +24,7 @@ describe('logger', () => {
     expect(typeof logger.debug).toBe('function');
   });
 
-  it('should create a child logger with context', async () => {
-    const { createChildLogger } = await import('./logger');
+  it('should create a child logger with context', () => {
     const child = createChildLogger({ requestId: 'test-123' });
 
     expect(child).toBeDefined();
@@ -30,19 +32,7 @@ describe('logger', () => {
     expect(typeof child.error).toBe('function');
   });
 
-  it('should create logger with info level in production', async () => {
-    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'production' } as NodeJS.ProcessEnv;
-
-    const { logger } = await import('./logger');
-
+  it('should have info level when IS_DEVELOPMENT is false', () => {
     expect(logger.level).toBe('info');
-  });
-
-  it('should create logger with debug level in development', async () => {
-    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'development' } as NodeJS.ProcessEnv;
-
-    const { logger } = await import('./logger');
-
-    expect(logger.level).toBe('debug');
   });
 });

@@ -1,0 +1,9 @@
+Review complete. Task 2.11 is **APPROVED WITH OBSERVATIONS**.
+
+**3 minor observations** (all non-blocking):
+
+1. **6 remaining `as never` casts** in `family-member.service.test.ts` — Prisma `include` type inference limitation on enrollment mock resolution
+2. **Duplicated `parseBalance`** in both enrollment form dialogs — should be extracted to shared utils
+3. **Duplicated date formatting** (`toISOString().split('T')[0]`) in edit enrollment dialog
+
+All 492 tests pass, TypeScript compiles cleanly, coverage exceeds 80% thresholds. Phase 2 is complete.

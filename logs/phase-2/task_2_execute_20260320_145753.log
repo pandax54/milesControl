@@ -1,0 +1,13 @@
+Task 2.5 is complete. Here's a summary:
+
+**Task 2.5 — Dashboard Page** `ac16375`
+
+Created 10 new files, modified 3:
+
+- **`dashboard.service.ts`** — Fetches enrollments, subscriptions, transfers, and projections in parallel via `Promise.all`; enriches with staleness classification
+- **`dashboard.service.test.ts`** — 15 unit tests covering staleness thresholds, data aggregation, empty states, Prisma filters, Decimal→number conversion
+- **`src/lib/utils/format.ts`** — Shared `formatNumber` / `formatCurrency` utilities
+- **6 dashboard components**: summary cards, balances with quick-update, projections (3/6/12mo), active subscriptions, recent transfers with cost rating, staleness alert banner
+- **`page.tsx`** — Server Component with auth, empty state for new users, full consolidated view
+
+All 227 tests pass. TypeScript compiles cleanly. Review: approved.

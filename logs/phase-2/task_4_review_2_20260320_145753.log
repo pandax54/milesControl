@@ -1,0 +1,5 @@
+**Review complete: CHANGES REQUESTED**
+
+Task 2.7 (Potential Balance Calculator) has **not been implemented**. No code exists for this feature — no service, no actions, no components, no tests. The review artifact has been generated at `tasks/prd-milescontrol/2.7_task_review.md` and committed.
+
+To proceed, run the `execute-task` skill to implement task 2.7, then request another review.

@@ -1,0 +1,4 @@
+All review fixes for task 2.7 applied:
+
+- **Minor #1**: Replaced all 12 `as never` casts with a typed `EnrollmentWithProgram` interface and properly typed `buildEnrollment` factory, importing `ProgramEnrollment`, `ProgramType`, and `Prisma` from the generated client — consistent with the pattern established in tasks 2.4–2.6.
+- TypeScript compiles cleanly, all 318 tests pass, coverage thresholds met.

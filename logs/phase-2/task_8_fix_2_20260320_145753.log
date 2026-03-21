@@ -1,0 +1,1 @@
+Done. The single minor issue from the 2.10 review has been fixed: replaced 3 `as never` casts in `benefits.test.ts` with a typed `buildMockBenefitReturn()` factory using `TrackedBenefit` from Prisma. All 415 tests pass, TypeScript compiles cleanly, and coverage thresholds are met.

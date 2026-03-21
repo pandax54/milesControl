@@ -1,11 +1,11 @@
 import pino from 'pino';
+import { IS_DEVELOPMENT } from '@/lib/env';
 
 function createLogger() {
-  const isDevelopment = process.env.NODE_ENV === 'development';
 
   return pino({
-    level: isDevelopment ? 'debug' : 'info',
-    transport: isDevelopment
+    level: IS_DEVELOPMENT ? 'debug' : 'info',
+    transport: IS_DEVELOPMENT
       ? {
           target: 'pino-pretty',
           options: {

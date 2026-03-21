@@ -1,0 +1,10 @@
+Review complete. **Task 2.5 — APPROVED WITH OBSERVATIONS**.
+
+Key findings:
+- **236 tests pass**, 97.37% coverage, TypeScript compiles cleanly
+- All PRD requirements for F1.7 met (balances, subscriptions, projections, transfers, staleness)
+- Clean architecture: parallel data fetching, Decimal→number at service boundary, readonly types, modular components
+- **1 actionable minor**: missing `aria-label` on external link icons in `dashboard-balances.tsx`
+- **2 deferred items**: rating threshold extraction (task 3.6), `date-fns` evaluation (low priority)
+
+Review artifact written to `tasks/prd-milescontrol/2.5_task_review.md` and committed.
