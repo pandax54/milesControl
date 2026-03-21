@@ -371,3 +371,29 @@ Checks passed:
 - Custom error classes for domain errors
 - No PII in logs
 - Cron endpoint auth gated on CRON_SECRET
+
+## Task 3.0 — Base Scraper Infrastructure (completed 2026-03-20)
+
+Files created:
+- src/lib/scrapers/types.ts — Shared types (ScrapedPromotion, ScraperConfig), constants (SCRAPER_RUN_STATUS, defaults for delay, retries, timeouts, user agent)
+- src/lib/scrapers/robots-txt.ts — robots.txt fetching (with 24h cache), parsing, path checking (longest-match rule), crawl delay extraction
+- src/lib/scrapers/robots-txt.test.ts — 26 tests covering parsing, path checking, crawl delay, fetch/cache/error handling
+- src/lib/scrapers/rate-limiter.ts — Rate limiting between scraper requests with exported sleep utility
+- src/lib/scrapers/rate-limiter.test.ts — 5 tests covering delay enforcement, independent keys, clearing state
+- src/lib/scrapers/base-scraper.ts — Abstract BaseScraper class with: run() orchestration, robots.txt check, rate limiting, fetchWithRetry (exponential backoff), ScraperRun persistence via service, child logger per scraper
+- src/lib/scrapers/base-scraper.test.ts — 12 tests covering full run lifecycle, robots.txt blocking, retry logic, persistence failure handling
+- src/lib/services/scraper-run.service.ts — CRUD/query service: createScraperRun, completeScraperRun, listScraperRuns, getLatestRunBySource, countConsecutiveFailures
+- src/lib/services/scraper-run.service.test.ts — 12 tests covering create, complete (success/fail/blocked), list, latest, consecutive failures
+
+Files modified:
+- .gitignore — Added /logs to ignored paths
+
+Review fixes applied:
+1. Extracted shared sleep() to rate-limiter.ts (eliminated duplication with base-scraper.ts)
+2. Replaced hardcoded User-Agent in fetchRobotsTxt with DEFAULT_USER_AGENT constant
+3. Wrapped completeScraperRun in catch block's error handler with try/catch to prevent persistence failure from losing original error
+4. Made ScraperResult.promotions readonly for immutability consistency
+5. Cached network errors in fetchRobotsTxt (consistent with HTTP error caching, prevents repeated timeouts)
+6. Added /logs to .gitignore
+
+All 555 tests pass. TypeScript compiles cleanly. Coverage: 97.93% stmts, 90.41% branches.

@@ -31,7 +31,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 
 ### Phase 3: Promotions Engine
 
-- [ ] 3.0 Base scraper infrastructure — Abstract scraper class, rate limiting, robots.txt, retry, logging, ScraperRun persistence
+- [x] 3.0 Base scraper infrastructure — Abstract scraper class, rate limiting, robots.txt, retry, logging, ScraperRun persistence
 - [ ] 3.1 Passageiro de Primeira scraper
 - [ ] 3.2 Melhores Cartões scraper
 - [ ] 3.3 Pontos Pra Voar scraper
