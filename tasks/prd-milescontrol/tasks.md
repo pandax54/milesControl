@@ -40,7 +40,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios
 - [x] 3.7 Calculator UI page — Interactive form, presets, comparison, embedded in promo cards
 - [x] 3.8 **Miles Value Advisor (Redemption Advisor)** — "This flight values your miles at R$80/k based on YOUR cost history." Uses user's actual transfer history average, not generic. [Key differentiator vs Oktoplus "Dica"]
-- [ ] 3.9 Promotion feed page — Active promos sorted by value, filters, deadline countdown, source links
+- [x] 3.9 Promotion feed page — Active promos sorted by value, filters, deadline countdown, source links
 - [ ] 3.10 **Personalized promo matching** — Highlight promos relevant to user's enrolled programs. "Relevant for you: you have 15,000 Livelo points." [Neither competitor does this]
 - [ ] 3.11 Cron job: scrape-promos — Vercel Cron every 30 min
 - [ ] 3.12 Miles calendar page — Calendar view with expected promo periods, historical notes

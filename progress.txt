@@ -687,3 +687,28 @@ Review observations (all non-blocking, applied where applicable):
 - Added POINTS_PER_MILHEIRO constant in transfer.service.ts
 
 All 873 tests pass. TypeScript compiles cleanly. Coverage: 98.46% stmts.
+
+## Task 3.9 — Promotion Feed Page (completed 2026-03-21)
+
+Files created:
+- src/lib/validators/promotion-feed.schema.ts — Zod schema for feed filters (status, type, programId, sortBy, sortOrder, limit) with PROMO_TYPE_LABELS and PROMO_SORT_LABELS constants
+- src/lib/validators/promotion-feed.schema.test.ts — 16 validation tests covering all filter options, boundaries, combined filters
+- src/actions/promotions.ts — Server actions (fetchPromotionsAction, fetchPromotionProgramsAction) with Zod validation and error handling
+- src/actions/promotions.test.ts — 8 action tests covering valid/invalid filters, service errors, empty results
+- src/components/promotions/deadline-utils.ts — Pure functions: computeTimeRemaining, formatTimeRemaining with TimeRemaining interface (extracted for testability)
+- src/components/promotions/deadline-countdown.tsx — Real-time countdown component using deadline-utils, auto-updates every 60s, color-coded urgency (red < 1 day, yellow > 1 day, muted when expired)
+- src/components/promotions/deadline-countdown.test.ts — 12 tests covering time computation (expired, days, hours, minutes, urgency) and formatting
+- src/components/promotions/promotion-card.tsx — Card with type badge, rating badge, program flow (source → dest), key metrics (bonus %, discount, cost/milheiro, min transfer, cap), deadline countdown, source link, embedded PromoCalculatorEmbed toggle
+- src/components/promotions/promotion-filters.tsx — Filter bar with Select dropdowns for status, type, program, sort. Clear-all button for active filters.
+- src/components/promotions/promotion-feed.tsx — Client component with useTransition for filter changes, fetches promotions via server action, empty state handling, responsive grid layout
+- src/app/(dashboard)/promotions/page.tsx — Server page with auth guard, parallel data fetching (active promotions + filter programs)
+
+Files modified:
+- src/lib/services/promotion.service.ts — Enhanced listPromotions with: PromotionWithPrograms type, programId filter (OR on source/dest), sortBy/sortOrder support (with detectedAt tiebreaker), buildSortOrder helper. Added listPromotionPrograms for filter dropdown. ListPromotionsOptions interface.
+- src/lib/services/promotion.service.test.ts — Added 9 tests: programId OR filter, costPerMilheiro sort, bonusPercent sort, deadline sort, combined options, listPromotionPrograms (populated + empty)
+
+Review observations addressed:
+1. Extracted pure deadline functions to deadline-utils.ts (tests now import real code, not duplicated copies)
+2. Simplified isUrgent: `days === 0` (removed tautological `hours < 24` condition)
+
+All 916 tests pass. TypeScript compiles cleanly. Coverage: 98.48% stmts, 92.7% branches.

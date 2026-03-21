@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     program: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     promotion: {
       findUnique: vi.fn(),
@@ -42,6 +43,7 @@ import {
   storePromotions,
   markExpiredPromotions,
   listPromotions,
+  listPromotionPrograms,
   getPromotionById,
   PromotionNotFoundError,
 } from './promotion.service';
@@ -49,6 +51,7 @@ import {
 // ==================== Typed mock accessors ====================
 
 const mockProgramFindFirst = vi.mocked(prisma.program.findFirst);
+const mockProgramFindMany = vi.mocked(prisma.program.findMany);
 const mockPromoFindUnique = vi.mocked(prisma.promotion.findUnique);
 const mockPromoFindFirst = vi.mocked(prisma.promotion.findFirst);
 const mockPromoFindMany = vi.mocked(prisma.promotion.findMany);
@@ -703,7 +706,7 @@ describe('listPromotions', () => {
     expect(mockPromoFindMany).toHaveBeenCalledWith({
       where: {},
       include: { sourceProgram: true, destProgram: true },
-      orderBy: { detectedAt: 'desc' },
+      orderBy: [{ detectedAt: 'desc' }],
       take: 50,
     });
     expect(result).toHaveLength(1);
@@ -756,6 +759,86 @@ describe('listPromotions', () => {
       }),
     );
   });
+
+  it('should filter by programId using OR clause', async () => {
+    mockPromoFindMany.mockResolvedValue([]);
+
+    await listPromotions({ programId: 'prog-smiles' });
+
+    expect(mockPromoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [
+            { sourceProgramId: 'prog-smiles' },
+            { destProgramId: 'prog-smiles' },
+          ],
+        },
+      }),
+    );
+  });
+
+  it('should sort by costPerMilheiro ascending with detectedAt tiebreaker', async () => {
+    mockPromoFindMany.mockResolvedValue([]);
+
+    await listPromotions({ sortBy: 'costPerMilheiro', sortOrder: 'asc' });
+
+    expect(mockPromoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ costPerMilheiro: 'asc' }, { detectedAt: 'desc' }],
+      }),
+    );
+  });
+
+  it('should sort by bonusPercent descending with detectedAt tiebreaker', async () => {
+    mockPromoFindMany.mockResolvedValue([]);
+
+    await listPromotions({ sortBy: 'bonusPercent', sortOrder: 'desc' });
+
+    expect(mockPromoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ bonusPercent: 'desc' }, { detectedAt: 'desc' }],
+      }),
+    );
+  });
+
+  it('should sort by deadline with detectedAt tiebreaker', async () => {
+    mockPromoFindMany.mockResolvedValue([]);
+
+    await listPromotions({ sortBy: 'deadline', sortOrder: 'asc' });
+
+    expect(mockPromoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ deadline: 'asc' }, { detectedAt: 'desc' }],
+      }),
+    );
+  });
+
+  it('should combine all filter and sort options', async () => {
+    mockPromoFindMany.mockResolvedValue([]);
+
+    await listPromotions({
+      status: 'ACTIVE',
+      type: 'TRANSFER_BONUS',
+      programId: 'prog-livelo',
+      sortBy: 'bonusPercent',
+      sortOrder: 'desc',
+      limit: 25,
+    });
+
+    expect(mockPromoFindMany).toHaveBeenCalledWith({
+      where: {
+        status: 'ACTIVE',
+        type: 'TRANSFER_BONUS',
+        OR: [
+          { sourceProgramId: 'prog-livelo' },
+          { destProgramId: 'prog-livelo' },
+        ],
+      },
+      include: { sourceProgram: true, destProgram: true },
+      orderBy: [{ bonusPercent: 'desc' }, { detectedAt: 'desc' }],
+      take: 25,
+    });
+  });
 });
 
 // ==================== getPromotionById ====================
@@ -780,6 +863,42 @@ describe('getPromotionById', () => {
     const result = await getPromotionById('nonexistent');
 
     expect(result).toBeNull();
+  });
+});
+
+// ==================== listPromotionPrograms ====================
+
+describe('listPromotionPrograms', () => {
+  it('should return programs that appear in promotions', async () => {
+    const programs = [
+      buildMockProgram({ id: 'prog-smiles', name: 'Smiles' }),
+      buildMockProgram({ id: 'prog-livelo', name: 'Livelo' }),
+    ];
+    mockProgramFindMany.mockResolvedValue(programs);
+
+    const result = await listPromotionPrograms();
+
+    expect(mockProgramFindMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { sourcePromos: { some: {} } },
+          { promotions: { some: {} } },
+        ],
+      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('prog-smiles');
+    expect(result[1].id).toBe('prog-livelo');
+  });
+
+  it('should return empty array when no programs have promotions', async () => {
+    mockProgramFindMany.mockResolvedValue([]);
+
+    const result = await listPromotionPrograms();
+
+    expect(result).toEqual([]);
   });
 });
 

@@ -1,7 +1,14 @@
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import type { ScrapedPromotion } from '@/lib/scrapers/types';
-import type { Promotion, PromoStatus, PromoType } from '@/generated/prisma/client';
+import type { Promotion, Program, PromoStatus, PromoType } from '@/generated/prisma/client';
+
+// ==================== Types ====================
+
+export type PromotionWithPrograms = Promotion & {
+  sourceProgram: Program | null;
+  destProgram: Program | null;
+};
 
 // ==================== Constants ====================
 
@@ -247,23 +254,72 @@ export async function markExpiredPromotions(): Promise<number> {
 
 // ==================== Queries ====================
 
-export async function listPromotions(options?: {
+export type PromotionSortField = 'detectedAt' | 'costPerMilheiro' | 'deadline' | 'bonusPercent';
+
+export interface ListPromotionsOptions {
   status?: PromoStatus;
   type?: PromoType;
+  programId?: string;
+  sortBy?: PromotionSortField;
+  sortOrder?: 'asc' | 'desc';
   limit?: number;
-}): Promise<Promotion[]> {
+}
+
+export async function listPromotions(options?: ListPromotionsOptions): Promise<PromotionWithPrograms[]> {
+  const sortBy = options?.sortBy ?? 'detectedAt';
+  const sortOrder = options?.sortOrder ?? 'desc';
+
   return prisma.promotion.findMany({
     where: {
       ...(options?.status ? { status: options.status } : {}),
       ...(options?.type ? { type: options.type } : {}),
+      ...(options?.programId
+        ? {
+            OR: [
+              { sourceProgramId: options.programId },
+              { destProgramId: options.programId },
+            ],
+          }
+        : {}),
     },
     include: {
       sourceProgram: true,
       destProgram: true,
     },
-    orderBy: { detectedAt: 'desc' },
+    orderBy: buildSortOrder(sortBy, sortOrder),
     take: options?.limit ?? DEFAULT_LIST_LIMIT,
   });
+}
+
+function buildSortOrder(
+  sortBy: PromotionSortField,
+  sortOrder: 'asc' | 'desc',
+): Record<string, string>[] {
+  const primary = { [sortBy]: sortOrder };
+
+  // Secondary sort by detectedAt desc to break ties consistently
+  if (sortBy !== 'detectedAt') {
+    return [primary, { detectedAt: 'desc' }];
+  }
+  return [primary];
+}
+
+/**
+ * List all programs that appear in at least one promotion (source or destination).
+ * Used by the filter bar on the promotion feed page.
+ */
+export async function listPromotionPrograms(): Promise<Array<{ id: string; name: string }>> {
+  const programs = await prisma.program.findMany({
+    where: {
+      OR: [
+        { sourcePromos: { some: {} } },
+        { promotions: { some: {} } },
+      ],
+    },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
+  });
+  return programs;
 }
 
 export async function getPromotionById(id: string): Promise<Promotion | null> {
