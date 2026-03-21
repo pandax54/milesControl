@@ -47,7 +47,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 
 ### Phase 4: Alerts & Notifications
 
-- [ ] 4.0 Alert configuration UI — Create/edit rules: programs, promo types, min bonus %, max cost/milheiro, channels
+- [x] 4.0 Alert configuration UI — Create/edit rules: programs, promo types, min bonus %, max cost/milheiro, channels
 - [ ] 4.1 Alert matching engine — Match new promos against active alerts
 - [ ] 4.2 Telegram bot — Setup, webhook, commands (/start, /alerts, /promos, /calc), chat ID registration
 - [ ] 4.3 Email notifications — Resend: alert emails, weekly digest, balance change digest (from 2.9)

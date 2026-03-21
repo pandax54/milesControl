@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Plane,
   Bell,
+  BellRing,
   Users,
   UsersRound,
   ClipboardList,
@@ -43,6 +44,10 @@ const DASHBOARD_ITEMS = [
 const PROMO_ITEMS = [
   { title: 'Promotions', href: '/promotions', icon: Megaphone },
   { title: 'Miles Calendar', href: '/promotions/calendar', icon: CalendarDays },
+];
+
+const ALERT_ITEMS = [
+  { title: 'Alert Rules', href: '/alerts', icon: BellRing },
 ];
 
 const FLIGHT_ITEMS = [
@@ -103,6 +108,7 @@ export function AppSidebar({ userRole }: AppSidebarProps) {
       <SidebarContent>
         <NavGroup label="Dashboard" items={DASHBOARD_ITEMS} pathname={pathname} />
         <NavGroup label="Promotions" items={PROMO_ITEMS} pathname={pathname} />
+        <NavGroup label="Alerts" items={ALERT_ITEMS} pathname={pathname} />
         <NavGroup label="Flights" items={FLIGHT_ITEMS} pathname={pathname} />
         {userRole === 'ADMIN' && (
           <NavGroup label="Admin" items={ADMIN_ITEMS} pathname={pathname} />
