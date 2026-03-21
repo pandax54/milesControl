@@ -732,3 +732,17 @@ Changes applied from 3.9_task_review.md:
    potential ESLint `react-hooks/exhaustive-deps` warnings.
 
 All 916 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 3.9 — Final Review Fixes (applied 2026-03-21)
+
+Changes applied from 3.9_task_review.md (second review pass):
+
+1. **Consistent `hasFilters` check** (Minor #1) — Added `status !== DEFAULT_FILTERS.status`
+   to the `hasFilters` condition in `PromotionFeed` empty state. Previously only checked
+   `type` and `programId`; now also detects non-default status filter selections.
+
+Non-blocking items deferred:
+- Pagination for promotion feed (Minor #2) — future enhancement as DB grows
+- Component-level React Testing Library tests (Rec #1) — future polish pass
+
+All 916 tests pass. TypeScript compiles cleanly.

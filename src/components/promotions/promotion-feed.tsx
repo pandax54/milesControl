@@ -48,7 +48,7 @@ export function PromotionFeed({ initialPromotions, programs }: PromotionFeedProp
       )}
 
       {!isPending && promotions.length === 0 && (
-        <EmptyState hasFilters={!!filters.type || !!filters.programId} />
+        <EmptyState hasFilters={!!filters.type || !!filters.programId || filters.status !== DEFAULT_FILTERS.status} />
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
