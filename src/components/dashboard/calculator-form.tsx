@@ -319,7 +319,7 @@ function CompareCalculator() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        {scenarios.map((scenario, index) => (
+        {scenarios.map((scenario) => (
           <Card key={scenario.id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">

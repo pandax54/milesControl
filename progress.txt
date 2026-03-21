@@ -644,3 +644,13 @@ Review fixes applied:
 5. Replaced duplicate CalculationDisplayData type with CostCalculation from service layer
 
 All 838 tests pass. TypeScript compiles cleanly. Coverage: 98.46% stmts, 92.57% branches.
+
+## Task 3.7 — Second Review Fixes (applied 2026-03-21)
+
+Changes applied from 3.7_task_review.md:
+
+1. **Prefixed unused `index` parameter with removal** (Minor #1, Rec #1) — Removed unused
+   `index` parameter from `scenarios.map((scenario, index) => ...)` at line 322 of
+   `calculator-form.tsx`. Only `scenario.id` is used for keys and handlers.
+
+All 838 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
