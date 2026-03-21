@@ -218,7 +218,7 @@ model Promotion {
   minimumTransfer   Int?
   maxBonusCap       Int?
   deadline          DateTime?
-  sourceUrl         String
+  sourceUrl         String      @unique
   sourceSiteName    String
   rawContent        String?
   costPerMilheiro   Decimal? @db.Decimal(10, 2)

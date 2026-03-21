@@ -530,3 +530,31 @@ Review status: APPROVED with zero critical issues.
 Note: parseBrDate duplication with melhores-cartoes.ts can be consolidated in task 3.5.
 
 All 721 tests pass. TypeScript compiles cleanly. Coverage: 98.31% stmts, 91.75% branches.
+
+## Task 3.4 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.4_task_review.md:
+
+1. **Consolidated duplicated `parseBrDate` into shared `promotion-helpers.ts`** (Minor #1, Rec #1) — Extracted
+   `BR_DATE_PATTERN` and `parseBrDate` from both `comparemania.ts` and `melhores-cartoes.ts` into
+   `promotion-helpers.ts`. Used the MC version (superset: handles both `DD/MM/YYYY` and `DD/MM/YYYY às HH:MM`).
+   Both scrapers now import from the shared module. Moved all `parseBrDate` tests from both scraper test files
+   to `promotion-helpers.test.ts` with 10 combined test cases (merged duplicates from MC's 7 + CM's 7).
+
+All 717 tests pass. TypeScript compiles cleanly. Coverage: 98.3% stmts, 91.69% branches.
+
+## Task 3.5 — Promotion Deduplication and Storage (completed 2026-03-20)
+
+Files created:
+- src/lib/services/promotion.service.ts — Service with: resolveProgramId (case-insensitive program name→ID lookup), findBySourceUrl (same-source dedup via unique URL), findCrossSourceDuplicate (cross-source dedup by type+programs+bonus within 30-day window), computeStatus (ACTIVE/EXPIRED from deadline), storePromotions (main orchestrator: create/update/skip with per-iteration error handling, ScraperRun newPromos update), markExpiredPromotions (batch expiration), listPromotions (query with filters), getPromotionById
+- src/lib/services/promotion.service.test.ts — 33 tests covering: resolveProgramId (match/miss), findBySourceUrl (match/miss), findCrossSourceDuplicate (null programs, TRANSFER_BONUS, POINT_PURCHASE, CLUB_SIGNUP, 30-day window, destProgramId-only), computeStatus (null/undefined/future/past), storePromotions (create/update/cross-dupe/mixed batch/scraperRun update/no programs/unresolvable programs/empty array/error handling/expired status/active status/null fields), markExpiredPromotions (with/without expired), listPromotions (defaults/filters/limit), getPromotionById (found/not-found), PromotionNotFoundError
+
+Files modified:
+- prisma/schema.prisma — Added @unique constraint on Promotion.sourceUrl for dedup integrity
+
+Review fixes applied:
+1. Added per-iteration try/catch with `failed` counter so batch continues on individual failures
+2. Removed misleading `?? null` on rawContent (required string field in ScrapedPromotion)
+3. Added comment on PromotionNotFoundError explaining future API-layer usage
+
+All 756 tests pass. TypeScript compiles cleanly. Coverage: 98.35% stmts, 91.94% branches.

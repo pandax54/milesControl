@@ -36,7 +36,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 3.2 Melhores Cartões scraper
 - [x] 3.3 Pontos Pra Voar scraper
 - [x] 3.4 Comparemania scraper
-- [ ] 3.5 Promotion deduplication and storage
+- [x] 3.5 Promotion deduplication and storage
 - [ ] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios
 - [ ] 3.7 Calculator UI page — Interactive form, presets, comparison, embedded in promo cards
 - [ ] 3.8 **Miles Value Advisor (Redemption Advisor)** — "This flight values your miles at R$80/k based on YOUR cost history." Uses user's actual transfer history average, not generic. [Key differentiator vs Oktoplus "Dica"]
