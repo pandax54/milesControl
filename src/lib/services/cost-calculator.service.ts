@@ -215,9 +215,6 @@ function ratePointPurchase(promotion: {
   purchasePricePerK?: number | null;
   purchaseDiscount?: number | null;
 }): CostCalculation | null {
-  if (promotion.purchasePricePerK == null && promotion.purchaseDiscount == null) return null;
-
-  // If we have a direct price per 1000 points, use it
   if (promotion.purchasePricePerK != null) {
     const pricePerPoint = Number(promotion.purchasePricePerK) / POINTS_PER_MILHEIRO;
     return calculateCostPerMilheiro({
@@ -227,7 +224,6 @@ function ratePointPurchase(promotion: {
     });
   }
 
-  // If we have a discount percentage, apply to standard price
   if (promotion.purchaseDiscount != null) {
     const discountedPrice = STANDARD_PRICE_PER_POINT * (1 - promotion.purchaseDiscount);
     return calculateCostPerMilheiro({

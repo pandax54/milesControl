@@ -605,3 +605,15 @@ Review fixes applied:
 3. Clarified docstring boundary conditions for rating thresholds
 
 All 824 tests pass. TypeScript compiles cleanly. Coverage: 100% on new files.
+
+## Task 3.6 — Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.6_task_review.md:
+
+1. **Removed unreachable dead code in `ratePointPurchase`** (Minor #1, Rec #1) — Removed the
+   early combined-null guard (`if (purchasePricePerK == null && purchaseDiscount == null) return null`)
+   and two now-unnecessary comments. The individual null checks on each field are sufficient, and the
+   trailing `return null` is now reachable (when both fields are null), bringing the function to 100%
+   coverage. This eliminates the only uncovered line (line 240) flagged in the review.
+
+All 824 tests pass. TypeScript compiles cleanly. Coverage: 100% on cost-calculator service.
