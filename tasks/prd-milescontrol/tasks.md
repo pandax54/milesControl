@@ -43,7 +43,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 3.9 Promotion feed page — Active promos sorted by value, filters, deadline countdown, source links
 - [x] 3.10 **Personalized promo matching** — Highlight promos relevant to user's enrolled programs. "Relevant for you: you have 15,000 Livelo points." [Neither competitor does this]
 - [x] 3.11 Cron job: scrape-promos — Vercel Cron every 30 min
-- [ ] 3.12 Miles calendar page — Calendar view with expected promo periods, historical notes
+- [x] 3.12 Miles calendar page — Calendar view with expected promo periods, historical notes
 
 ### Phase 4: Alerts & Notifications
 

@@ -813,3 +813,21 @@ No critical, major, or minor issues remain. All review findings were resolved in
 2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
 
 Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
+
+## Task 3.12 — Miles Calendar Page (completed 2026-03-21)
+
+Files created:
+- src/lib/services/miles-calendar.service.ts — Service with listCalendarEvents, listUpcomingCalendarEvents, listEventsByMonth, groupEventsByMonth, PROMO_TYPE_LABELS. UTC-consistent date filtering.
+- src/lib/services/miles-calendar.service.test.ts — 13 unit tests covering all service functions and groupEventsByMonth edge cases
+- src/components/promotions/miles-calendar-event-card.tsx — Card component showing event title, date range, programs, expected promo type badge, description, and historical note
+- src/components/promotions/miles-calendar-view.tsx — View component that splits events into upcoming/past sections, groups by month, renders MonthSection grids
+- src/app/(dashboard)/promotions/calendar/page.tsx — Server component page at /promotions/calendar
+
+Key implementation details:
+- UTC-consistent date comparisons throughout (Date.UTC, setUTCHours) to avoid off-by-one timezone errors
+- Events grouped by month using reduce (no for...of loops, no non-null assertions)
+- Import order: external → @/ internal → relative
+- Upcoming events shown first, past events with reduced opacity
+
+Review: APPROVED WITH OBSERVATIONS — all 5 minor issues fixed before commit.
+All 964 tests pass. TypeScript compiles cleanly.
