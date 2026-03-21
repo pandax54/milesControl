@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DeadlineCountdown } from './deadline-countdown';
+import { PersonalizedBadge } from './personalized-badge';
 import { PromoCalculatorEmbed } from '@/components/dashboard/promo-calculator-embed';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
+import type { PromoMatch } from '@/lib/services/promo-matcher.service';
 import { PROMOTION_RATINGS, type PromotionRating } from '@/lib/validators/cost-calculator.schema';
 import { PROMO_TYPE_LABELS } from '@/lib/validators/promotion-feed.schema';
 import type { PromoType } from '@/generated/prisma/client';
@@ -30,6 +32,7 @@ const RATING_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'des
 
 interface PromotionCardProps {
   promotion: PromotionWithPrograms;
+  match?: PromoMatch;
 }
 
 function buildCalculatorDefaults(promotion: PromotionWithPrograms) {
@@ -53,7 +56,7 @@ function buildCalculatorDefaults(promotion: PromotionWithPrograms) {
   return undefined;
 }
 
-export function PromotionCard({ promotion }: PromotionCardProps) {
+export function PromotionCard({ promotion, match }: PromotionCardProps) {
   const [showCalculator, setShowCalculator] = useState(false);
   const calculatorDefaults = buildCalculatorDefaults(promotion);
   const rating = (PROMOTION_RATINGS as readonly string[]).includes(promotion.rating ?? '')
@@ -90,6 +93,9 @@ export function PromotionCard({ promotion }: PromotionCardProps) {
       <CardContent className="space-y-3">
         {/* Program transfer flow */}
         <ProgramFlow promotion={promotion} />
+
+        {/* Personalized match badge */}
+        {match && <PersonalizedBadge match={match} />}
 
         {/* Key metrics row */}
         <div className="flex flex-wrap items-center gap-4 text-sm">

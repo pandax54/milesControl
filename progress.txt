@@ -746,3 +746,29 @@ Non-blocking items deferred:
 - Component-level React Testing Library tests (Rec #1) — future polish pass
 
 All 916 tests pass. TypeScript compiles cleanly.
+
+## Task 3.10 — Personalized Promo Matching (completed 2026-03-21)
+
+Files created:
+- src/lib/services/promo-matcher.service.ts — Pure matching service: matchPromotion() and matchPromotions() functions. Three match types: SOURCE (user has points in source program, score 10), DESTINATION (user enrolled in destination, score 5), BOTH (source and dest enrolled, score 15). Builds human-readable reasons with balance info and bonus %.
+- src/lib/services/promo-matcher.service.test.ts — 16 unit tests covering: empty enrollments, no program match, no promotion programs, SOURCE match (with/without bonus), DESTINATION match, BOTH match, zero balance, null bonusPercent, multiple promotions, mixed matching/non-matching, empty promotions list, Map keyed lookup.
+- src/components/promotions/personalized-badge.tsx — UI badge component showing "Relevant for you:" with match reason, icon varies by match type (Star for SOURCE/BOTH, User for DESTINATION), primary color background.
+- tasks/prd-milescontrol/3.10_task_review.md — Review artifact (APPROVED WITH OBSERVATIONS)
+
+Files modified:
+- src/app/(dashboard)/promotions/page.tsx — Fetches user enrollments via listEnrollments(), maps to EnrollmentSummary[], passes to PromotionFeed
+- src/components/promotions/promotion-feed.tsx — Accepts enrollments prop, computes matches via useMemo + matchPromotions(), passes per-card PromoMatch to PromotionCard. Module-level EMPTY_ENROLLMENTS constant for stable default.
+- src/components/promotions/promotion-card.tsx — Accepts optional match prop, renders PersonalizedBadge between program flow and key metrics when matched
+
+Key implementation details:
+- Pure functions (no DB calls) — matching computed client-side from server-fetched enrollments
+- O(1) lookup per card via Map keyed by promotion ID
+- useMemo recomputes only when promotions or enrollments change
+- Source match reason includes transfer bonus % when available
+- BOTH match describes full transfer path: "You have X points to transfer to your Y account"
+
+Review observations addressed:
+1. Replaced non-null assertion (destEnrollment!) with explicit if guard
+2. Extracted module-level EMPTY_ENROLLMENTS constant to prevent useMemo invalidation
+
+All 932 tests pass. TypeScript compiles cleanly. Coverage: 100% on promo-matcher service.

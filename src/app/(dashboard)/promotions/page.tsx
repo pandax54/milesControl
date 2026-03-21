@@ -1,7 +1,9 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { listPromotions, listPromotionPrograms } from '@/lib/services/promotion.service';
+import { listEnrollments } from '@/lib/services/program-enrollment.service';
 import { PromotionFeed } from '@/components/promotions/promotion-feed';
+import type { EnrollmentSummary } from '@/lib/services/promo-matcher.service';
 
 export default async function PromotionsPage() {
   const session = await auth();
@@ -10,10 +12,17 @@ export default async function PromotionsPage() {
     redirect('/login');
   }
 
-  const [promotions, programs] = await Promise.all([
+  const [promotions, programs, rawEnrollments] = await Promise.all([
     listPromotions({ status: 'ACTIVE', sortBy: 'detectedAt', sortOrder: 'desc' }),
     listPromotionPrograms(),
+    listEnrollments(session.user.id),
   ]);
+
+  const enrollments: EnrollmentSummary[] = rawEnrollments.map((e) => ({
+    programId: e.program.id,
+    programName: e.program.name,
+    currentBalance: e.currentBalance,
+  }));
 
   return (
     <div className="space-y-6">
@@ -24,7 +33,11 @@ export default async function PromotionsPage() {
         </p>
       </div>
 
-      <PromotionFeed initialPromotions={promotions} programs={programs} />
+      <PromotionFeed
+        initialPromotions={promotions}
+        programs={programs}
+        enrollments={enrollments}
+      />
     </div>
   );
 }

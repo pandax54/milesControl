@@ -1,16 +1,19 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import { Megaphone } from 'lucide-react';
 import { PromotionCard } from './promotion-card';
 import { PromotionFilters } from './promotion-filters';
 import { fetchPromotionsAction } from '@/actions/promotions';
+import { matchPromotions } from '@/lib/services/promo-matcher.service';
+import type { EnrollmentSummary } from '@/lib/services/promo-matcher.service';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
 import type { PromotionFeedFilter } from '@/lib/validators/promotion-feed.schema';
 
 interface PromotionFeedProps {
   initialPromotions: PromotionWithPrograms[];
   programs: Array<{ id: string; name: string }>;
+  enrollments?: EnrollmentSummary[];
 }
 
 const DEFAULT_FILTERS: PromotionFeedFilter = {
@@ -19,10 +22,17 @@ const DEFAULT_FILTERS: PromotionFeedFilter = {
   sortOrder: 'desc',
 };
 
-export function PromotionFeed({ initialPromotions, programs }: PromotionFeedProps) {
+const EMPTY_ENROLLMENTS: EnrollmentSummary[] = [];
+
+export function PromotionFeed({ initialPromotions, programs, enrollments = EMPTY_ENROLLMENTS }: PromotionFeedProps) {
   const [promotions, setPromotions] = useState(initialPromotions);
   const [filters, setFilters] = useState<PromotionFeedFilter>(DEFAULT_FILTERS);
   const [isPending, startTransition] = useTransition();
+
+  const promoMatches = useMemo(
+    () => matchPromotions(promotions, enrollments),
+    [promotions, enrollments],
+  );
 
   function handleFilterChange(newFilters: PromotionFeedFilter) {
     setFilters(newFilters);
@@ -53,7 +63,11 @@ export function PromotionFeed({ initialPromotions, programs }: PromotionFeedProp
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {promotions.map((promo) => (
-          <PromotionCard key={promo.id} promotion={promo} />
+          <PromotionCard
+            key={promo.id}
+            promotion={promo}
+            match={promoMatches.get(promo.id)}
+          />
         ))}
       </div>
     </div>
