@@ -467,3 +467,24 @@ Review fixes applied:
 2. Fixed misleading comment describing non-existent fallback logic in extractCategory
 
 All 641 tests pass. TypeScript compiles cleanly. Coverage: 98.17% stmts, 91.54% branches.
+
+## Task 3.2 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.2_task_review.md:
+
+1. **Extracted shared `CheerioSelection` type to `types.ts`** (Minor #1, Rec #1) — Removed
+   duplicated `type CheerioSelection = ReturnType<CheerioAPI>` from both `melhores-cartoes.ts`
+   and `passageiro-de-primeira.ts`. Added shared export in `src/lib/scrapers/types.ts`. Both
+   scrapers now import `CheerioSelection` from `./types`.
+
+2. **Removed re-export coupling in PdP** (Minor #2, Rec #2) — Removed the
+   `export { classifyPromoType, ... }` re-export line from `passageiro-de-primeira.ts`. Updated
+   PdP test imports to only import PdP-specific exports (`extractCategories`, `isPromotionRelevant`,
+   `parseDatetime`). Shared helpers are now imported directly from `./promotion-helpers`.
+
+3. **Created dedicated `promotion-helpers.test.ts`** (Minor #3, Rec #3) — Moved all shared helper
+   tests (classifyPromoType, extractBonusPercent, extractDiscountPercent, extractPrograms — 26 tests)
+   from `passageiro-de-primeira.test.ts` to `src/lib/scrapers/promotion-helpers.test.ts` for clear
+   ownership and coverage attribution.
+
+All 641 tests pass. TypeScript compiles cleanly. Coverage: 98.17% stmts, 91.54% branches.
