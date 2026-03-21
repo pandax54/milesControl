@@ -803,3 +803,13 @@ Issues fixed from 3.11_task_review.md:
 - src/lib/services/scrape-promos.service.test.ts — Changed mock value from 3 → 4 in the "should skip scraper with more than 3 consecutive failures" test so the value matches the title (strictly-above-threshold scenario); skipReason expectation updated to '4 consecutive failures'
 
 All 951 tests pass. TypeScript compiles cleanly. Coverage: 98.46%.
+
+## Task 3.11 — Review Confirmed Approved (2026-03-21)
+
+Review file: tasks/prd-milescontrol/3.11_task_review.md — Status: APPROVED
+
+No critical, major, or minor issues remain. All review findings were resolved in commit dc38003:
+1. Error envelope alignment — both cron routes now return `{ error: { code, message } }` matching project standard
+2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
+
+Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
