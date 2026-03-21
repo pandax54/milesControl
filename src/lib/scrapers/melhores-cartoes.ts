@@ -1,6 +1,6 @@
 import type { CheerioAPI } from 'cheerio';
 import { BaseScraper } from './base-scraper';
-import type { ScrapedPromotion, ScraperConfig } from './types';
+import type { CheerioSelection, ScrapedPromotion, ScraperConfig } from './types';
 import {
   classifyPromoType,
   extractBonusPercent,
@@ -75,8 +75,6 @@ export class MelhoresCartoesScraper extends BaseScraper {
 }
 
 // ==================== MC-specific extraction helpers ====================
-
-type CheerioSelection = ReturnType<CheerioAPI>;
 
 export function extractCategory(container: CheerioSelection): string {
   const label = container.find('.label-card').first();

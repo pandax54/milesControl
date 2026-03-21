@@ -1,4 +1,9 @@
+import type { CheerioAPI } from 'cheerio';
 import type { PromoType } from '@/generated/prisma/client';
+
+// ==================== Shared Cheerio type ====================
+
+export type CheerioSelection = ReturnType<CheerioAPI>;
 
 // ==================== Scraped promotion (output of each scraper) ====================
 

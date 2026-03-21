@@ -1,15 +1,12 @@
 import type { CheerioAPI } from 'cheerio';
 import { BaseScraper } from './base-scraper';
-import type { ScrapedPromotion, ScraperConfig } from './types';
 import {
   classifyPromoType,
   extractBonusPercent,
   extractDiscountPercent,
   extractPrograms,
 } from './promotion-helpers';
-
-// Re-export shared helpers for backward compatibility with existing tests
-export { classifyPromoType, extractBonusPercent, extractDiscountPercent, extractPrograms };
+import type { CheerioSelection, ScrapedPromotion, ScraperConfig } from './types';
 
 // ==================== Constants ====================
 
@@ -88,8 +85,6 @@ export class PassageiroDePrimeiraScraper extends BaseScraper {
 }
 
 // ==================== PdP-specific extraction helpers ====================
-
-type CheerioSelection = ReturnType<CheerioAPI>;
 
 export function extractCategories($: CheerioAPI, article: CheerioSelection): string[] {
   const categories: string[] = [];
