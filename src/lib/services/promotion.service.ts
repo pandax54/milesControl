@@ -151,10 +151,17 @@ export async function storePromotions(
   }
 
   if (scraperRunId) {
-    await prisma.scraperRun.update({
-      where: { id: scraperRunId },
-      data: { newPromos: created },
-    });
+    try {
+      await prisma.scraperRun.update({
+        where: { id: scraperRunId },
+        data: { newPromos: created },
+      });
+    } catch (error) {
+      logger.error(
+        { err: error, scraperRunId, created },
+        'Failed to update ScraperRun with new promo count',
+      );
+    }
   }
 
   logger.info(

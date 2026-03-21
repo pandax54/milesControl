@@ -558,3 +558,15 @@ Review fixes applied:
 3. Added comment on PromotionNotFoundError explaining future API-layer usage
 
 All 756 tests pass. TypeScript compiles cleanly. Coverage: 98.35% stmts, 91.94% branches.
+
+## Task 3.5 — Second Review Fixes (applied 2026-03-20)
+
+Changes applied from 3.5_task_review.md:
+
+1. **Wrapped `scraperRun.update` in try/catch** (Major #1, Rec #1) — The ScraperRun update
+   at the end of `storePromotions` is a non-critical side-effect. If it fails (e.g., invalid
+   scraperRunId, transient DB error), the function now logs the error and returns the storage
+   results instead of throwing and discarding them. Added a corresponding test verifying that
+   results are returned when `scraperRun.update` rejects.
+
+All 757 tests pass. TypeScript compiles cleanly. Coverage thresholds met.

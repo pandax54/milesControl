@@ -444,6 +444,24 @@ describe('storePromotions', () => {
     });
   });
 
+  it('should still return results when scraperRun update fails', async () => {
+    setupProgramResolution();
+    mockPromoFindUnique.mockResolvedValue(null);
+    mockPromoFindFirst.mockResolvedValue(null);
+    mockPromoCreate.mockResolvedValue(buildMockPromotion());
+    mockScraperRunUpdate.mockRejectedValue(new Error('ScraperRun not found'));
+
+    const scraped = buildScrapedPromotion();
+    const result = await storePromotions([scraped], 'invalid-run-id');
+
+    expect(result.created).toBe(1);
+    expect(result.updated).toBe(0);
+    expect(result.duplicates).toBe(0);
+    expect(result.failed).toBe(0);
+    expect(result.total).toBe(1);
+    expect(mockScraperRunUpdate).toHaveBeenCalled();
+  });
+
   it('should not update scraper run when scraperRunId is not provided', async () => {
     setupProgramResolution();
     mockPromoFindUnique.mockResolvedValue(null);
