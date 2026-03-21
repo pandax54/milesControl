@@ -46,9 +46,9 @@ For each endpoint defined in the TechSpec, verify:
 | Verification       | Description                                                                                         |
 | ------------------ | --------------------------------------------------------------------------------------------------- |
 | Status codes       | Correct codes for success, validation errors, not found, unauthorized, forbidden, and server errors |
-| Response format    | Matches the `ApiResponse<T>` / `ApiError` envelope defined in project standards                     |
-| Request validation | Rejects invalid payloads with 400 and descriptive Zod error details                                 |
-| Authentication     | Returns 401 for missing/invalid Firebase tokens                                                     |
+| Response format    | Matches the project standards                                                                       |
+| Request validation | Rejects invalid payloads with descriptive Zod error details                                         |
+| Authentication     | Returns appropriate error for missing/invalid auth                                                  |
 | Authorization      | Returns 403 for authenticated users without permission                                              |
 | Business rules     | Returns 422 for business rule violations with clear error codes                                     |
 | Pagination         | Correct `meta` object with page, perPage, and total                                                 |
@@ -66,7 +66,7 @@ For each functional requirement in the PRD:
 - Verify database constraints are enforced (unique, not null, foreign keys)
 - Verify transactions roll back correctly on failure
 - Verify cascade deletes work as expected
-- Verify that TypeORM migrations are up to date: `npx typeorm migration:show`
+- Verify that Prisma schema is in sync with the database
 - Verify no orphaned records are created during error scenarios
 
 ### 5. Error Handling Verification (Required)
@@ -80,7 +80,7 @@ For each functional requirement in the PRD:
 ### 6. Security Verification (Required)
 
 - Verify Firebase token validation on all protected routes
-- Verify no SQL injection via parameterized queries (TypeORM handles this)
+- Verify no SQL injection via parameterized queries (Prisma handles this)
 
 - Verify sensitive data is not exposed in API responses (passwords, tokens, internal IDs)
 - Verify sensitive data is not logged (check Pino redact configuration)
@@ -88,10 +88,11 @@ For each functional requirement in the PRD:
 
 ### 7. Test Suite Verification (Required)
 
-- Run ALL project tests: `npm test`
+- Run ALL project tests: `pnpm test`
 - Verify that ALL pass with 100% success
 - Run type checking: `npx tsc --noEmit`
-- Verify coverage meets thresholds: `npm run test:coverage`
+- Verify coverage meets thresholds: `pnpm run test:coverage`
+- Build: `pnpm build`
 
 <critical>QA is NOT complete if any test fails</critical>
 

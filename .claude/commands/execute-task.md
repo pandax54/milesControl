@@ -3,7 +3,6 @@ You are an AI assistant responsible for implementing tasks correctly. Your task 
 <critical>After completing the task, **mark it as complete in tasks.md**</critical>
 <critical>You must not rush to finish the task; always check the required files, verify the tests, and go through a reasoning process to ensure both understanding and execution (you are not lazy)</critical>
 <critical>THE TASK CANNOT BE CONSIDERED COMPLETE UNTIL ALL TESTS ARE PASSING, **with 100% success**</critical>
-<critical>You cannot finish the task without running the review agent @task-reviewer; if it does not pass, you must fix the issues and review again</critical>
 
 ## File Locations
 
@@ -13,31 +12,10 @@ You are an AI assistant responsible for implementing tasks correctly. Your task 
 - Individual Task: `./tasks/prd-[feature-name]/[num]_task.md`
 - Project Rules: @.claude/rules
 
-## Project Standards (Rules — Always Loaded)
+## Project Standards
 
-Before implementing, review the project rules:
-
-- `code-standards.md` — naming, functions, error handling, formatting, imports
-- `database.md` — TypeORM patterns, transactions, migrations, relations
-- `node.md` — TypeScript, Koa, TypeORM, Firebase, Docker, REST responses
-- `http.md` — routing, status codes, middleware, Zod validation
-- `logging.md` — Pino levels, structured logging, redaction
-- `tests.md` — Vitest structure, mocking, coverage
-
-## Reference Skills (On-Demand — Load When Needed)
-
-If you need detailed examples or patterns for any standard, load the corresponding skill:
-
-- `code-standards-reference` — full examples for naming, functions, error handling, formatting
-- `nodejs-typescript-reference` — Koa middleware, TypeORM queries, Firebase auth, Docker, config
-- `rest-api-reference` — route definitions, status codes, Axios, Zod validation, middleware
-- `logging-reference` — Pino setup, child loggers, koa-pino-logger, redaction
-- `testing-reference` — Vitest mocking, time faking, module mocking, coverage config
-- `architecture` - project structure, design patterns, service organization
-- `typescript` - TypeScript patterns, utility types, advanced types
-- `database-typeorm-config` - TypeORM DataSource setup, migrations, naming strategies, test DB config
-- `database-typeorm-migrations` - TypeORM migration patterns, generating and running migrations, best practices
-- `firebase-auth-basics` - Firebase Auth integration patterns, token verification, error handling
+Project rules in @.claude/rules are **automatically loaded** — do not repeat them here.
+Refer to CLAUDE.md for tech stack details (Next.js 16+, Prisma, NextAuth, Vitest, Zod, Pino).
 
 ## Steps to Execute
 
@@ -57,7 +35,7 @@ Analyze considering:
 - Main objectives of the task
 - How the task fits into the project context
 - Alignment with project rules and standards
-- Which layers are involved (TypeORM entities, services, Koa routes, middleware, tests)
+- Which layers are involved (Prisma models, services, Server Actions, React components, tests)
 - Possible solutions or approaches
 
 ### 3. Task Summary (Required)
@@ -77,9 +55,9 @@ Reference Skills to Load: [Which skills to consult for examples]
 ### 4. Approach Plan (Required)
 
 ```
-1. [First step — e.g., update TypeORM entities and generate migration]
+1. [First step — e.g., update Prisma schema and run db push]
 2. [Second step — e.g., create service with business logic]
-3. [Third step — e.g., create Koa route with Zod validation]
+3. [Third step — e.g., create Server Action with Zod validation]
 4. [Additional steps as needed]
 5. [Write tests]
 6. [Run verification commands]
@@ -89,44 +67,8 @@ Reference Skills to Load: [Which skills to consult for examples]
 
 **Begin implementation immediately after the plan.**
 
-Follow these standards for every line of code:
-
-**TypeScript & Code Quality:**
-
-- All code in TypeScript with strict mode
-- `const` over `let`, never `var`, never `any`
-- Functions start with a verb, max 50 lines, max 3 params
-- Early returns over nested conditionals
-- One responsibility per function — mutation OR query
-- Import order: external → internal (`@/`) → relative
-
-**Koa & REST:**
-
-- Koa + @koa/router for all routes
-- Zod schemas for all request validation
-- Consistent response envelope: `{ data, meta? }` and `{ error: { code, message } }`
-- Correct status codes: 200, 400, 401, 403, 404, 422, 500
-- One responsibility per middleware with `await next()`
-- Firebase Auth token verification on protected routes
-
-**TypeORM & Database:**
-
-- TypeORM for all database operations
-- Use `select` or `QueryBuilder` to fetch only needed fields, `leftJoinAndSelect` to avoid N+1
-- Transactions for multi-step operations via `DataSource.transaction()` or `QueryRunner`
-- Run `npx typeorm migration:generate src/migrations/[descriptive-name]` for entity changes
-
-**Logging:**
-
-- Pino only — never `console.log` or `console.error`
-- Data first, message last: `logger.info({ userId }, "User created")`
-- Child loggers for request-scoped context via `ctx.log`
-- Never log sensitive data
-
-**Environment & Config:**
-
-- Never access `process.env` directly — use centralized Zod-validated config
-- Axios with shared instance for external API calls
+Follow ALL project rules in @.claude/rules — they are automatically loaded.
+Refer to CLAUDE.md for the actual tech stack (Next.js, Prisma, NextAuth, shadcn/ui).
 
 <critical>Implement proper solutions — NO workarounds or hacks</critical>
 
@@ -148,27 +90,18 @@ Run all verification commands and ensure they pass:
 npx tsc --noEmit
 
 # Run all tests
-npm test
+pnpm test
 
 # Run tests with coverage (must meet 80% threshold)
-npm run test:coverage
+pnpm run test:coverage
 
-# Check TypeORM migration status (if entities changed)
-npx typeorm migration:show
+# Build (must succeed without errors)
+pnpm build
 ```
 
 <critical>THE TASK IS NOT COMPLETE UNTIL ALL COMMANDS ABOVE PASS</critical>
 
-### 8. Review (Required)
-
-1. Run the review agent @task-reviewer
-2. Fix ALL issues flagged by the reviewer
-3. Re-run verification commands after fixes
-4. Do not finalize the task until the review passes
-
-<critical>You cannot finish the task without a passing review</critical>
-
-### 9. Mark Complete (Required)
+### 8. Mark Complete (Required)
 
 - Mark the task as complete in `tasks.md`
 - Proceed to the next available task

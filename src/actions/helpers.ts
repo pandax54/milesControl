@@ -1,5 +1,3 @@
-'use server';
-
 import { auth } from '@/lib/auth';
 
 export interface ActionResult {

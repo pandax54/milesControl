@@ -78,9 +78,10 @@ For bugs that affect API endpoints:
 
 ### 6. Final Test Execution (Required)
 
-- Run ALL project tests: `npm test`
+- Run ALL project tests: `pnpm test`
 - Verify that ALL pass with 100% success
 - Run type checking: `npx tsc --noEmit`
+- Build: `pnpm build`
 
 <critical>The task is NOT complete if any test fails</critical>
 
