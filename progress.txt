@@ -408,3 +408,25 @@ Changes applied from 3.0_task_review.md:
    project-wide convention established in tasks 2.6–2.11.
 
 All 555 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 3.1 — Passageiro de Primeira Scraper (completed 2026-03-20)
+
+Files created:
+- src/lib/scrapers/passageiro-de-primeira.ts — Concrete scraper extending BaseScraper for the Passageiro de Primeira blog. Parses `article.card-noticia` elements, filters by promotion-relevant categories, extracts metadata (bonus %, discount %, source/destination programs) from Portuguese titles using regex patterns.
+- src/lib/scrapers/passageiro-de-primeira.test.ts — 54 tests covering: extractCategories, isPromotionRelevant (all 6 PROMO_CATEGORIES), classifyPromoType (all PromoType values), extractBonusPercent, extractDiscountPercent, extractPrograms (transfer patterns, reverse patterns, substring deduplication, fallback paths), parseDatetime, and full integration tests through BaseScraper.run().
+
+Key implementation details:
+- Scrapes the main page (`/`) since the `/category/promocoes` path has anti-bot protection
+- Filters articles by 6 promotion-relevant categories: transferência de pontos, compra de pontos, passagens aéreas, compre e pontue, bancos e cartões, programas de fidelidade
+- Deduplicates substring program matches (e.g., "Azul" filtered when "Azul Fidelidade" already matched)
+- Classifies promo types: TRANSFER_BONUS, POINT_PURCHASE, CLUB_SIGNUP, MIXED
+- Extracts source/destination programs using transfer pattern ("Transfira X para Y"), reverse pattern ("bônus da X"), and array-order fallback
+- All extraction helpers are pure functions, individually exported and testable
+
+Review fixes applied:
+1. Simplified constructor to use object spread instead of manual field mapping
+2. Added "why" comment at extractPrograms fallback explaining array-order dependency
+3. Added tests for 0% discount, "compre e pontue" and "programas de fidelidade" categories
+4. Added edge-case tests for fallthrough paths in extractPrograms
+
+All 609 tests pass. TypeScript compiles cleanly. Coverage: 98.1% stmts, 90.86% branches.
