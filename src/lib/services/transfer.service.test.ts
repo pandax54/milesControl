@@ -29,6 +29,7 @@ import {
   updateTransfer,
   deleteTransfer,
   calculateCostPerMilheiro,
+  getUserAverageCostPerMilheiro,
   TransferNotFoundError,
 } from './transfer.service';
 
@@ -318,5 +319,103 @@ describe('deleteTransfer', () => {
     expect(mockFindFirst).toHaveBeenCalledWith({
       where: { id: 'transfer-1', userId: 'other-user' },
     });
+  });
+});
+
+describe('getUserAverageCostPerMilheiro', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should calculate weighted average cost per milheiro from transfer history', async () => {
+    mockFindMany.mockResolvedValue([
+      { totalCost: new Prisma.Decimal(280), milesReceived: 19000 },
+      { totalCost: new Prisma.Decimal(300), milesReceived: 18000 },
+    ] as TransferLog[]);
+
+    const result = await getUserAverageCostPerMilheiro(USER_ID);
+
+    // totalCost = 280 + 300 = 580, totalMiles = 19000 + 18000 = 37000
+    // avgCPM = 580 / (37000 / 1000) = 580 / 37 = 15.675...
+    expect(result).toBeCloseTo(15.68, 1);
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: {
+        userId: USER_ID,
+        totalCost: { not: null },
+        costPerMilheiro: { not: null },
+        milesReceived: { gt: 0 },
+      },
+      select: { totalCost: true, milesReceived: true },
+    });
+  });
+
+  it('should return null when no qualifying transfers exist', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    const result = await getUserAverageCostPerMilheiro(USER_ID);
+
+    expect(result).toBeNull();
+  });
+
+  it('should filter by destination program when provided', async () => {
+    mockFindMany.mockResolvedValue([
+      { totalCost: new Prisma.Decimal(280), milesReceived: 19000 },
+    ] as TransferLog[]);
+
+    await getUserAverageCostPerMilheiro(USER_ID, 'Smiles');
+
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: {
+        userId: USER_ID,
+        totalCost: { not: null },
+        costPerMilheiro: { not: null },
+        milesReceived: { gt: 0 },
+        destProgramName: 'Smiles',
+      },
+      select: { totalCost: true, milesReceived: true },
+    });
+  });
+
+  it('should not include destProgramName filter when program is undefined', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    await getUserAverageCostPerMilheiro(USER_ID);
+
+    const calledWith = mockFindMany.mock.calls[0][0] as { where: Record<string, unknown> };
+    expect(calledWith.where).not.toHaveProperty('destProgramName');
+  });
+
+  it('should return null when total miles sum is zero', async () => {
+    mockFindMany.mockResolvedValue([
+      { totalCost: new Prisma.Decimal(100), milesReceived: 0 },
+    ] as TransferLog[]);
+
+    const result = await getUserAverageCostPerMilheiro(USER_ID);
+
+    expect(result).toBeNull();
+  });
+
+  it('should weight by miles received (larger transfers count more)', async () => {
+    mockFindMany.mockResolvedValue([
+      { totalCost: new Prisma.Decimal(100), milesReceived: 10000 },  // R$10/k
+      { totalCost: new Prisma.Decimal(1400), milesReceived: 100000 }, // R$14/k
+    ] as TransferLog[]);
+
+    const result = await getUserAverageCostPerMilheiro(USER_ID);
+
+    // Weighted: (100 + 1400) / ((10000 + 100000) / 1000) = 1500 / 110 = 13.636...
+    // Closer to R$14/k because the larger transfer dominates
+    expect(result).toBeCloseTo(13.64, 1);
+  });
+
+  it('should round result to 2 decimal places', async () => {
+    mockFindMany.mockResolvedValue([
+      { totalCost: new Prisma.Decimal(100), milesReceived: 7777 },
+    ] as TransferLog[]);
+
+    const result = await getUserAverageCostPerMilheiro(USER_ID);
+
+    // 100 / (7777/1000) = 100/7.777 = 12.858...
+    expect(result).toBe(12.86);
   });
 });

@@ -17,6 +17,7 @@ import {
   calculateCostPerMilheiro,
   ratePromotion,
   compareScenarios,
+  computeRedemptionAdvisor,
   InsufficientScenariosError,
   TooManyScenariosError,
   PRESET_SCENARIOS,
@@ -454,5 +455,175 @@ describe('PRESET_SCENARIOS', () => {
   it('should have unique names', () => {
     const names = PRESET_SCENARIOS.map((p) => p.name);
     expect(new Set(names).size).toBe(names.length);
+  });
+});
+
+// ==================== computeRedemptionAdvisor ====================
+
+describe('computeRedemptionAdvisor', () => {
+  it('should calculate redemption value for a flight', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesValuePerK = (3500 - 120) / 35 = 96.57
+    expect(result.milesValuePerK).toBeCloseTo(96.57, 1);
+    // equivalentCashCost = 14 * 35 = 490
+    expect(result.equivalentCashCost).toBe(490);
+    // cashSavings = 3500 - 490 - 120 = 2890
+    expect(result.cashSavings).toBe(2890);
+    expect(result.rating).toBe('EXCELLENT');
+    expect(result.isUsingPersonalData).toBe(true);
+    expect(result.userAvgCostPerMilheiro).toBe(14);
+    expect(result.recommendation).toContain('Use miles');
+    expect(result.recommendation).toContain('your cost history');
+  });
+
+  it('should use market average when user has no cost history', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    // Falls back to R$15/k market average
+    expect(result.userAvgCostPerMilheiro).toBe(15);
+    expect(result.isUsingPersonalData).toBe(false);
+    // equivalentCashCost = 15 * 35 = 525
+    expect(result.equivalentCashCost).toBe(525);
+    // cashSavings = 3500 - 525 - 120 = 2855
+    expect(result.cashSavings).toBe(2855);
+    expect(result.recommendation).toContain('market average');
+  });
+
+  it('should recommend paying cash when miles cost more', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 800,
+      milesRequired: 50000,
+      taxesBRL: 80,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 18,
+    });
+
+    // milesValuePerK = (800 - 80) / 50 = 14.4
+    expect(result.milesValuePerK).toBeCloseTo(14.4, 1);
+    // equivalentCashCost = 18 * 50 = 900
+    expect(result.equivalentCashCost).toBe(900);
+    // cashSavings = 800 - 900 - 80 = -180 (negative = pay cash)
+    expect(result.cashSavings).toBe(-180);
+    expect(result.recommendation).toContain('Pay cash');
+  });
+
+  it('should handle break-even scenario', () => {
+    // cashSavings = cashPrice - equivalentCashCost - taxes = 0
+    // cashPrice = 1000, taxes = 0, equivalentCashCost = 1000
+    // equivalentCashCost = avgCost * milheiros => avgCost = 1000 / 10 = 100
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 1000,
+      milesRequired: 10000,
+      taxesBRL: 0,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 100,
+    });
+
+    expect(result.cashSavings).toBe(0);
+    expect(result.recommendation).toContain('Break even');
+  });
+
+  it('should rate high-value redemptions as EXCELLENT', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 18000,
+      milesRequired: 90000,
+      taxesBRL: 850,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesValuePerK = (18000 - 850) / 90 = 190.56
+    expect(result.milesValuePerK).toBeCloseTo(190.56, 1);
+    expect(result.rating).toBe('EXCELLENT');
+  });
+
+  it('should rate low-value redemptions as AVOID', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 500,
+      milesRequired: 50000,
+      taxesBRL: 100,
+      program: 'Azul Fidelidade',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesValuePerK = (500 - 100) / 50 = 8
+    expect(result.milesValuePerK).toBeCloseTo(8, 0);
+    expect(result.rating).toBe('AVOID');
+  });
+
+  it('should rate R$30-60/k as GOOD', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 2000,
+      milesRequired: 50000,
+      taxesBRL: 0,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesValuePerK = 2000 / 50 = 40
+    expect(result.milesValuePerK).toBe(40);
+    expect(result.rating).toBe('GOOD');
+  });
+
+  it('should rate R$15-30/k as ACCEPTABLE', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 1000,
+      milesRequired: 50000,
+      taxesBRL: 0,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesValuePerK = 1000 / 50 = 20
+    expect(result.milesValuePerK).toBe(20);
+    expect(result.rating).toBe('ACCEPTABLE');
+  });
+
+  it('should handle zero miles as AVOID with zero value', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 3500,
+      milesRequired: 1,
+      taxesBRL: 0,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    // milesRequired=1, milheiros=0.001, milesValuePerK = 3500 / 0.001 = 3,500,000
+    expect(result.milesValuePerK).toBeGreaterThan(0);
+    expect(result.rating).toBe('EXCELLENT');
+  });
+
+  it('should round output values to 2 decimal places', () => {
+    const result = computeRedemptionAdvisor({
+      cashPriceBRL: 1234,
+      milesRequired: 33333,
+      taxesBRL: 56.78,
+      program: 'Latam Pass',
+      userAvgCostPerMilheiro: 13.37,
+    });
+
+    // Verify rounding — all values should have at most 2 decimal places
+    const decimalPlaces = (n: number) => {
+      const str = n.toString();
+      const idx = str.indexOf('.');
+      return idx === -1 ? 0 : str.length - idx - 1;
+    };
+
+    expect(decimalPlaces(result.milesValuePerK)).toBeLessThanOrEqual(2);
+    expect(decimalPlaces(result.equivalentCashCost)).toBeLessThanOrEqual(2);
+    expect(decimalPlaces(result.cashSavings)).toBeLessThanOrEqual(2);
+    expect(decimalPlaces(result.userAvgCostPerMilheiro)).toBeLessThanOrEqual(2);
   });
 });

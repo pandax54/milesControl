@@ -1,20 +1,26 @@
 'use server';
 
+import { auth } from '@/lib/auth';
 import { logger } from '@/lib/logger';
 import {
   calculatorInputSchema,
   compareInputSchema,
+  redemptionAdvisorInputSchema,
   type CalculatorInput,
   type CompareInput,
+  type RedemptionAdvisorInput,
 } from '@/lib/validators/cost-calculator.schema';
 import {
   calculateCostPerMilheiro,
   compareScenarios,
+  computeRedemptionAdvisor,
   InsufficientScenariosError,
   TooManyScenariosError,
   type CostCalculation,
+  type RedemptionAdvisorResult,
   type ScenarioComparison,
 } from '@/lib/services/cost-calculator.service';
+import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
 
 interface CalculateResult {
   success: boolean;
@@ -61,5 +67,47 @@ export async function compareScenariosAction(input: CompareInput): Promise<Compa
     }
     logger.error({ err: error }, 'Failed to compare scenarios');
     return { success: false, error: 'Comparison failed. Please try again.' };
+  }
+}
+
+interface RedemptionResult {
+  success: boolean;
+  data?: RedemptionAdvisorResult;
+  error?: string;
+}
+
+/**
+ * Server action for the Miles Value Advisor (Redemption Advisor).
+ * Fetches user's actual average cost-per-milheiro from transfer history,
+ * then calculates redemption value for a flight.
+ *
+ * PRD F3.6-F3.7: Uses user's personal cost history, not generic averages.
+ */
+export async function computeRedemptionAdvisorAction(
+  input: RedemptionAdvisorInput,
+): Promise<RedemptionResult> {
+  const parsed = redemptionAdvisorInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: 'Invalid input' };
+  }
+
+  try {
+    const session = await auth();
+    let userAvgCost = parsed.data.userAvgCostPerMilheiro;
+
+    // If user is authenticated and didn't provide a manual override, fetch from history
+    if (userAvgCost == null && session?.user?.id) {
+      userAvgCost = (await getUserAverageCostPerMilheiro(session.user.id, parsed.data.program)) ?? undefined;
+    }
+
+    const result = computeRedemptionAdvisor({
+      ...parsed.data,
+      userAvgCostPerMilheiro: userAvgCost,
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to compute redemption advisor');
+    return { success: false, error: 'Redemption calculation failed. Please try again.' };
   }
 }

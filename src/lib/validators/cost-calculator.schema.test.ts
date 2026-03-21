@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculatorInputSchema, compareInputSchema } from './cost-calculator.schema';
+import { calculatorInputSchema, compareInputSchema, redemptionAdvisorInputSchema } from './cost-calculator.schema';
 
 describe('calculatorInputSchema', () => {
   it('should accept valid input with required fields', () => {
@@ -179,6 +179,115 @@ describe('compareInputSchema', () => {
       scenarios: [validScenario, { purchasePricePerPoint: -1, quantity: 0 }],
     });
 
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('redemptionAdvisorInputSchema', () => {
+  it('should accept valid input with required fields', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 0,
+      program: 'Smiles',
+    });
+  });
+
+  it('should accept valid input with all fields', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.userAvgCostPerMilheiro).toBe(14);
+  });
+
+  it('should default taxesBRL to 0 when not provided', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.taxesBRL).toBe(0);
+  });
+
+  it('should reject negative cashPriceBRL', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: -100,
+      milesRequired: 35000,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject milesRequired less than 1', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 0,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject non-integer milesRequired', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000.5,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject empty program', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      program: '',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject negative taxes', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: -50,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject negative userAvgCostPerMilheiro', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: -5,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject missing required fields', () => {
+    const result = redemptionAdvisorInputSchema.safeParse({});
     expect(result.success).toBe(false);
   });
 });

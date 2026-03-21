@@ -654,3 +654,36 @@ Changes applied from 3.7_task_review.md:
    `calculator-form.tsx`. Only `scenario.id` is used for keys and handlers.
 
 All 838 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
+
+## Task 3.8 — Miles Value Advisor (Redemption Advisor) (completed 2026-03-21)
+
+Files created:
+- src/components/dashboard/redemption-advisor-form.tsx — Full-page form with preset flights, program select, optional manual cost override, result card with rating/savings/recommendation, compact embed variant
+- tasks/prd-milescontrol/3.8_task_review.md — Review artifact (APPROVED WITH OBSERVATIONS)
+
+Files modified:
+- src/lib/validators/cost-calculator.schema.ts — Added redemptionAdvisorInputSchema with Zod validation (cashPriceBRL, milesRequired, taxesBRL, program, optional userAvgCostPerMilheiro)
+- src/lib/validators/cost-calculator.schema.test.ts — Added 9 tests for redemptionAdvisorInputSchema
+- src/lib/services/cost-calculator.service.ts — Added computeRedemptionAdvisor, rateRedemptionValue, buildRecommendation, RedemptionAdvisorResult interface, redemption threshold constants
+- src/lib/services/cost-calculator.service.test.ts — Added 10 tests for computeRedemptionAdvisor (savings, pay-cash, break-even, ratings, rounding)
+- src/lib/services/transfer.service.ts — Added getUserAverageCostPerMilheiro (weighted average from transfer history, filtered by program), POINTS_PER_MILHEIRO constant, Prisma.TransferLogWhereInput typing
+- src/lib/services/transfer.service.test.ts — Added 7 tests for getUserAverageCostPerMilheiro (weighted avg, no history, program filter, rounding)
+- src/actions/calculator.ts — Added computeRedemptionAdvisorAction server action (auth check, auto-fetch user avg cost from history, manual override support)
+- src/actions/calculator.test.ts — Added 8 tests for computeRedemptionAdvisorAction (auth flows, validation, error handling)
+- src/app/(dashboard)/calculator/page.tsx — Integrated RedemptionAdvisorForm below existing calculator with separator
+
+Key implementation details:
+- PRD F3.6-F3.7: Uses user's ACTUAL transfer history average, not generic market data
+- getUserAverageCostPerMilheiro uses weighted averaging (by miles received) — larger transfers count more
+- Server action checks auth, fetches personal avg cost, falls back to R$15/k market average
+- Manual override field lets user specify their own cost basis, skipping DB lookup
+- Redemption thresholds: EXCELLENT (>R$60/k), GOOD (R$30-60/k), ACCEPTABLE (R$15-30/k), AVOID (<R$15/k)
+- Preset flights: GRU→MIA Economy, GRU→LIS Business, GRU→EZE Economy, VCP→SSA Economy
+- CompactRedemptionResult component for embedding in future flight result cards (F4.10)
+
+Review observations (all non-blocking, applied where applicable):
+- Extracted REDEMPTION_THRESHOLD_EXCELLENT/GOOD/ACCEPTABLE as named constants
+- Used Prisma.TransferLogWhereInput instead of Record<string, unknown>
+- Added POINTS_PER_MILHEIRO constant in transfer.service.ts
+
+All 873 tests pass. TypeScript compiles cleanly. Coverage: 98.46% stmts.

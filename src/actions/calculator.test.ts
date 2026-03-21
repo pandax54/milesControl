@@ -9,9 +9,14 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn(),
+}));
+
 vi.mock('@/lib/services/cost-calculator.service', () => ({
   calculateCostPerMilheiro: vi.fn(),
   compareScenarios: vi.fn(),
+  computeRedemptionAdvisor: vi.fn(),
   InsufficientScenariosError: class extends Error {
     constructor(count: number) {
       super(`At least 2 scenarios are required for comparison, received ${count}`);
@@ -26,18 +31,28 @@ vi.mock('@/lib/services/cost-calculator.service', () => ({
   },
 }));
 
+vi.mock('@/lib/services/transfer.service', () => ({
+  getUserAverageCostPerMilheiro: vi.fn(),
+}));
+
 import {
   calculateCostPerMilheiro,
   compareScenarios,
+  computeRedemptionAdvisor,
   InsufficientScenariosError,
   TooManyScenariosError,
 } from '@/lib/services/cost-calculator.service';
-import { calculateCostPerMilheiroAction, compareScenariosAction } from './calculator';
-import type { CostCalculation, ScenarioComparison } from '@/lib/services/cost-calculator.service';
+import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
+import { auth } from '@/lib/auth';
+import { calculateCostPerMilheiroAction, compareScenariosAction, computeRedemptionAdvisorAction } from './calculator';
+import type { CostCalculation, ScenarioComparison, RedemptionAdvisorResult } from '@/lib/services/cost-calculator.service';
 import type { CalculatorInput } from '@/lib/validators/cost-calculator.schema';
 
 const mockCalculate = vi.mocked(calculateCostPerMilheiro);
 const mockCompare = vi.mocked(compareScenarios);
+const mockRedemption = vi.mocked(computeRedemptionAdvisor);
+const mockGetUserAvgCost = vi.mocked(getUserAverageCostPerMilheiro);
+const mockAuth = vi.mocked(auth);
 
 function buildCalculation(overrides?: Partial<CostCalculation>): CostCalculation {
   return {
@@ -239,5 +254,166 @@ describe('compareScenariosAction', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Invalid input. Provide 2-3 scenarios.');
+  });
+});
+
+// ==================== computeRedemptionAdvisorAction ====================
+
+function buildRedemptionResult(overrides?: Partial<RedemptionAdvisorResult>): RedemptionAdvisorResult {
+  return {
+    milesValuePerK: 96.57,
+    equivalentCashCost: 490,
+    cashSavings: 2890,
+    rating: 'EXCELLENT',
+    recommendation: 'Use miles — you save R$2890.00 based on your cost history (R$14.00/k). Redemption value: R$96.57/k.',
+    userAvgCostPerMilheiro: 14,
+    isUsingPersonalData: true,
+    ...overrides,
+  };
+}
+
+describe('computeRedemptionAdvisorAction', () => {
+  it('should return redemption result for valid input with user cost override', async () => {
+    const redemptionResult = buildRedemptionResult();
+    mockRedemption.mockReturnValue(redemptionResult);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual(redemptionResult);
+    expect(mockRedemption).toHaveBeenCalledWith({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+    // Should NOT fetch from transfer history when user provides manual override
+    expect(mockGetUserAvgCost).not.toHaveBeenCalled();
+  });
+
+  it('should fetch user avg cost from transfer history when not provided', async () => {
+    const redemptionResult = buildRedemptionResult();
+    mockRedemption.mockReturnValue(redemptionResult);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetUserAvgCost.mockResolvedValue(13.5);
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockGetUserAvgCost).toHaveBeenCalledWith('user-1', 'Smiles');
+    expect(mockRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ userAvgCostPerMilheiro: 13.5 }),
+    );
+  });
+
+  it('should use undefined avg cost when user has no history', async () => {
+    const redemptionResult = buildRedemptionResult({ isUsingPersonalData: false });
+    mockRedemption.mockReturnValue(redemptionResult);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockGetUserAvgCost.mockResolvedValue(null);
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ userAvgCostPerMilheiro: undefined }),
+    );
+  });
+
+  it('should skip transfer history fetch when user is not authenticated', async () => {
+    const redemptionResult = buildRedemptionResult({ isUsingPersonalData: false });
+    mockRedemption.mockReturnValue(redemptionResult);
+    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockGetUserAvgCost).not.toHaveBeenCalled();
+    expect(mockRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ userAvgCostPerMilheiro: undefined }),
+    );
+  });
+
+  it('should return error for invalid input', async () => {
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: -100,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Invalid input');
+    expect(mockRedemption).not.toHaveBeenCalled();
+  });
+
+  it('should return error for empty program', async () => {
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: '',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Invalid input');
+  });
+
+  it('should return error when service throws', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockRedemption.mockImplementation(() => {
+      throw new Error('Unexpected error');
+    });
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Redemption calculation failed. Please try again.');
+  });
+
+  it('should default taxesBRL to 0 when not provided', async () => {
+    const redemptionResult = buildRedemptionResult();
+    mockRedemption.mockReturnValue(redemptionResult);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+
+    await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      program: 'Smiles',
+      userAvgCostPerMilheiro: 14,
+    } as Parameters<typeof computeRedemptionAdvisorAction>[0]);
+
+    expect(mockRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ taxesBRL: 0 }),
+    );
   });
 });
