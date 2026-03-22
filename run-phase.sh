@@ -86,7 +86,7 @@ review_passed() {
   local task_id="$1"
   local review_file="${FEATURE_DIR}/${task_id}_task_review.md"
   [[ -f "$review_file" ]] \
-    && grep -qiE "status:\s*(approved|approved with observations)" "$review_file" 2>/dev/null
+    && grep -qiE "(\*\*)?status(\*\*)?:\s*(\*\*)?(approved|approved with observations)" "$review_file" 2>/dev/null
 }
 
 run_claude() {
@@ -116,7 +116,8 @@ extract_phase_tasks() {
   local out="${LOG_DIR}/phase_${phase}_tasks.txt"
   # Extract overview + current phase block
   sed -n '1,/^### Phase/p' "${FEATURE_DIR}/tasks.md" > "$out"
-  sed -n "/^### Phase ${phase}:/,/^### Phase/p" "${FEATURE_DIR}/tasks.md" | head -n -1 >> "$out"
+  # macOS sed: remove last line instead of GNU head -n -1
+  sed -n "/^### Phase ${phase}:/,/^### Phase/p" "${FEATURE_DIR}/tasks.md" | sed '$ d' >> "$out"
   echo "$out"
 }
 
