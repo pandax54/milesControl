@@ -52,7 +52,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 4.2 Telegram bot — Setup, webhook, commands (/start, /alerts, /promos, /calc), chat ID registration
 - [x] 4.3 Email notifications — Resend: alert emails, weekly digest, balance change digest (from 2.9)
 - [x] 4.4 In-app notification center — List, read/unread, badge in nav
-- [ ] 4.5 Web push notifications
+- [x] 4.5 Web push notifications
 
 ### Phase 5: Flight Search
 

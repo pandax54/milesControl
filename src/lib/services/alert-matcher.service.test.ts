@@ -34,8 +34,13 @@ vi.mock('./email-notification.service', () => ({
   sendEmailAlerts: vi.fn(),
 }));
 
+vi.mock('./push-notification.service', () => ({
+  sendWebPushAlerts: vi.fn(),
+}));
+
 import { prisma } from '@/lib/prisma';
 import { sendEmailAlerts } from './email-notification.service';
+import { sendWebPushAlerts } from './push-notification.service';
 import {
   doesPromotionMatchAlert,
   matchPromotionAgainstAlerts,
@@ -46,6 +51,7 @@ import {
 } from './alert-matcher.service';
 
 const mockSendEmailAlerts = vi.mocked(sendEmailAlerts);
+const mockSendWebPushAlerts = vi.mocked(sendWebPushAlerts);
 
 // ==================== Factories ====================
 
@@ -607,12 +613,13 @@ describe('processNewPromotions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSendEmailAlerts.mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0 });
+    mockSendWebPushAlerts.mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0, expiredRemoved: 0 });
   });
 
   it('should return zeroed result when promotions list is empty', async () => {
     const result = await processNewPromotions([]);
 
-    expect(result).toEqual({ promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 });
+    expect(result).toEqual({ promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0, webPushSent: 0 });
     expect(mockFindMany).not.toHaveBeenCalled();
   });
 

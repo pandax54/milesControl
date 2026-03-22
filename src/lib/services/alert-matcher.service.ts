@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { sendEmailAlerts } from './email-notification.service';
+import { sendWebPushAlerts } from './push-notification.service';
 import type { AlertConfig, Promotion, AlertChannel } from '@/generated/prisma/client';
 import type { PromotionWithPrograms } from './promotion.service';
 
@@ -26,6 +27,7 @@ export interface ProcessNewPromotionsResult {
   readonly totalMatches: number;
   readonly notificationsCreated: number;
   readonly emailsSent: number;
+  readonly webPushSent: number;
 }
 
 // ==================== Constants ====================
@@ -234,7 +236,7 @@ export async function processNewPromotions(
   promotions: readonly PromotionWithPrograms[],
 ): Promise<ProcessNewPromotionsResult> {
   if (promotions.length === 0) {
-    return { promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 };
+    return { promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0, webPushSent: 0 };
   }
 
   const activeAlertConfigs = await prisma.alertConfig.findMany({
@@ -246,7 +248,7 @@ export async function processNewPromotions(
       { promotionCount: promotions.length },
       'No active alert configs — skipping alert matching',
     );
-    return { promotionsProcessed: promotions.length, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 };
+    return { promotionsProcessed: promotions.length, totalMatches: 0, notificationsCreated: 0, emailsSent: 0, webPushSent: 0 };
   }
 
   const allMatches: AlertMatchResult[] = [];
@@ -258,6 +260,7 @@ export async function processNewPromotions(
 
   let notificationsCreated = 0;
   let emailsSent = 0;
+  let webPushSent = 0;
 
   if (allMatches.length > 0) {
     try {
@@ -273,12 +276,20 @@ export async function processNewPromotions(
       logger.error({ err: error, matchCount: allMatches.length }, 'Failed to send email alerts');
     }
 
+    try {
+      const webPushResult = await sendWebPushAlerts(allMatches);
+      webPushSent = webPushResult.succeeded;
+    } catch (error) {
+      logger.error({ err: error, matchCount: allMatches.length }, 'Failed to send web push alerts');
+    }
+
     logger.info(
       {
         promotionsProcessed: promotions.length,
         totalMatches: allMatches.length,
         notificationsCreated,
         emailsSent,
+        webPushSent,
       },
       'Alert matching completed',
     );
@@ -289,5 +300,6 @@ export async function processNewPromotions(
     totalMatches: allMatches.length,
     notificationsCreated,
     emailsSent,
+    webPushSent,
   };
 }
