@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { sendEmailAlerts } from './email-notification.service';
 import type { AlertConfig, Promotion, AlertChannel } from '@/generated/prisma/client';
 import type { PromotionWithPrograms } from './promotion.service';
 
@@ -24,6 +25,7 @@ export interface ProcessNewPromotionsResult {
   readonly promotionsProcessed: number;
   readonly totalMatches: number;
   readonly notificationsCreated: number;
+  readonly emailsSent: number;
 }
 
 // ==================== Constants ====================
@@ -232,7 +234,7 @@ export async function processNewPromotions(
   promotions: readonly PromotionWithPrograms[],
 ): Promise<ProcessNewPromotionsResult> {
   if (promotions.length === 0) {
-    return { promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0 };
+    return { promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 };
   }
 
   const activeAlertConfigs = await prisma.alertConfig.findMany({
@@ -244,7 +246,7 @@ export async function processNewPromotions(
       { promotionCount: promotions.length },
       'No active alert configs — skipping alert matching',
     );
-    return { promotionsProcessed: promotions.length, totalMatches: 0, notificationsCreated: 0 };
+    return { promotionsProcessed: promotions.length, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 };
   }
 
   const allMatches: AlertMatchResult[] = [];
@@ -255,12 +257,20 @@ export async function processNewPromotions(
   }
 
   let notificationsCreated = 0;
+  let emailsSent = 0;
 
   if (allMatches.length > 0) {
     try {
       notificationsCreated = await createInAppNotifications(allMatches);
     } catch (error) {
-      logger.error({ err: error, matchCount: allMatches.length }, 'Failed to create notifications');
+      logger.error({ err: error, matchCount: allMatches.length }, 'Failed to create in-app notifications');
+    }
+
+    try {
+      const emailResult = await sendEmailAlerts(allMatches);
+      emailsSent = emailResult.succeeded;
+    } catch (error) {
+      logger.error({ err: error, matchCount: allMatches.length }, 'Failed to send email alerts');
     }
 
     logger.info(
@@ -268,6 +278,7 @@ export async function processNewPromotions(
         promotionsProcessed: promotions.length,
         totalMatches: allMatches.length,
         notificationsCreated,
+        emailsSent,
       },
       'Alert matching completed',
     );
@@ -277,5 +288,6 @@ export async function processNewPromotions(
     promotionsProcessed: promotions.length,
     totalMatches: allMatches.length,
     notificationsCreated,
+    emailsSent,
   };
 }

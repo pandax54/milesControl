@@ -100,6 +100,7 @@ function buildMockAlertMatchResult(overrides?: Partial<ProcessNewPromotionsResul
     promotionsProcessed: 1,
     totalMatches: 0,
     notificationsCreated: 0,
+    emailsSent: 0,
     ...overrides,
   };
 }
@@ -271,7 +272,7 @@ describe('runAllScrapers', () => {
 
     expect(mockPromotionFindMany).toHaveBeenCalledOnce();
     expect(mockProcessNewPromotions).toHaveBeenCalledWith([mockNewPromo]);
-    expect(result.alertMatchResult).toEqual({ promotionsProcessed: 1, totalMatches: 2, notificationsCreated: 2 });
+    expect(result.alertMatchResult).toEqual({ promotionsProcessed: 1, totalMatches: 2, notificationsCreated: 2, emailsSent: 0 });
   });
 
   it('should not call processNewPromotions when no new promotions are created', async () => {

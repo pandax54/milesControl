@@ -30,7 +30,12 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+vi.mock('./email-notification.service', () => ({
+  sendEmailAlerts: vi.fn(),
+}));
+
 import { prisma } from '@/lib/prisma';
+import { sendEmailAlerts } from './email-notification.service';
 import {
   doesPromotionMatchAlert,
   matchPromotionAgainstAlerts,
@@ -39,6 +44,8 @@ import {
   createInAppNotifications,
   processNewPromotions,
 } from './alert-matcher.service';
+
+const mockSendEmailAlerts = vi.mocked(sendEmailAlerts);
 
 // ==================== Factories ====================
 
@@ -597,12 +604,15 @@ describe('processNewPromotions', () => {
   const mockFindMany = vi.mocked(prisma.alertConfig.findMany);
   const mockCreateMany = vi.mocked(prisma.notification.createMany);
 
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSendEmailAlerts.mockResolvedValue({ attempted: 0, succeeded: 0, failed: 0 });
+  });
 
   it('should return zeroed result when promotions list is empty', async () => {
     const result = await processNewPromotions([]);
 
-    expect(result).toEqual({ promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0 });
+    expect(result).toEqual({ promotionsProcessed: 0, totalMatches: 0, notificationsCreated: 0, emailsSent: 0 });
     expect(mockFindMany).not.toHaveBeenCalled();
   });
 
@@ -615,6 +625,7 @@ describe('processNewPromotions', () => {
     expect(result.promotionsProcessed).toBe(1);
     expect(result.totalMatches).toBe(0);
     expect(result.notificationsCreated).toBe(0);
+    expect(result.emailsSent).toBe(0);
     expect(mockCreateMany).not.toHaveBeenCalled();
   });
 
@@ -685,5 +696,48 @@ describe('processNewPromotions', () => {
     expect(result.promotionsProcessed).toBe(1);
     expect(result.totalMatches).toBe(1);
     expect(result.notificationsCreated).toBe(0);
+  });
+
+  it('should dispatch email alerts for EMAIL channel matches', async () => {
+    const alertConfigs = [
+      buildMockAlertConfig({ id: 'alert-1', userId: 'user-1', channels: ['EMAIL'] as AlertChannel[] }),
+    ];
+    mockFindMany.mockResolvedValue(alertConfigs);
+    mockSendEmailAlerts.mockResolvedValue({ attempted: 1, succeeded: 1, failed: 0 });
+
+    const promotions = [buildPromotionWithPrograms()];
+    const result = await processNewPromotions(promotions);
+
+    expect(mockSendEmailAlerts).toHaveBeenCalledOnce();
+    expect(result.emailsSent).toBe(1);
+  });
+
+  it('should return emailsSent count from sendEmailAlerts result', async () => {
+    const alertConfigs = [
+      buildMockAlertConfig({ id: 'alert-1', userId: 'user-1', channels: ['EMAIL'] as AlertChannel[] }),
+      buildMockAlertConfig({ id: 'alert-2', userId: 'user-2', channels: ['EMAIL'] as AlertChannel[] }),
+    ];
+    mockFindMany.mockResolvedValue(alertConfigs);
+    mockSendEmailAlerts.mockResolvedValue({ attempted: 2, succeeded: 2, failed: 0 });
+
+    const promotions = [buildPromotionWithPrograms()];
+    const result = await processNewPromotions(promotions);
+
+    expect(result.emailsSent).toBe(2);
+  });
+
+  it('should handle sendEmailAlerts error gracefully and still return result', async () => {
+    const alertConfigs = [
+      buildMockAlertConfig({ id: 'alert-1', userId: 'user-1', channels: ['EMAIL'] as AlertChannel[] }),
+    ];
+    mockFindMany.mockResolvedValue(alertConfigs);
+    mockSendEmailAlerts.mockRejectedValue(new Error('Email service error'));
+
+    const promotions = [buildPromotionWithPrograms()];
+    const result = await processNewPromotions(promotions);
+
+    expect(result.promotionsProcessed).toBe(1);
+    expect(result.totalMatches).toBe(1);
+    expect(result.emailsSent).toBe(0);
   });
 });
