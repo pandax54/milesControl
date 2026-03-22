@@ -83,7 +83,9 @@ export async function sendPushNotification(
     const statusCode = (error as { statusCode?: number }).statusCode;
 
     if (statusCode === 410 || statusCode === 404) {
-      // Subscription expired or invalid — callers should remove it
+      // Per Web Push Protocol (RFC 8030 §8.1): 410 Gone means the subscription
+      // has been permanently removed; 404 means it was never valid or has expired.
+      // In both cases the endpoint is no longer deliverable — callers must remove it.
       logger.info(
         { endpoint: subscription.endpoint.slice(0, 50), statusCode },
         'Push subscription expired or gone',
