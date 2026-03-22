@@ -132,3 +132,35 @@ describe('sendPushNotification', () => {
     expect(parsed.tag).toBe('promo-1');
   });
 });
+
+// ==================== ensureVapidConfigured — missing keys ====================
+
+describe('ensureVapidConfigured — missing keys', () => {
+  it('should return false when VAPID keys are not configured', async () => {
+    vi.resetModules();
+
+    vi.doMock('@/lib/env', () => ({
+      env: {
+        VAPID_PUBLIC_KEY: undefined,
+        VAPID_PRIVATE_KEY: undefined,
+        VAPID_EMAIL: 'mailto:admin@milescontrol.com',
+      },
+    }));
+
+    vi.doMock('@/lib/logger', () => ({
+      logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+    }));
+
+    vi.doMock('web-push', () => ({
+      default: {
+        setVapidDetails: vi.fn(),
+        sendNotification: vi.fn(),
+      },
+    }));
+
+    const { sendPushNotification: sendPush } = await import('./web-push');
+    const result = await sendPush(buildSubscription(), buildPayload());
+
+    expect(result).toBe(false);
+  });
+});
