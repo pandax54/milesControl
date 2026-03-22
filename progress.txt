@@ -1,36 +1,3 @@
-- src/app/api/cron/scrape-promos/route.test.ts — 6 tests: auth rejection, correct token, 500 on failure, dev bypass, error field mapping
-- src/lib/services/scrape-promos.service.ts — Orchestrates all 4 scrapers sequentially, skips scrapers with 3+ consecutive failures, marks expired promotions, aggregates totals/created/updated/failed/duration
-- src/lib/services/scrape-promos.service.test.ts — 11 tests covering full orchestration, skipping, empty runs, error resilience, aggregation
-- src/lib/scrapers/base-scraper.ts — Added public getter `scraperName` to replace protected `name` bracket-access hack
-- vercel.json — Cron schedule "*/30 * * * *" for /api/cron/scrape-promos
-
-Review fixes applied:
-1. Added `get scraperName()` public getter to BaseScraper — removes `scraper['name'] as string` bracket hack
-2. Fixed test mock for consecutive failure ceiling: changed mock value from 5 to 3 (real DB ceiling from `take: 3`)
-
-All 951 tests pass. TypeScript compiles cleanly.
-
-## Review fixes for Task 3.11 — scrape-promos cron (applied 2026-03-21)
-
-Issues fixed from 3.11_task_review.md:
-
-**Minor #1 — Error envelope alignment (scrape-promos + balance-digest routes)**
-- src/app/api/cron/scrape-promos/route.ts — Changed flat `{ error: string }` to project envelope `{ error: { code, message } }` for both 401 and 500 responses
-- src/app/api/cron/balance-digest/route.ts — Same fix applied (same pre-existing pattern from task 2.9)
-- src/app/api/cron/scrape-promos/route.test.ts — Updated 3 assertions to use `toEqual({ code, message })`
-- src/app/api/cron/balance-digest/route.test.ts — Updated 3 assertions to use `toEqual({ code, message })`
-
-**Minor #2 — Misleading test description/mock value**
-- src/lib/services/scrape-promos.service.test.ts — Changed mock value from 3 → 4 in the "should skip scraper with more than 3 consecutive failures" test so the value matches the title (strictly-above-threshold scenario); skipReason expectation updated to '4 consecutive failures'
-
-All 951 tests pass. TypeScript compiles cleanly. Coverage: 98.46%.
-
-## Task 3.11 — Review Confirmed Approved (2026-03-21)
-
-Review file: tasks/prd-milescontrol/3.11_task_review.md — Status: APPROVED
-
-No critical, major, or minor issues remain. All review findings were resolved in commit dc38003:
-1. Error envelope alignment — both cron routes now return `{ error: { code, message } }` matching project standard
 2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
 
 Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
@@ -111,3 +78,21 @@ Major issue resolved: integrated processNewPromotions() into runAllScrapers() po
 - scrape-promos.service.test.ts — mocked prisma.promotion.findMany + processNewPromotions; 4 new tests covering alert matching trigger, skip when no creates, skip when query empty, graceful failure
 - scrape-promos route.ts — expose alertMatchResult in cron response
 Verification: 1025 tests pass, TypeScript compiles cleanly, coverage thresholds met.
+
+## Task 4.2 — Telegram Bot (completed 2026-03-21)
+
+Files created:
+- src/lib/integrations/telegram.ts — sendMessage, sendAlertNotification, escapeHtml. Native fetch with 3-retry logic and 5s delay. HTML parse mode.
+- src/lib/integrations/telegram.test.ts — 12 tests covering escapeHtml, sendMessage (retry logic, network errors), sendAlertNotification
+- src/lib/services/telegram-notification.service.ts — findUserByChatId (via AlertConfig.telegramChatId), sendTelegramAlerts, getTopPromotionsForBot, getUserAlertConfigs
+- src/lib/services/telegram-notification.service.test.ts — 13 tests covering all service functions
+- src/app/api/webhook/telegram/route.ts — POST handler with CRON_SECRET validation, command routing: /start (show chat ID + instructions), /alerts (list active rules), /promos (top 5 active promos), /calc (cost per milheiro), unknown command fallback
+- src/app/api/webhook/telegram/route.test.ts — 22 tests covering authorization, all 4 commands, edge cases
+
+Key design decisions:
+- telegramChatId stored on AlertConfig (already in schema); user lookup via findFirst on AlertConfig.telegramChatId
+- /start shows user their chat ID to paste into the app UI (no deep-link needed)
+- Webhook secret uses CRON_SECRET header X-Telegram-Bot-Api-Secret-Token
+- Always returns 200 to Telegram to prevent retries on processing errors
+
+Verification: 1067 tests pass, TypeScript compiles cleanly, coverage thresholds met.
