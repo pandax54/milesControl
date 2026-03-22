@@ -1,7 +1,9 @@
 'use client';
 
 import { Bell, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,10 +15,13 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { DarkModeToggle } from '@/components/dark-mode-toggle';
 import { Separator } from '@/components/ui/separator';
 
+const MAX_BADGE_COUNT = 99;
+
 interface TopNavProps {
   userName?: string | null;
   userImage?: string | null;
   userEmail?: string;
+  unreadCount?: number;
 }
 
 function getInitials(name?: string | null): string {
@@ -29,7 +34,10 @@ function getInitials(name?: string | null): string {
     .slice(0, 2);
 }
 
-export function TopNav({ userName, userImage, userEmail }: TopNavProps) {
+export function TopNav({ userName, userImage, userEmail, unreadCount = 0 }: TopNavProps) {
+  const badgeCount = Math.min(unreadCount, MAX_BADGE_COUNT);
+  const badgeLabel = badgeCount > MAX_BADGE_COUNT ? `${MAX_BADGE_COUNT}+` : String(badgeCount);
+
   return (
     <header className="flex h-14 items-center gap-2 border-b px-4">
       <SidebarTrigger />
@@ -39,9 +47,21 @@ export function TopNav({ userName, userImage, userEmail }: TopNavProps) {
 
       <DarkModeToggle />
 
-      <Button variant="ghost" size="icon" aria-label="Notifications">
+      <Link
+        href="/notifications"
+        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'relative')}
+        aria-label="Notifications"
+      >
         <Bell className="h-4 w-4" />
-      </Button>
+        {badgeCount > 0 && (
+          <span
+            className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground"
+            aria-label={`${badgeCount} unread notifications`}
+          >
+            {badgeLabel}
+          </span>
+        )}
+      </Link>
 
       <DropdownMenu>
         <DropdownMenuTrigger

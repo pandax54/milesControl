@@ -48,6 +48,7 @@ const PROMO_ITEMS = [
 
 const ALERT_ITEMS = [
   { title: 'Alert Rules', href: '/alerts', icon: BellRing },
+  { title: 'Notifications', href: '/notifications', icon: Bell },
 ];
 
 const FLIGHT_ITEMS = [
