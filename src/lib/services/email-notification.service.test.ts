@@ -1,5 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { AlertChannel } from '@/generated/prisma/client';
+import type { AlertChannel, User } from '@/generated/prisma/client';
+
+function buildMockUser(overrides: Partial<{ id: string; email: string }> = {}): User {
+  return {
+    id: 'user-1',
+    email: 'user@example.com',
+    name: null,
+    passwordHash: null,
+    image: null,
+    role: 'USER',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    managedById: null,
+    ...overrides,
+  } as User;
+}
 
 // ==================== Mocks ====================
 
@@ -165,7 +180,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should send email to user for EMAIL channel match', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(true);
 
     const matches = [buildMatch()];
@@ -183,8 +198,8 @@ describe('sendEmailAlerts', () => {
 
   it('should look up user emails in a single batched query', async () => {
     mockFindMany.mockResolvedValue([
-      { id: 'user-1', email: 'user1@example.com' },
-      { id: 'user-2', email: 'user2@example.com' },
+      buildMockUser({ id: 'user-1', email: 'user1@example.com' }),
+      buildMockUser({ id: 'user-2', email: 'user2@example.com' }),
     ]);
     mockSendEmail.mockResolvedValue(true);
 
@@ -202,7 +217,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should deduplicate userIds before querying', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(true);
 
     // Same userId in multiple matches
@@ -220,7 +235,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should count failed when sendEmail returns false', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(false);
 
     const matches = [buildMatch()];
@@ -241,8 +256,8 @@ describe('sendEmailAlerts', () => {
 
   it('should handle mixed success and failure across multiple matches', async () => {
     mockFindMany.mockResolvedValue([
-      { id: 'user-1', email: 'user1@example.com' },
-      { id: 'user-2', email: 'user2@example.com' },
+      buildMockUser({ id: 'user-1', email: 'user1@example.com' }),
+      buildMockUser({ id: 'user-2', email: 'user2@example.com' }),
     ]);
     mockSendEmail
       .mockResolvedValueOnce(true)
@@ -258,7 +273,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should only send emails for EMAIL channel — skip other channels', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(true);
 
     const matches = [
@@ -273,7 +288,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should include promotion title in email subject', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(true);
 
     const matches = [buildMatch({ notificationTitle: '100% bonus: Esfera → Latam Pass' })];
@@ -287,7 +302,7 @@ describe('sendEmailAlerts', () => {
   });
 
   it('should include HTML in sent email', async () => {
-    mockFindMany.mockResolvedValue([{ id: 'user-1', email: 'user@example.com' }]);
+    mockFindMany.mockResolvedValue([buildMockUser()]);
     mockSendEmail.mockResolvedValue(true);
 
     const matches = [buildMatch()];
