@@ -104,6 +104,8 @@ export async function sendEmailAlerts(
     }
 
     const html = buildAlertEmailHtml(match.notificationTitle, match.notificationBody);
+    // Note: If RESEND_API_KEY is not configured, sendEmail returns false.
+    // This allows graceful degradation in environments without email configured.
     const sent = await sendEmail({
       to: userEmail,
       subject: `MilesControl — ${match.notificationTitle}`,

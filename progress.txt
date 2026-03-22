@@ -96,3 +96,9 @@ Key design decisions:
 - Always returns 200 to Telegram to prevent retries on processing errors
 
 Verification: 1067 tests pass, TypeScript compiles cleanly, coverage thresholds met.
+
+## Task 4.3 — Review Fixes (2026-03-22)
+
+Review file: tasks/prd-milescontrol/4.3_task_review.md — Status: APPROVED
+Optional recommendation applied: added inline comment in sendEmailAlerts() noting silent degradation when RESEND_API_KEY is not configured.
+Verification: npx tsc --noEmit PASS, pnpm test PASS (1094 tests), pnpm build PASS, coverage thresholds met.
