@@ -300,6 +300,46 @@ export async function checkWatchlistItemPrices(
   };
 }
 
+// ==================== Cron orchestration ====================
+
+export interface CheckFlightsResult {
+  readonly totalChecked: number;
+  readonly totalAlerts: number;
+  readonly results: WatchlistCheckResult[];
+  readonly durationMs: number;
+}
+
+/**
+ * Runs price checks for all active watchlist items.
+ * Called by the check-flights cron job every 6 hours (PRD F4.6).
+ */
+export async function checkAllActiveWatchlistItems(): Promise<CheckFlightsResult> {
+  const startTime = Date.now();
+  const items = await listActiveWatchlistItems();
+
+  const results: WatchlistCheckResult[] = [];
+
+  for (const item of items) {
+    const result = await checkWatchlistItemPrices(item);
+    results.push(result);
+  }
+
+  const totalAlerts = results.reduce((sum, r) => sum + r.alertsCreated, 0);
+  const durationMs = Date.now() - startTime;
+
+  logger.info(
+    { totalChecked: results.length, totalAlerts, durationMs },
+    'check-flights cron completed',
+  );
+
+  return {
+    totalChecked: results.length,
+    totalAlerts,
+    results,
+    durationMs,
+  };
+}
+
 // ==================== Helpers ====================
 
 function resolveDepartureDate(item: WatchlistItem): string | null {

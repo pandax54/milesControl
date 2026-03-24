@@ -137,3 +137,14 @@ Files created:
 - src/app/(dashboard)/flights/watchlist/page.tsx — RSC route at /flights/watchlist; fetches items server-side
 
 Verification: 1330 tests pass, TypeScript clean, coverage 97.81%, build PASS (/flights/watchlist route visible).
+
+## Task 5.5 — Cron job: check-flights (completed 2026-03-24)
+
+Files created/modified:
+- src/lib/services/flight-watchlist.service.ts — Added checkAllActiveWatchlistItems(): fetches all active watchlist items, runs checkWatchlistItemPrices per item, returns CheckFlightsResult summary (totalChecked, totalAlerts, durationMs, results[])
+- src/lib/services/flight-watchlist.service.test.ts — Added 3 tests for checkAllActiveWatchlistItems (empty list, alert aggregation, durationMs)
+- src/app/api/cron/check-flights/route.ts — GET route handler with CRON_SECRET auth, maxDuration=300, calls checkAllActiveWatchlistItems, returns {data: {totalChecked, totalAlerts, durationMs}}
+- src/app/api/cron/check-flights/route.test.ts — 6 tests: auth validation, success path, zero items, 500 on throw, dev/prod auth behavior
+- vercel.json — Added check-flights cron entry with schedule "0 */6 * * *" (every 6 hours)
+
+Verification: 1340 tests pass, TypeScript clean, coverage 97.83%, build PASS.

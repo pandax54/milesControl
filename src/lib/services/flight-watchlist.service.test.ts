@@ -40,6 +40,7 @@ import {
   toggleWatchlistItem,
   deleteWatchlistItem,
   checkWatchlistItemPrices,
+  checkAllActiveWatchlistItems,
   WatchlistItemNotFoundError,
 } from './flight-watchlist.service';
 import type { FlightSearchResult } from './flight-search.service';
@@ -487,5 +488,61 @@ describe('checkWatchlistItemPrices', () => {
         departureDate: '2027-06-01',
       }),
     );
+  });
+});
+
+describe('checkAllActiveWatchlistItems', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('should return zero totals when no active watchlist items exist', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    const result = await checkAllActiveWatchlistItems();
+
+    expect(result.totalChecked).toBe(0);
+    expect(result.totalAlerts).toBe(0);
+    expect(result.results).toHaveLength(0);
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should check all active items and aggregate alert counts', async () => {
+    const item1 = buildMockWatchlistItem({ id: 'wl-1', targetMilesPrice: 50000, earliestDate: new Date('2027-06-01') });
+    const item2 = buildMockWatchlistItem({ id: 'wl-2', targetMilesPrice: 40000, earliestDate: new Date('2027-07-01') });
+    mockFindMany.mockResolvedValue([item1, item2]);
+
+    const searchWithAlert = buildMockFlightSearchResult({
+      awardFlights: [
+        {
+          airline: 'TAP Air Portugal',
+          milesRequired: 45000,
+          taxes: 300,
+          program: 'Smiles',
+          cabinClass: 'ECONOMY',
+          seatsAvailable: 2,
+          source: 'SEATS_AERO',
+        },
+      ],
+    });
+    const searchNoAlert = buildMockFlightSearchResult({ awardFlights: [] });
+
+    mockSearchFlights
+      .mockResolvedValueOnce(searchWithAlert)
+      .mockResolvedValueOnce(searchNoAlert);
+    mockUpdate.mockResolvedValue(item1);
+    mockNotificationCreate.mockResolvedValue({} as never);
+
+    const result = await checkAllActiveWatchlistItems();
+
+    expect(result.totalChecked).toBe(2);
+    expect(result.totalAlerts).toBe(1);
+    expect(result.results).toHaveLength(2);
+  });
+
+  it('should return durationMs as a non-negative number', async () => {
+    mockFindMany.mockResolvedValue([]);
+
+    const result = await checkAllActiveWatchlistItems();
+
+    expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
 });
