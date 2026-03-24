@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { searchAvailability, SeatsAeroError } from '@/lib/integrations/seats-aero';
+import { searchCashFlights, SerpApiError } from '@/lib/integrations/serp-api';
 import type { FlightSearchParams } from '@/lib/validators/flight-search.schema';
 
 // ==================== Types ====================
@@ -49,8 +50,7 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
 
   const [awardFlights, cashFlights] = await Promise.all([
     fetchAwardFlights(params),
-    // Task 5.2: SerpApi cash flights — returns empty until implemented
-    Promise.resolve<readonly CashFlight[]>([]),
+    fetchCashFlights(params),
   ]);
 
   return {
@@ -59,6 +59,20 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
     awardFlights,
     searchedAt: new Date(),
   };
+}
+
+async function fetchCashFlights(params: FlightSearchParams): Promise<readonly CashFlight[]> {
+  try {
+    return await searchCashFlights(params);
+  } catch (error) {
+    if (error instanceof SerpApiError) {
+      logger.warn({ err: error }, 'SerpApi search failed, returning empty cash flights');
+      return [];
+    }
+
+    logger.error({ err: error }, 'Unexpected error fetching cash flights');
+    throw error;
+  }
 }
 
 async function fetchAwardFlights(params: FlightSearchParams): Promise<readonly AwardFlight[]> {

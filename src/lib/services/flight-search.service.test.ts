@@ -19,13 +19,26 @@ vi.mock('@/lib/integrations/seats-aero', () => ({
   },
 }));
 
+vi.mock('@/lib/integrations/serp-api', () => ({
+  searchCashFlights: vi.fn(),
+  SerpApiError: class SerpApiError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = 'SerpApiError';
+    }
+  },
+}));
+
 import { searchAvailability } from '@/lib/integrations/seats-aero';
 import { SeatsAeroError } from '@/lib/integrations/seats-aero';
+import { searchCashFlights } from '@/lib/integrations/serp-api';
+import { SerpApiError } from '@/lib/integrations/serp-api';
 import { searchFlights } from './flight-search.service';
-import type { AwardFlight } from './flight-search.service';
+import type { AwardFlight, CashFlight } from './flight-search.service';
 import type { FlightSearchParams } from '@/lib/validators/flight-search.schema';
 
 const mockSearchAvailability = vi.mocked(searchAvailability);
+const mockSearchCashFlights = vi.mocked(searchCashFlights);
 
 function buildParams(overrides?: Partial<FlightSearchParams>): FlightSearchParams {
   return {
@@ -51,8 +64,23 @@ function buildAwardFlight(overrides?: Partial<AwardFlight>): AwardFlight {
   };
 }
 
+function buildCashFlight(overrides?: Partial<CashFlight>): CashFlight {
+  return {
+    airline: 'LATAM Airlines',
+    price: 1200,
+    duration: 720,
+    stops: 0,
+    departureTime: '2026-05-01T10:00:00',
+    arrivalTime: '2026-05-01T22:00:00',
+    source: 'GOOGLE_FLIGHTS',
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  mockSearchAvailability.mockResolvedValue([]);
+  mockSearchCashFlights.mockResolvedValue([]);
 });
 
 describe('searchFlights', () => {
@@ -67,8 +95,6 @@ describe('searchFlights', () => {
   });
 
   it('should call Seats.aero with correct params', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
-
     await searchFlights(
       buildParams({ origin: 'GRU', destination: 'CDG', cabinClass: 'BUSINESS' }),
     );
@@ -85,8 +111,6 @@ describe('searchFlights', () => {
   });
 
   it('should use returnDate as endDate when provided', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
-
     await searchFlights(buildParams({ returnDate: '2026-05-10' }));
 
     expect(mockSearchAvailability).toHaveBeenCalledWith(
@@ -98,8 +122,6 @@ describe('searchFlights', () => {
   });
 
   it('should use departureDate as endDate when returnDate is absent', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
-
     await searchFlights(buildParams());
 
     expect(mockSearchAvailability).toHaveBeenCalledWith(
@@ -110,17 +132,51 @@ describe('searchFlights', () => {
     );
   });
 
-  it('should return empty cashFlights (task 5.2 pending)', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
+  it('should return cash flights from SerpApi', async () => {
+    const cashFlight = buildCashFlight();
+    mockSearchCashFlights.mockResolvedValue([cashFlight]);
+
+    const result = await searchFlights(buildParams());
+
+    expect(result.cashFlights).toHaveLength(1);
+    expect(result.cashFlights[0]).toEqual(cashFlight);
+  });
+
+  it('should call SerpApi with the same params', async () => {
+    const params = buildParams({ origin: 'GRU', destination: 'CDG', cabinClass: 'BUSINESS', passengers: 2 });
+
+    await searchFlights(params);
+
+    expect(mockSearchCashFlights).toHaveBeenCalledWith(params);
+  });
+
+  it('should return empty cashFlights when SerpApi fails with SerpApiError', async () => {
+    mockSearchCashFlights.mockRejectedValue(new SerpApiError('API key not configured'));
 
     const result = await searchFlights(buildParams());
 
     expect(result.cashFlights).toHaveLength(0);
   });
 
-  it('should include the search params in the result', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
+  it('should re-throw unexpected errors from SerpApi', async () => {
+    mockSearchCashFlights.mockRejectedValue(new Error('Unexpected SerpApi failure'));
 
+    await expect(searchFlights(buildParams())).rejects.toThrow('Unexpected SerpApi failure');
+  });
+
+  it('should return both cash and award flights together', async () => {
+    const awardFlight = buildAwardFlight();
+    const cashFlight = buildCashFlight();
+    mockSearchAvailability.mockResolvedValue([awardFlight]);
+    mockSearchCashFlights.mockResolvedValue([cashFlight]);
+
+    const result = await searchFlights(buildParams());
+
+    expect(result.awardFlights).toHaveLength(1);
+    expect(result.cashFlights).toHaveLength(1);
+  });
+
+  it('should include the search params in the result', async () => {
     const params = buildParams({ cabinClass: 'BUSINESS', passengers: 2 });
     const result = await searchFlights(params);
 
@@ -129,8 +185,6 @@ describe('searchFlights', () => {
   });
 
   it('should return a searchedAt date', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
-
     const before = new Date();
     const result = await searchFlights(buildParams());
     const after = new Date();
@@ -155,8 +209,6 @@ describe('searchFlights', () => {
   });
 
   it('should include returnDate in params when provided', async () => {
-    mockSearchAvailability.mockResolvedValue([]);
-
     const params = buildParams({ returnDate: '2026-05-10' });
     const result = await searchFlights(params);
 

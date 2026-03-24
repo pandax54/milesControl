@@ -1,30 +1,3 @@
-- `pnpm test` — PASS (964 tests, 0 failing)
-- `pnpm run test:coverage` — PASS (above 80% threshold on all metrics)
-- `miles-calendar.service.ts` — 100% coverage across all metrics
-
-Review file updated to reflect final approved state with no outstanding issues.
-
-## Task 4.0 — Alert Configuration UI (completed 2026-03-21)
-
-Files created:
-- src/lib/validators/alert-config.schema.ts — Zod schemas for create/update/delete/toggle with ALERT_CHANNELS and PROMO_TYPES constants
-- src/lib/services/alert-config.service.ts — CRUD service: list, get, create, update, toggle, delete. Includes listAllActiveAlertConfigs for use by task 4.1 matching engine.
-- src/lib/services/alert-config.service.test.ts — 14 unit tests covering all CRUD operations and error cases
-- src/actions/alerts.ts — Server Actions: addAlertConfig, editAlertConfig, removeAlertConfig, setAlertConfigActive
-- src/components/alerts/alert-config-form-fields.tsx — Shared form fields with channel multi-select, promo type checkboxes, program names, threshold inputs
-- src/components/alerts/alert-config-form-dialog.tsx — Create dialog with form
-- src/components/alerts/edit-alert-config-dialog.tsx — Edit dialog pre-populated from existing config
-- src/components/alerts/alert-config-card.tsx — Card with active/paused toggle, edit, delete. Shows channels, program filters, promo type filters, thresholds.
-- src/components/alerts/delete-alert-config-button.tsx — Delete button with confirmation dialog
-- src/components/alerts/toggle-alert-config-button.tsx — Active/Paused toggle button
-- src/app/(alerts)/alerts/page.tsx — Server-rendered page at /alerts. Lists active/paused rules, empty state.
-- src/components/app-sidebar.tsx — Added "Alerts" nav group with Alert Rules link
-
-All 977 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
-
-## Task 4.0 — Review Fixes (2026-03-21)
-
-Review file: tasks/prd-milescontrol/4.0_task_review.md — Status: APPROVED
 No critical, major, or minor issues found. No fixes required.
 Verification: 977 tests pass, TypeScript compiles cleanly, coverage thresholds met.
 
@@ -96,6 +69,24 @@ Files created:
 - src/app/(dashboard)/flights/search/page.tsx — Route at /flights/search under dashboard layout
 
 Verification: 1179 tests pass, TypeScript clean, coverage 98.2%, build PASS (/flights/search route visible).
+
+## Task 5.2 — SerpApi Google Flights integration (completed 2026-03-24)
+
+Files created:
+- src/lib/validators/serp-api.schema.ts — Zod schemas for flight leg, flight option, full search response, and search params
+- src/lib/validators/serp-api.schema.test.ts — 14 tests validating all schemas (valid inputs, missing fields, optional fields)
+- src/lib/integrations/serp-api.ts — searchCashFlights() with 6h in-memory cache, cabin class mapping, retry on 5xx, Zod validation of response
+- src/lib/integrations/serp-api.test.ts — 23 tests covering response parsing, param mapping, cache TTL, retry logic, error types
+- src/lib/services/flight-search.service.ts — Updated: searchFlights() now calls SerpApi for cash flights via fetchCashFlights(); SerpApiError handled gracefully (returns [])
+- src/lib/services/flight-search.service.test.ts — Updated: mocks serp-api module, adds 5 new cash flight tests (results, params forwarding, SerpApiError fallback, re-throw on unexpected, combined results)
+
+Key design decisions:
+- Cache key: origin:destination:departureDate:returnDate:cabinClass:passengers
+- Retry: once on 5xx and network errors; 4xx and SerpApiError body errors not retried
+- Cabin class mapped to SerpApi travel_class: ECONOMY=1, PREMIUM_ECONOMY=2, BUSINESS=3, FIRST=4
+- clearCache() exported for test isolation
+
+Verification: 1269 tests pass, TypeScript clean, coverage thresholds met, build PASS.
 
 ## Task 5.1 — Review Fixes (2026-03-24)
 
