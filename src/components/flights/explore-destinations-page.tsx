@@ -1,4 +1,5 @@
 // PRD F4.8: Explore destinations UI — filter form with region, date type, cabin, sort options
+// PRD F4.9: Saved flight filters — integrated SavedFiltersPanel for quick filter reuse
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -15,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ExploreDestinationCard } from './explore-destination-card';
+import { SavedFiltersPanel, type ApplyFilterValues } from './saved-filters-panel';
 import { exploreDestinationsAction } from '@/actions/explore';
 import {
   EXPLORE_REGIONS,
@@ -61,6 +63,13 @@ export function ExploreDestinationsPage() {
   const [state, setState] = useState<ExploreState>(INITIAL_STATE);
   const [isPending, startTransition] = useTransition();
 
+  function handleApplyFilter(values: ApplyFilterValues) {
+    if (values.origin) setOrigin(values.origin);
+    if (values.region) setRegion(values.region);
+    if (values.cabinClass) setCabinClass(values.cabinClass);
+    if (values.dateType) setDateType(values.dateType);
+  }
+
   function handleExplore() {
     setState((prev) => ({ ...prev, error: null }));
 
@@ -95,6 +104,12 @@ export function ExploreDestinationsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Saved filters panel */}
+      <SavedFiltersPanel
+        currentFilters={{ origin, region, cabinClass, dateType }}
+        onApplyFilter={handleApplyFilter}
+      />
+
       {/* Filters */}
       <Card>
         <CardHeader>
