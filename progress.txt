@@ -96,3 +96,12 @@ Files created:
 - src/app/(dashboard)/flights/search/page.tsx — Route at /flights/search under dashboard layout
 
 Verification: 1179 tests pass, TypeScript clean, coverage 98.2%, build PASS (/flights/search route visible).
+
+## Task 5.1 — Review Fixes (2026-03-24)
+
+Review file: tasks/prd-milescontrol/5.1_task_review.md — Status: CHANGES REQUESTED → fixed
+1. Dead code: `callSeatsAeroApi` retry loop now tracks `lastError`; unreachable throw kept with TypeScript-required comment
+2. Zod validation: created `src/lib/validators/seats-aero.schema.ts` with schemas for availability, response, segment, trip, and search params
+3. Input validation: `searchAvailability()` now calls `seatsAeroSearchParamsSchema.parse()` at boundary
+4. Response validation: `callSeatsAeroApi` accepts optional `z.ZodSchema<T>` and validates API responses
+Verification: 1226 tests pass, TypeScript clean, coverage 98.18% (all thresholds met), build PASS.

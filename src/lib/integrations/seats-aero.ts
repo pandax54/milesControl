@@ -1,7 +1,16 @@
+import { z } from 'zod';
+
 import { env } from '@/lib/env';
 import { logger } from '@/lib/logger';
 import type { AwardFlight } from '@/lib/services/flight-search.service';
 import type { CabinClass } from '@/lib/validators/flight-search.schema';
+import {
+  seatsAeroSearchParamsSchema,
+  seatsAeroSearchResponseSchema,
+  seatsAeroTripSchema,
+  type SeatsAeroAvailability,
+  type SeatsAeroTrip,
+} from '@/lib/validators/seats-aero.schema';
 
 // ==================== Constants ====================
 
@@ -19,52 +28,7 @@ export interface SeatsAeroSearchParams {
   readonly endDate: string; // YYYY-MM-DD
 }
 
-interface SeatsAeroAvailability {
-  readonly ID: string;
-  readonly Route: string;
-  readonly Date: string;
-  readonly ParsedDate: string;
-  readonly YAvailable: boolean;
-  readonly WAvailable: boolean;
-  readonly JAvailable: boolean;
-  readonly FAvailable: boolean;
-  readonly YMileage: number;
-  readonly WMileage: number;
-  readonly JMileage: number;
-  readonly FMileage: number;
-  readonly YTaxes: number;
-  readonly WTaxes: number;
-  readonly JTaxes: number;
-  readonly FTaxes: number;
-  readonly YSeat: number;
-  readonly WSeat: number;
-  readonly JSeat: number;
-  readonly FSeat: number;
-  readonly Source: string;
-  readonly UpdatedAt: string;
-}
-
-export interface SeatsAeroTrip {
-  readonly ID: string;
-  readonly Segments: readonly SeatsAeroSegment[];
-  readonly Source: string;
-  readonly UpdatedAt: string;
-}
-
-interface SeatsAeroSegment {
-  readonly Origin: string;
-  readonly Destination: string;
-  readonly Airline: string;
-  readonly FlightNumber: string;
-  readonly DepartureDateTime: string;
-  readonly ArrivalDateTime: string;
-  readonly Cabin: string;
-}
-
-interface SeatsAeroSearchResponse {
-  readonly count: number;
-  readonly data: readonly SeatsAeroAvailability[];
-}
+export type { SeatsAeroTrip } from '@/lib/validators/seats-aero.schema';
 
 // ==================== Cabin mapping ====================
 
@@ -103,6 +67,7 @@ const SOURCE_TO_PROGRAM: Record<string, string> = {
 async function callSeatsAeroApi<T>(
   endpoint: string,
   queryParams?: Record<string, string>,
+  schema?: z.ZodSchema<T>,
 ): Promise<T> {
   const apiKey = env.SEATS_AERO_API_KEY;
 
@@ -117,6 +82,8 @@ async function callSeatsAeroApi<T>(
       url.searchParams.set(key, value);
     }
   }
+
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
     try {
@@ -135,8 +102,15 @@ async function callSeatsAeroApi<T>(
         );
       }
 
-      return (await response.json()) as T;
+      const json: unknown = await response.json();
+
+      if (schema) {
+        return schema.parse(json);
+      }
+
+      return json as T;
     } catch (error) {
+      lastError = error;
       const isLastAttempt = attempt === MAX_RETRY_ATTEMPTS;
 
       if (error instanceof SeatsAeroApiError && error.statusCode < 500) {
@@ -145,7 +119,7 @@ async function callSeatsAeroApi<T>(
       }
 
       if (isLastAttempt) {
-        throw error;
+        throw lastError;
       }
 
       const delayMs = BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1);
@@ -158,6 +132,7 @@ async function callSeatsAeroApi<T>(
     }
   }
 
+  // TypeScript requires a return/throw here; the loop above always exits via throw
   throw new SeatsAeroError('All retry attempts exhausted');
 }
 
@@ -195,21 +170,24 @@ function mapAvailabilityToAwardFlights(
     return null;
   }
 
-  const milesRequired = availability[mileageKey] as number;
+  const mileageValue = availability[mileageKey];
 
-  if (milesRequired <= 0) {
+  if (typeof mileageValue !== 'number' || mileageValue <= 0) {
     return null;
   }
+
+  const taxesValue = availability[taxesKey];
+  const seatValue = availability[seatKey];
 
   const program = SOURCE_TO_PROGRAM[availability.Source.toLowerCase()] ?? availability.Source;
 
   return {
     airline: program,
-    milesRequired,
-    taxes: (availability[taxesKey] as number) ?? 0,
+    milesRequired: mileageValue,
+    taxes: typeof taxesValue === 'number' ? taxesValue : 0,
     program,
     cabinClass: CABIN_CODE_TO_LABEL[cabinCode] ?? cabinCode,
-    seatsAvailable: (availability[seatKey] as number) ?? 0,
+    seatsAvailable: typeof seatValue === 'number' ? seatValue : 0,
     source: 'SEATS_AERO',
   };
 }
@@ -225,27 +203,30 @@ function mapAvailabilityToAwardFlights(
 export async function searchAvailability(
   params: SeatsAeroSearchParams,
 ): Promise<readonly AwardFlight[]> {
-  const cabinCode = CABIN_CLASS_TO_SEATS_AERO[params.cabinClass];
+  // Validate input at boundary
+  const validated = seatsAeroSearchParamsSchema.parse(params);
+
+  const cabinCode = CABIN_CLASS_TO_SEATS_AERO[validated.cabinClass];
 
   logger.info(
     {
-      origin: params.originAirport,
-      destination: params.destinationAirport,
+      origin: validated.originAirport,
+      destination: validated.destinationAirport,
       cabin: cabinCode,
-      startDate: params.startDate,
+      startDate: validated.startDate,
     },
     'Seats.aero availability search started',
   );
 
   const queryParams: Record<string, string> = {
-    origin_airport: params.originAirport,
-    destination_airport: params.destinationAirport,
+    origin_airport: validated.originAirport,
+    destination_airport: validated.destinationAirport,
     cabin: cabinCode.toLowerCase(),
-    start_date: params.startDate,
-    end_date: params.endDate,
+    start_date: validated.startDate,
+    end_date: validated.endDate,
   };
 
-  const response = await callSeatsAeroApi<SeatsAeroSearchResponse>('/search', queryParams);
+  const response = await callSeatsAeroApi('/search', queryParams, seatsAeroSearchResponseSchema);
 
   const awardFlights = response.data
     .map((availability) => mapAvailabilityToAwardFlights(availability, cabinCode))
@@ -253,8 +234,8 @@ export async function searchAvailability(
 
   logger.info(
     {
-      origin: params.originAirport,
-      destination: params.destinationAirport,
+      origin: validated.originAirport,
+      destination: validated.destinationAirport,
       count: awardFlights.length,
     },
     'Seats.aero availability search complete',
@@ -271,7 +252,7 @@ export async function searchAvailability(
 export async function getTripDetails(tripId: string): Promise<SeatsAeroTrip> {
   logger.info({ tripId }, 'Seats.aero trip details fetch started');
 
-  const trip = await callSeatsAeroApi<SeatsAeroTrip>(`/trips/${tripId}`);
+  const trip = await callSeatsAeroApi(`/trips/${tripId}`, undefined, seatsAeroTripSchema);
 
   logger.info({ tripId }, 'Seats.aero trip details fetch complete');
 
