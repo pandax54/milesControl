@@ -62,7 +62,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 5.3 **Miles value comparison per result** — Each flight card shows: cash price, miles price, and "Miles value: R$X/k — [RATING]" using user's cost data. [Differentiator]
 - [x] 5.4 Flight watchlist — CRUD, target price alerts
 - [x] 5.5 Cron job: check-flights — Vercel Cron every 6h
-- [ ] 5.6 **Explore destinations** — Browse flights by region, date type (holidays/weekends/flexible), sorted by best value. [Inspired by Oktoplus Explore + Google Flights Explore]
+- [x] 5.6 **Explore destinations** — Browse flights by region, date type (holidays/weekends/flexible), sorted by best value. [Inspired by Oktoplus Explore + Google Flights Explore]
 - [ ] 5.7 **Saved flight filters** — Save common searches for quick reuse. [Inspired by Oktoplus]
 
 ### Phase 6: Admin & Multi-Client

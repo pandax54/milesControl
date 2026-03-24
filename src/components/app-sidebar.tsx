@@ -14,6 +14,7 @@ import {
   UsersRound,
   ClipboardList,
   Gift,
+  Compass,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -53,6 +54,7 @@ const ALERT_ITEMS = [
 
 const FLIGHT_ITEMS = [
   { title: 'Flight Search', href: '/flights/search', icon: Plane },
+  { title: 'Explore Destinations', href: '/flights/explore', icon: Compass },
   { title: 'Watchlist', href: '/flights/watchlist', icon: Bell },
 ];
 
