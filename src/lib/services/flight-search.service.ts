@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { searchAvailability, SeatsAeroError } from '@/lib/integrations/seats-aero';
 import type { FlightSearchParams } from '@/lib/validators/flight-search.schema';
 
 // ==================== Types ====================
@@ -35,9 +36,8 @@ export interface FlightSearchResult {
 /**
  * Search for flights by params.
  *
- * NOTE: This is a placeholder until external API integrations are ready.
- * - Task 5.1 will implement Seats.aero integration (award flights)
- * - Task 5.2 will implement SerpApi integration (cash flights)
+ * - Award flights: Seats.aero Pro API (task 5.1 — implemented)
+ * - Cash flights: SerpApi Google Flights (task 5.2 — pending)
  *
  * PRD F4.1-F4.3: Search cash and award flights by origin/destination/date/cabin/passengers.
  */
@@ -47,11 +47,38 @@ export async function searchFlights(params: FlightSearchParams): Promise<FlightS
     'Flight search started',
   );
 
-  // Real implementations injected in tasks 5.1 (Seats.aero) and 5.2 (SerpApi)
+  const [awardFlights, cashFlights] = await Promise.all([
+    fetchAwardFlights(params),
+    // Task 5.2: SerpApi cash flights — returns empty until implemented
+    Promise.resolve<readonly CashFlight[]>([]),
+  ]);
+
   return {
     params,
-    cashFlights: [],
-    awardFlights: [],
+    cashFlights,
+    awardFlights,
     searchedAt: new Date(),
   };
+}
+
+async function fetchAwardFlights(params: FlightSearchParams): Promise<readonly AwardFlight[]> {
+  try {
+    const endDate = params.returnDate ?? params.departureDate;
+
+    return await searchAvailability({
+      originAirport: params.origin,
+      destinationAirport: params.destination,
+      cabinClass: params.cabinClass,
+      startDate: params.departureDate,
+      endDate,
+    });
+  } catch (error) {
+    if (error instanceof SeatsAeroError) {
+      logger.warn({ err: error }, 'Seats.aero search failed, returning empty award flights');
+      return [];
+    }
+
+    logger.error({ err: error }, 'Unexpected error fetching award flights');
+    throw error;
+  }
 }

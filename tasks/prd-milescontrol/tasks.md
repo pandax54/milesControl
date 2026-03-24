@@ -57,7 +57,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 ### Phase 5: Flight Search
 
 - [x] 5.0 Flight search UI — Search form, results display with Miles Value Advisor integrated per card
-- [ ] 5.1 Seats.aero integration — Client library, cached search, trip details, error handling
+- [x] 5.1 Seats.aero integration — Client library, cached search, trip details, error handling
 - [ ] 5.2 SerpApi Google Flights integration — Client library, flight search, result parsing, 6h cache
 - [ ] 5.3 **Miles value comparison per result** — Each flight card shows: cash price, miles price, and "Miles value: R$X/k — [RATING]" using user's cost data. [Differentiator]
 - [ ] 5.4 Flight watchlist — CRUD, target price alerts
