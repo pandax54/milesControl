@@ -1,10 +1,13 @@
+import type { Prisma } from '@/generated/prisma/client';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import type { CreateTransferInput, UpdateTransferInput } from '@/lib/validators/transfer.schema';
 
+const POINTS_PER_MILHEIRO = 1000;
+
 export function calculateCostPerMilheiro(totalCost: number, milesReceived: number): number {
   if (milesReceived <= 0) return 0;
-  return totalCost / (milesReceived / 1000);
+  return totalCost / (milesReceived / POINTS_PER_MILHEIRO);
 }
 
 export async function listTransfers(userId: string) {
@@ -98,6 +101,58 @@ export async function deleteTransfer(userId: string, transferId: string) {
   });
 
   logger.info({ userId, transferId }, 'Transfer deleted');
+}
+
+/**
+ * Calculate the user's weighted average cost-per-milheiro from their transfer history.
+ * Only considers transfers that have both totalCost and costPerMilheiro recorded.
+ * Weighted by miles received so larger transfers count more.
+ * Optionally filters by destination program (e.g. 'Smiles').
+ * Returns null if no qualifying transfers exist.
+ */
+export async function getUserAverageCostPerMilheiro(
+  userId: string,
+  program?: string,
+): Promise<number | null> {
+  const where: Prisma.TransferLogWhereInput = {
+    userId,
+    totalCost: { not: null },
+    costPerMilheiro: { not: null },
+    milesReceived: { gt: 0 },
+    ...(program ? { destProgramName: program } : {}),
+  };
+
+  const transfers = await prisma.transferLog.findMany({
+    where,
+    select: {
+      totalCost: true,
+      milesReceived: true,
+    },
+  });
+
+  if (transfers.length === 0) {
+    logger.debug({ userId, program }, 'No qualifying transfers for average cost calculation');
+    return null;
+  }
+
+  let totalCostSum = 0;
+  let totalMilesSum = 0;
+
+  for (const transfer of transfers) {
+    totalCostSum += Number(transfer.totalCost);
+    totalMilesSum += transfer.milesReceived;
+  }
+
+  if (totalMilesSum <= 0) return null;
+
+  const avgCostPerMilheiro = totalCostSum / (totalMilesSum / POINTS_PER_MILHEIRO);
+
+  logger.debug(
+    { userId, program, avgCostPerMilheiro, transferCount: transfers.length },
+    'Calculated user average cost per milheiro',
+  );
+
+  return Math.round(avgCostPerMilheiro * 100) / 100;
 }
 
 export class TransferNotFoundError extends Error {

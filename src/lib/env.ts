@@ -12,6 +12,9 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().optional().default('MilesControl <noreply@milescontrol.com>'),
   CRON_SECRET: z.string().optional(),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_EMAIL: z.string().optional().default('mailto:admin@milescontrol.com'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });
 

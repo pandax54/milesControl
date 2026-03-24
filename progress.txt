@@ -1,373 +1,122 @@
-## Task 2.2 — Club Subscription Management (completed 2026-03-20)
+2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
+
+Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
+
+## Task 3.12 — Miles Calendar Page (completed 2026-03-21)
 
 Files created:
-- src/app/(dashboard)/subscriptions/page.tsx — Subscriptions page with auth, active/inactive sections
-- src/components/dashboard/subscription-form-dialog.tsx — Create dialog with tier selection (grouped by program), accrual schedule builder (multi-phase), billing date tracking
-- src/components/dashboard/edit-subscription-dialog.tsx — Edit dialog for status, cost, dates, accrual schedule
-- src/lib/services/club-subscription.service.test.ts — 15 unit tests covering list, create, update, delete
+- src/lib/services/miles-calendar.service.ts — Service with listCalendarEvents, listUpcomingCalendarEvents, listEventsByMonth, groupEventsByMonth, PROMO_TYPE_LABELS. UTC-consistent date filtering.
+- src/lib/services/miles-calendar.service.test.ts — 13 unit tests covering all service functions and groupEventsByMonth edge cases
+- src/components/promotions/miles-calendar-event-card.tsx — Card component showing event title, date range, programs, expected promo type badge, description, and historical note
+- src/components/promotions/miles-calendar-view.tsx — View component that splits events into upcoming/past sections, groups by month, renders MonthSection grids
+- src/app/(dashboard)/promotions/calendar/page.tsx — Server component page at /promotions/calendar
 
-Files modified:
-- src/components/dashboard/subscription-card.tsx — Added edit button (EditSubscriptionDialog), fixed Decimal type compatibility
+Key implementation details:
+- UTC-consistent date comparisons throughout (Date.UTC, setUTCHours) to avoid off-by-one timezone errors
+- Events grouped by month using reduce (no for...of loops, no non-null assertions)
+- Import order: external → @/ internal → relative
+- Upcoming events shown first, past events with reduced opacity
 
-All 123 tests pass. TypeScript compiles cleanly.
+Review: APPROVED WITH OBSERVATIONS — all 5 minor issues fixed before commit.
+All 964 tests pass. TypeScript compiles cleanly.
 
-## Task 2.4 — Credit Card Registry (completed 2026-03-20)
+## Task 3.12 — Review Fixes Applied (2026-03-21)
 
-Files created:
-- src/lib/validators/credit-card.schema.ts — Zod schemas for create/update/delete with type exports
-- src/lib/validators/credit-card.schema.test.ts — 17 validation tests
-- src/lib/services/credit-card.service.ts — CRUD service with ownership checks, Prisma.JsonNull for JSON fields
-- src/lib/services/credit-card.service.test.ts — 14 unit tests covering list, create, update, delete
-- src/actions/credit-cards.ts — Server actions (add, edit, remove) with auth and Zod validation
-- src/actions/credit-cards.test.ts — 15 action tests
-- src/app/(dashboard)/credit-cards/page.tsx — Page with auth, grouped by bank, empty state
-- src/components/dashboard/credit-card-card.tsx — Card display with bank badge, program, rates, benefits, fee
-- src/components/dashboard/credit-card-form-dialog.tsx — Create dialog with benefit tag input
-- src/components/dashboard/edit-credit-card-dialog.tsx — Edit dialog pre-populated with current values
-- src/components/dashboard/delete-credit-card-button.tsx — Confirmation dialog for deletion
+Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED
 
-Files modified:
-- (TypeScript fixes) Fixed Decimal import path, Prisma.JsonNull for JSON null values
+Minor issues resolved (commit 483cb8f):
+1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100` constant in calendar page
+2. Duplicated UTC midnight boundary (`new Date(); today.setUTCHours(0,0,0,0)`) extracted to exported `getUtcMidnightToday()` in miles-calendar.service.ts — used by both miles-calendar-event-card.tsx and miles-calendar-view.tsx (and internally by buildWhereClause)
 
-All 212 tests pass. TypeScript compiles cleanly.
+Verification: 964 tests pass, TypeScript compiles cleanly, coverage thresholds met.
 
-## Task 2.4 — Review Fixes (applied 2026-03-20)
+## Task 3.12 — Final Review Verification (2026-03-21)
 
-Changes applied from 2.4_task_review.md:
+Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED (final)
 
-1. **Extracted shared CreditCardFormFields** (Issue #1, Rec #1) — Created
-   src/components/dashboard/credit-card-form-fields.tsx with shared form fields,
-   validation parsing, and completeness check. Both create and edit dialogs now
-   use this component, eliminating ~80% duplicated form markup.
+All prior review recommendations were already resolved in commit 483cb8f:
+1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100`
+2. Duplicated UTC midnight boundary extracted to exported `getUtcMidnightToday()` in service
 
-2. **Normalized Decimal at page boundary** (Issue #4, Rec #2) — Page now converts
-   Prisma Decimal to number via Number(card.annualFee) before passing to components.
-   CreditCardData.annualFee changed from `Decimal | number` to `number`. Removed
-   Prisma Decimal import from UI layer.
+Verification checks:
+- `npx tsc --noEmit` — PASS
+- `pnpm test` — PASS (964 tests, 0 failing)
+- `pnpm run test:coverage` — PASS (above 80% threshold on all metrics)
+- `miles-calendar.service.ts` — 100% coverage across all metrics
 
-3. **Edit dialog resets on open** (Issue #5) — Edit dialog now rebuilds form values
-   from the card prop each time it opens, preventing stale state.
+Review file updated to reflect final approved state with no outstanding issues.
 
-4. **Empty state hides top button** (Issue #6) — Top-level "Add Card" button
-   conditionally rendered only when cards exist, avoiding visual redundancy.
-
-5. **Type-safe test factories** (Issue #3, Rec #4) — Replaced all `as never` casts
-   with a typed `buildMockCard()` factory returning proper `CreditCard` type with
-   Prisma.Decimal for annualFee.
-
-All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.
-
-## Task 2.4 — Second Review Fixes (applied 2026-03-20)
-
-Applied remaining 3 minor recommendations from 2.4_task_review.md:
-
-1. **Typed action test mocks** (Minor #1) — Replaced all `as never` casts in
-   credit-cards.test.ts with properly typed Session, typed `buildMockCard()`
-   factory, and typed auth mock via `ReturnType<typeof vi.fn>`.
-
-2. **useRef for benefit input** (Minor #2) — Replaced fragile DOM traversal
-   (`previousElementSibling`) in BenefitsField with a `useRef<HTMLInputElement>`
-   and extracted `handleAdd()` helper.
-
-3. **shadcn/ui Checkbox** (Minor #3) — Installed shadcn/ui Checkbox component
-   and replaced native `<input type="checkbox">` for visual consistency.
-
-All 212 tests pass. TypeScript compiles cleanly. Coverage: 97.19% stmts, 91% branches.
-
-## Task 2.5 — Dashboard Page (completed 2026-03-20)
+## Task 4.0 — Alert Configuration UI (completed 2026-03-21)
 
 Files created:
-- src/lib/services/dashboard.service.ts — Service fetching all dashboard data in parallel (enrollments, subscriptions, transfers, projections) with staleness classification
-- src/lib/services/dashboard.service.test.ts — 15 unit tests covering staleness classification, data aggregation, empty states, Prisma filters, Decimal→number conversion
-- src/lib/utils/format.ts — Shared formatNumber and formatCurrency utilities
-- src/components/dashboard/dashboard-summary-cards.tsx — 4 metric cards: Total Miles, Total Points, Active Subscriptions, Stale Balances
-- src/components/dashboard/dashboard-balances.tsx — Program balances list with staleness indicators, quick-update, external links
-- src/components/dashboard/dashboard-projections.tsx — Balance projections at 3/6/12 months with month-by-month breakdown
-- src/components/dashboard/dashboard-subscriptions.tsx — Active subscriptions with cost and billing info
-- src/components/dashboard/dashboard-transfers.tsx — Recent transfers with bonus %, cost-per-milheiro rating
-- src/components/dashboard/dashboard-staleness-alerts.tsx — Alert banner for programs not updated in 30+ days
+- src/lib/validators/alert-config.schema.ts — Zod schemas for create/update/delete/toggle with ALERT_CHANNELS and PROMO_TYPES constants
+- src/lib/services/alert-config.service.ts — CRUD service: list, get, create, update, toggle, delete. Includes listAllActiveAlertConfigs for use by task 4.1 matching engine.
+- src/lib/services/alert-config.service.test.ts — 14 unit tests covering all CRUD operations and error cases
+- src/actions/alerts.ts — Server Actions: addAlertConfig, editAlertConfig, removeAlertConfig, setAlertConfigActive
+- src/components/alerts/alert-config-form-fields.tsx — Shared form fields with channel multi-select, promo type checkboxes, program names, threshold inputs
+- src/components/alerts/alert-config-form-dialog.tsx — Create dialog with form
+- src/components/alerts/edit-alert-config-dialog.tsx — Edit dialog pre-populated from existing config
+- src/components/alerts/alert-config-card.tsx — Card with active/paused toggle, edit, delete. Shows channels, program filters, promo type filters, thresholds.
+- src/components/alerts/delete-alert-config-button.tsx — Delete button with confirmation dialog
+- src/components/alerts/toggle-alert-config-button.tsx — Active/Paused toggle button
+- src/app/(alerts)/alerts/page.tsx — Server-rendered page at /alerts. Lists active/paused rules, empty state.
+- src/components/app-sidebar.tsx — Added "Alerts" nav group with Alert Rules link
 
-Files modified:
-- src/app/(dashboard)/page.tsx — Replaced skeleton with real data-driven dashboard
+All 977 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
 
-All 227 tests pass. TypeScript compiles cleanly.
+## Task 4.0 — Review Fixes (2026-03-21)
 
-## Task 2.5 — Review Fixes (applied 2026-03-20)
+Review file: tasks/prd-milescontrol/4.0_task_review.md — Status: APPROVED
+No critical, major, or minor issues found. No fixes required.
+Verification: 977 tests pass, TypeScript compiles cleanly, coverage thresholds met.
 
-Changes applied from 2.5_task_review.md:
+## Task 4.1 — Review Fixes (2026-03-21)
 
-1. **Typed mock factories** (Minor #1, Rec #1) — Replaced all 27 `as never` casts in
-   dashboard.service.test.ts with typed interfaces (MockEnrollmentWithProgram,
-   MockSubscriptionWithTier, MockTransferLog) and Prisma.Decimal for Decimal fields.
-   Added typed helper functions (mockEnrollments, mockSubscriptions, mockTransfers)
-   for cleaner mock setup.
+Review file: tasks/prd-milescontrol/4.1_task_review.md — Status: APPROVED WITH OBSERVATIONS
+Major issue resolved: integrated processNewPromotions() into runAllScrapers() post-storage step.
+- scrape-promos.service.ts — import prisma + processNewPromotions; after all scrapers run, fetch new promotions (createdAt >= runStartTime) and call processNewPromotions; add alertMatchResult to ScrapePromosResult
+- scrape-promos.service.test.ts — mocked prisma.promotion.findMany + processNewPromotions; 4 new tests covering alert matching trigger, skip when no creates, skip when query empty, graceful failure
+- scrape-promos route.ts — expose alertMatchResult in cron response
+Verification: 1025 tests pass, TypeScript compiles cleanly, coverage thresholds met.
 
-2. **Format utility tests** (Minor #3, Rec #3) — Created src/lib/utils/format.test.ts
-   with 9 tests covering formatNumber and formatCurrency: pt-BR locale formatting,
-   zero, negative, decimal, and large number cases.
-
-3. **Rating threshold extraction** (Minor #2, Rec #2) — Deferred to task 3.6 as
-   recommended. Constants are already named and scoped; will extract to shared
-   src/lib/utils/cost-rating.ts when calculator service is built.
-
-All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
-
-## Task 2.5 — Second Review Fixes (applied 2026-03-20)
-
-1. **Replaced duplicated `formatBalance` with `formatNumber`** (Minor #1, Rec #1) — Removed
-   local `formatBalance` function from `quick-update-balance.tsx` and replaced all usages
-   with the shared `formatNumber` from `@/lib/utils/format`, eliminating duplicated formatting logic.
-
-2. **Rating threshold extraction** (Minor #2, Rec #2) — Already deferred to task 3.6.
-
-3. **`date-fns` dependency evaluation** (Minor #3, Rec #3) — Low priority, no action needed now.
-
-All 236 tests pass. TypeScript compiles cleanly. Coverage: 97.37% stmts, 91.38% branches.
-
-## Task 2.6 — Transfer Logging (completed 2026-03-20)
+## Task 4.2 — Telegram Bot (completed 2026-03-21)
 
 Files created:
-- src/lib/validators/transfer.schema.ts — Zod schemas for create/update/delete transfers, TransferData interface
-- src/lib/validators/transfer.schema.test.ts — 21 validation tests
-- src/lib/services/transfer.service.ts — CRUD service with calculateCostPerMilheiro, TransferNotFoundError
-- src/lib/services/transfer.service.test.ts — 14 unit tests covering list, create, update, delete, cost calculation
-- src/actions/transfers.ts — Server actions (logTransfer, editTransfer, removeTransfer) with auth and Zod validation
-- src/actions/transfers.test.ts — 15 action tests
-- src/app/(dashboard)/transfers/page.tsx — Transfers page with table view, rating badges, edit/delete actions
-- src/components/dashboard/transfer-form-dialog.tsx — Create dialog with program selects, cost/bonus fields
-- src/components/dashboard/edit-transfer-dialog.tsx — Edit dialog with pre-populated form, typed updateField
-- src/components/dashboard/delete-transfer-button.tsx — Confirmation dialog for transfer deletion
+- src/lib/integrations/telegram.ts — sendMessage, sendAlertNotification, escapeHtml. Native fetch with 3-retry logic and 5s delay. HTML parse mode.
+- src/lib/integrations/telegram.test.ts — 12 tests covering escapeHtml, sendMessage (retry logic, network errors), sendAlertNotification
+- src/lib/services/telegram-notification.service.ts — findUserByChatId (via AlertConfig.telegramChatId), sendTelegramAlerts, getTopPromotionsForBot, getUserAlertConfigs
+- src/lib/services/telegram-notification.service.test.ts — 13 tests covering all service functions
+- src/app/api/webhook/telegram/route.ts — POST handler with CRON_SECRET validation, command routing: /start (show chat ID + instructions), /alerts (list active rules), /promos (top 5 active promos), /calc (cost per milheiro), unknown command fallback
+- src/app/api/webhook/telegram/route.test.ts — 22 tests covering authorization, all 4 commands, edge cases
 
-Review fixes applied:
-1. Moved TransferData interface from page to shared validator module
-2. Added typed FormField for edit dialog updateField parameter
-3. Added date validation (.refine) to transferDate in Zod schemas
+Key design decisions:
+- telegramChatId stored on AlertConfig (already in schema); user lookup via findFirst on AlertConfig.telegramChatId
+- /start shows user their chat ID to paste into the app UI (no deep-link needed)
+- Webhook secret uses CRON_SECRET header X-Telegram-Bot-Api-Secret-Token
+- Always returns 200 to Telegram to prevent retries on processing errors
 
-All 291 tests pass. TypeScript compiles cleanly. Coverage: 97.76% stmts, 90.1% branches.
+Verification: 1067 tests pass, TypeScript compiles cleanly, coverage thresholds met.
 
-## Task 2.6 — Second Review Fixes (applied 2026-03-20)
+## Task 4.3 — Review Fixes (2026-03-22)
 
-Changes applied from 2.6_task_review.md:
+Review file: tasks/prd-milescontrol/4.3_task_review.md — Status: APPROVED
+Optional recommendation applied: added inline comment in sendEmailAlerts() noting silent degradation when RESEND_API_KEY is not configured.
+Verification: npx tsc --noEmit PASS, pnpm test PASS (1094 tests), pnpm build PASS, coverage thresholds met.
 
-1. **Typed mock returns in service test** (Minor #1) — Replaced `MockTransferLog` interface
-   and all `as never` casts in `transfer.service.test.ts` with `TransferLog` type from Prisma.
-   `buildMockTransfer()` now returns typed `TransferLog`.
+## Task 4.5 — Review Fixes (2026-03-22)
 
-2. **Typed mock returns in actions test** (Minor #1) — Replaced `as never` casts in
-   `transfers.test.ts` with typed `Session` for auth mock and typed return casts for
-   service mocks. `mockAuth` typed via `ReturnType<typeof vi.fn>` pattern from credit-cards test.
+Review file: tasks/prd-milescontrol/4.5_task_review.md — Status: APPROVED
+Minor issues resolved (commit 50287d7):
+1. Added missing VAPID keys test in web-push.test.ts using vi.resetModules() + vi.doMock() pattern
+2. Created push-notification-toggle.test.tsx — 12 tests covering unsupported/denied/subscribed/unsubscribed states, subscribe/unsubscribe flows, permission denial, and fetch error handling
+Recommendation applied: expanded 410/404 comment in web-push.ts with RFC 8030 §8.1 reference.
+Verification: 1152 tests pass, TypeScript compiles cleanly, coverage 98.19% (all thresholds met), build PASS.
 
-3. **Extracted shared `parseTransferFormValues`** (Minor #2) — Created
-   `src/components/dashboard/transfer-form-utils.ts` with shared parsing/validation logic.
-   Both `transfer-form-dialog.tsx` and `edit-transfer-dialog.tsx` now use this utility,
-   eliminating duplicated validation code.
+## Phase 4 QA — APPROVED (2026-03-22)
 
-4. **Added `updateTransferSchema` date validation test** (Minor #3) — Added test for
-   invalid `transferDate` on update schema, bringing `transfer.schema.ts` to 100% coverage.
-
-All 292 tests pass. TypeScript compiles cleanly. Coverage: 97.77% stmts, 90.1% branches.
-
-## Task 2.7 — Potential Balance Calculator (completed 2026-03-20)
-
-Files created:
-- src/lib/services/potential-balance.service.ts — Service with calculatePotentialBalances, parseTransferRatio, isValidTransferPartners. Queries user enrollments, groups by airline/banking, uses transferPartners JSON to compute consolidation options.
-- src/lib/services/potential-balance.service.test.ts — 26 unit tests covering: empty enrollments, airline-only, banking-only, single/multiple sources, multiple airlines, zero-balance skip, invalid transfer partners, non-1:1 ratios, floor rounding, currency passthrough.
-- src/components/dashboard/potential-balance-card.tsx — Card showing target airline, current balance, transfer sources with arrows, and potential total with gain summary.
-
-Files modified:
-- src/app/(dashboard)/programs/page.tsx — Added calculatePotentialBalances to parallel data fetch, rendered PotentialBalanceCard section below banking enrollments.
-
-All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
-
-## Task 2.7 — Review Fixes (applied 2026-03-20)
-
-Changes applied from 2.7_task_review.md:
-
-1. **Replaced `as never` casts with typed mocks** (Minor #1, Rec #1) — Imported
-   `ProgramEnrollment`, `ProgramType`, and `Prisma` types from `@/generated/prisma/client`.
-   Created `EnrollmentWithProgram` type alias matching the `findMany` return shape with
-   included program. Updated `buildEnrollment` to accept typed parameters (`ProgramType`,
-   `Prisma.JsonValue`) and return `EnrollmentWithProgram`. Removed all 12 `as never` casts.
-
-All 318 tests pass. TypeScript compiles cleanly.
-
-## Task 2.8 — One-Click Program Links (completed 2026-03-20)
-
-Files modified:
-- src/components/dashboard/enrollment-card.tsx — Added shadcn/ui Tooltip around ExternalLink button with aria-label for accessibility
-- src/components/dashboard/dashboard-balances.tsx — Added shadcn/ui Tooltip around ExternalLink button with aria-label for accessibility
-
-The one-click program links feature (PRD F1.12) was already partially implemented as part of earlier tasks (ExternalLink icon buttons linking to program websites). This task enhanced them with:
-1. Tooltip showing "Open {program name} website" on hover
-2. aria-label attribute for screen reader accessibility
-3. Consistent use of shadcn/ui Tooltip component (base-ui)
-
-All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
-
-## Task 2.8 — Review Fixes (applied 2026-03-20)
-
-Changes applied from 2.8_task_review.md:
-
-1. **Moved TooltipProvider to dashboard layout** (Minor #1, Rec #1) — Removed per-link
-   `<TooltipProvider>` wrapping from `enrollment-card.tsx` and `dashboard-balances.tsx`.
-   Added a single `<TooltipProvider>` at the dashboard layout level
-   (`src/app/(dashboard)/layout.tsx`) so all tooltips share consistent hover delay grouping.
-
-All 318 tests pass. TypeScript compiles cleanly. Coverage: 97.94% stmts, 90.9% branches.
-
-## Task 2.9 — Balance Change Digest (completed 2026-03-20)
-
-Files created:
-- prisma/schema.prisma — Added BalanceSnapshot model for tracking periodic balance snapshots
-- src/lib/integrations/resend.ts — Resend email client wrapper with graceful degradation when API key is not configured
-- src/lib/integrations/resend.test.ts — 3 tests covering send success, missing API key, and API error
-- src/lib/services/balance-digest.service.ts — Core service: takeBalanceSnapshots, computeBalanceChanges (pure), buildDigestHtml, sendDigestForUser, sendAllDigests. Includes UserNotFoundError custom error class.
-- src/lib/services/balance-digest.service.test.ts — 24 tests covering balance computation, HTML generation, snapshot creation, per-user digest, and batch processing
-- src/app/api/cron/balance-digest/route.ts — Cron endpoint with Bearer token auth (CRON_SECRET), development fallback
-
-Files modified:
-- prisma/schema.prisma — Added BalanceSnapshot model with userId, programId, programName, balance, snapshotAt. Added relation on User model.
-- src/lib/env.ts — Added RESEND_FROM_EMAIL (with default) and CRON_SECRET env vars
-- .env.example — Documented new env vars
-
-Review fixes applied:
-1. Removed email addresses from log output to avoid PII leakage (logger redact config only covers `email` key)
-2. Gated verifyCronSecret fallback on IS_DEVELOPMENT (was allowing unauthenticated access in all environments)
-3. Extracted magic color hex values to named constants (COLOR_POSITIVE, COLOR_NEGATIVE, COLOR_NEUTRAL)
-
-All 345 tests pass. TypeScript compiles cleanly.
-
-## Task 2.9 — Second Review Fixes (applied 2026-03-20)
-
-Changes applied from 2.9_task_review.md:
-
-1. **Replaced `as never` casts with typed mock factories** (Minor #1, Rec #1) — Created
-   `buildMockEnrollment()`, `buildMockSnapshot()`, and `buildMockUser()` typed factory
-   functions in `balance-digest.service.test.ts`. Imported `BalanceSnapshot`,
-   `ProgramEnrollment`, `User`, and `UserRole` types from `@/generated/prisma/client`.
-   Removed all `as never` casts.
-
-2. **Added multi-snapshot deduplication test** (Minor #2, Rec #3) — Added test
-   `should deduplicate multiple snapshots per program keeping the earliest` to verify
-   that `fetchLatestSnapshots` correctly picks the earliest snapshot when multiple
-   snapshots exist for the same program (desc-ordered, last write wins).
-
-3. **Added cron route tests** (Minor #3, Rec #2) — Created
-   `src/app/api/cron/balance-digest/route.test.ts` with 6 tests covering: missing auth
-   header (401), wrong token (401), correct bearer token (200), service error (500),
-   dev fallback when CRON_SECRET is unset (200), and production rejection when
-   CRON_SECRET is unset (401).
-
-All 352 tests pass. TypeScript compiles cleanly. Coverage: 98.25% stmts, 91.76% branches.
-
-## Task 2.10 — Benefit Tracking (completed 2026-03-20)
-
-Files created:
-- src/lib/validators/benefit.schema.ts — Zod schemas for create/update/delete/markUsed with shared BENEFIT_TYPES and BENEFIT_TYPE_LABELS constants, date format validation
-- src/lib/validators/benefit.schema.test.ts — 19 validation tests including date format rejection
-- src/lib/services/tracked-benefit.service.ts — CRUD service: list, listExpiring, create, update, markUsed (partial consumption), delete, with ownership checks
-- src/lib/services/tracked-benefit.service.test.ts — 22 unit tests covering all operations, error paths, partial-use logic
-- src/actions/helpers.ts — Shared AuthenticationError, requireUserId, isAuthenticationError extracted from duplicated action patterns
-- src/actions/benefits.ts — Server actions (addBenefit, editBenefit, removeBenefit, useBenefit) using shared helpers
-- src/actions/benefits.test.ts — 22 action tests covering success, validation, auth, not-found, already-used
-- src/components/dashboard/benefit-card.tsx — Card with type badge, expiration status (expired/warning/ok), remaining count
-- src/components/dashboard/benefit-form-fields.tsx — Shared form fields using benefit type constants from schema
-- src/components/dashboard/benefit-form-dialog.tsx — Create dialog
-- src/components/dashboard/edit-benefit-dialog.tsx — Edit dialog with form reset on open
-- src/components/dashboard/delete-benefit-button.tsx — Delete confirmation dialog
-- src/components/dashboard/use-benefit-button.tsx — Mark-as-used confirmation dialog
-- src/app/(dashboard)/benefits/page.tsx — Benefits page with active/used sections, empty state
-
-Files modified:
-- src/components/app-sidebar.tsx — Added Benefits link with Gift icon
-
-Review fixes applied:
-1. Added date format validation (.refine) to expirationDate in Zod schemas
-2. Extracted BENEFIT_TYPES and BENEFIT_TYPE_LABELS to shared schema file, used by card and form components
-3. Extracted shared AuthenticationError/requireUserId/isAuthenticationError to src/actions/helpers.ts
-4. Extracted MILLISECONDS_PER_DAY named constant in benefit-card.tsx
-
-All 415 tests pass. TypeScript compiles cleanly. Coverage: 98.48% stmts, 91.79% branches.
-
-## Task 2.10 — Second Review Fixes (applied 2026-03-20)
-
-Changes applied from 2.10_task_review.md:
-
-1. **Replaced `as never` casts with typed mock factory** (Minor #1, Rec #1) — Created
-   `buildMockBenefitReturn()` typed factory in `benefits.test.ts` using `TrackedBenefit`
-   and `BenefitType` from `@/generated/prisma/client`. Replaced all 3 `{} as never` casts
-   with properly typed mock return values, matching the pattern established in tasks 2.6–2.9.
-
-All 415 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
-
-## Task 2.11 — Family Member Profiles (completed 2026-03-20)
-
-Files created:
-- src/lib/validators/family.schema.ts — Zod schemas for family member + enrollment CRUD with z.enum(RELATIONSHIPS) constraint, type exports
-- src/lib/validators/family.schema.test.ts — 23 validation tests including invalid relationship rejection
-- src/lib/services/family-member.service.ts — CRUD service for family members and their program enrollments with ownership verification, custom error classes
-- src/lib/services/family-member.service.test.ts — 22 unit tests covering list, create, update, delete for members and enrollments
-- src/actions/family.ts — Server actions (addFamilyMember, editFamilyMember, removeFamilyMember, addFamilyEnrollment, editFamilyEnrollment, removeFamilyEnrollment) using shared helpers
-- src/actions/family.test.ts — 25 action tests covering success, validation, auth, not-found, already-enrolled
-- src/components/dashboard/family-member-card.tsx — Card with relationship badge, enrollment list, filtered "Add Program" button
-- src/components/dashboard/family-enrollment-card.tsx — Enrollment display with balance, staleness indicator, type badges
-- src/components/dashboard/family-member-form-dialog.tsx — Create family member dialog with relationship select
-- src/components/dashboard/edit-family-member-dialog.tsx — Edit family member dialog with form reset on open
-- src/components/dashboard/delete-family-member-button.tsx — Delete confirmation dialog
-- src/components/dashboard/family-enrollment-form-dialog.tsx — Add program enrollment dialog for family members
-- src/components/dashboard/edit-family-enrollment-dialog.tsx — Edit enrollment dialog
-- src/components/dashboard/delete-family-enrollment-button.tsx — Delete enrollment confirmation
-- src/app/(dashboard)/family/page.tsx — Family page with auth, empty state, member grid, parallel data fetch
-
-Files modified:
-- src/components/app-sidebar.tsx — Added Family link with UsersRound icon
-
-Review fixes applied:
-1. Constrained relationship field with z.enum(RELATIONSHIPS) instead of z.string() for defense in depth
-2. Changed enrollment ordering from familyMemberId (meaningless) to balanceUpdatedAt desc
-3. Added test for invalid relationship value rejection
-
-All 492 tests pass. TypeScript compiles cleanly.
-
-## Task 2.11 — Second Review Fixes (applied 2026-03-20)
-
-Changes applied from 2.11_task_review.md:
-
-1. **Replaced `as never` casts with typed mock factories in service test** (Minor #1) — Created
-   `MemberWithEnrollments`, `EnrollmentWithProgram`, `ProgramSelect` type aliases and
-   `buildMockMemberWithEnrollments()`, `buildMockEnrollmentWithProgram()`, `buildMockProgramSelect()`
-   typed factories in `family-member.service.test.ts`. Replaced all 6 `as never` casts on
-   `mockResolvedValue` calls with properly typed return values.
-
-2. **Replaced `as never` casts with typed mock factory in actions test** (Minor #2) — Created
-   `EnrollmentWithProgram` type alias and `buildMockEnrollmentReturn()` typed factory in
-   `family.test.ts` using `FamilyProgramEnrollment` and `ProgramType` from Prisma. Replaced
-   both `{} as never` casts with properly typed mock return values.
-
-3. **Extracted shared `AvailableProgram` interface** (Minor #3) — Removed duplicated
-   `AvailableProgram` interface from `family-enrollment-form-dialog.tsx` and replaced with
-   import from `family-member-card.tsx` where it is already exported.
-
-All 492 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
-
-## Phase 2 — QA Report (completed 2026-03-20)
-
-QA report written to tasks/prd-milescontrol/qa-report-phase2.md.
-
-Status: APPROVED
-- 36 requirements verified, all PASSED
-- 492 tests passing (28 test files)
-- Coverage: 97.55% stmts, 90.24% branches, 97.26% functions, 97.50% lines
-- TypeScript: 0 errors
-- 0 bugs found
-
-Checks passed:
-- No console.log usage (Pino only)
-- No `as any` casts in source code
-- All actions authenticated via requireUserId/getServerSession
-- All mutations call revalidatePath
-- Cascade deletes on all user-owned entities
-- Zod validation on all inputs
-- Custom error classes for domain errors
-- No PII in logs
-- Cron endpoint auth gated on CRON_SECRET
+QA report: tasks/prd-milescontrol/qa-report-phase4.md
+Status: APPROVED — 14/14 requirements met, 0 bugs found
+Test suite: 1152 tests passing (59 files), TypeScript clean, coverage 98.19%, build PASS
+All 4 alert channels verified: in-app, email (Resend), Telegram bot, web push (VAPID)
+Channel failures are isolated — one channel failure does not affect others
+Phase 5 (Flight Search) can proceed.

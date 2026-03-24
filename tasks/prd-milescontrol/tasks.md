@@ -31,28 +31,28 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 
 ### Phase 3: Promotions Engine
 
-- [ ] 3.0 Base scraper infrastructure — Abstract scraper class, rate limiting, robots.txt, retry, logging, ScraperRun persistence
-- [ ] 3.1 Passageiro de Primeira scraper
-- [ ] 3.2 Melhores Cartões scraper
-- [ ] 3.3 Pontos Pra Voar scraper
-- [ ] 3.4 Comparemania scraper
-- [ ] 3.5 Promotion deduplication and storage
-- [ ] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios
-- [ ] 3.7 Calculator UI page — Interactive form, presets, comparison, embedded in promo cards
-- [ ] 3.8 **Miles Value Advisor (Redemption Advisor)** — "This flight values your miles at R$80/k based on YOUR cost history." Uses user's actual transfer history average, not generic. [Key differentiator vs Oktoplus "Dica"]
-- [ ] 3.9 Promotion feed page — Active promos sorted by value, filters, deadline countdown, source links
-- [ ] 3.10 **Personalized promo matching** — Highlight promos relevant to user's enrolled programs. "Relevant for you: you have 15,000 Livelo points." [Neither competitor does this]
-- [ ] 3.11 Cron job: scrape-promos — Vercel Cron every 30 min
-- [ ] 3.12 Miles calendar page — Calendar view with expected promo periods, historical notes
+- [x] 3.0 Base scraper infrastructure — Abstract scraper class, rate limiting, robots.txt, retry, logging, ScraperRun persistence
+- [x] 3.1 Passageiro de Primeira scraper
+- [x] 3.2 Melhores Cartões scraper
+- [x] 3.3 Pontos Pra Voar scraper
+- [x] 3.4 Comparemania scraper
+- [x] 3.5 Promotion deduplication and storage
+- [x] 3.6 Cost calculator service — Pure functions: calculateCostPerMilheiro, ratePromotion, compareScenarios
+- [x] 3.7 Calculator UI page — Interactive form, presets, comparison, embedded in promo cards
+- [x] 3.8 **Miles Value Advisor (Redemption Advisor)** — "This flight values your miles at R$80/k based on YOUR cost history." Uses user's actual transfer history average, not generic. [Key differentiator vs Oktoplus "Dica"]
+- [x] 3.9 Promotion feed page — Active promos sorted by value, filters, deadline countdown, source links
+- [x] 3.10 **Personalized promo matching** — Highlight promos relevant to user's enrolled programs. "Relevant for you: you have 15,000 Livelo points." [Neither competitor does this]
+- [x] 3.11 Cron job: scrape-promos — Vercel Cron every 30 min
+- [x] 3.12 Miles calendar page — Calendar view with expected promo periods, historical notes
 
 ### Phase 4: Alerts & Notifications
 
-- [ ] 4.0 Alert configuration UI — Create/edit rules: programs, promo types, min bonus %, max cost/milheiro, channels
-- [ ] 4.1 Alert matching engine — Match new promos against active alerts
-- [ ] 4.2 Telegram bot — Setup, webhook, commands (/start, /alerts, /promos, /calc), chat ID registration
-- [ ] 4.3 Email notifications — Resend: alert emails, weekly digest, balance change digest (from 2.9)
-- [ ] 4.4 In-app notification center — List, read/unread, badge in nav
-- [ ] 4.5 Web push notifications
+- [x] 4.0 Alert configuration UI — Create/edit rules: programs, promo types, min bonus %, max cost/milheiro, channels
+- [x] 4.1 Alert matching engine — Match new promos against active alerts
+- [x] 4.2 Telegram bot — Setup, webhook, commands (/start, /alerts, /promos, /calc), chat ID registration
+- [x] 4.3 Email notifications — Resend: alert emails, weekly digest, balance change digest (from 2.9)
+- [x] 4.4 In-app notification center — List, read/unread, badge in nav
+- [x] 4.5 Web push notifications
 
 ### Phase 5: Flight Search
 

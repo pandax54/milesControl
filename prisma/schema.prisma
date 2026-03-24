@@ -43,6 +43,7 @@ model User {
   pointsSales        PointsSale[]
   savedFlightFilters SavedFlightFilter[]
   balanceSnapshots   BalanceSnapshot[]
+  pushSubscriptions  PushSubscription[]
 
   @@index([managedById])
   @@index([email])
@@ -218,7 +219,7 @@ model Promotion {
   minimumTransfer   Int?
   maxBonusCap       Int?
   deadline          DateTime?
-  sourceUrl         String
+  sourceUrl         String      @unique
   sourceSiteName    String
   rawContent        String?
   costPerMilheiro   Decimal? @db.Decimal(10, 2)
@@ -284,6 +285,23 @@ model Notification {
 
   @@index([userId, isRead])
   @@index([sentAt])
+}
+
+// ==================== WEB PUSH SUBSCRIPTIONS ====================
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // ==================== FLIGHT WATCHLIST ====================
