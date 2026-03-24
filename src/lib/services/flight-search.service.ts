@@ -38,7 +38,7 @@ export interface FlightSearchResult {
  * Search for flights by params.
  *
  * - Award flights: Seats.aero Pro API (task 5.1 — implemented)
- * - Cash flights: SerpApi Google Flights (task 5.2 — pending)
+ * - Cash flights: SerpApi Google Flights (task 5.2 — implemented)
  *
  * PRD F4.1-F4.3: Search cash and award flights by origin/destination/date/cabin/passengers.
  */

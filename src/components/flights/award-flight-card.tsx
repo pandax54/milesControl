@@ -9,7 +9,9 @@ import { Separator } from '@/components/ui/separator';
 import { formatCurrency, formatNumber } from '@/lib/utils/format';
 import { computeRedemptionAdvisorAction } from '@/actions/calculator';
 import { CompactRedemptionResult } from '@/components/dashboard/redemption-advisor-form';
+import { MilesValueBadge } from './miles-value-badge';
 import type { AwardFlight } from '@/lib/services/flight-search.service';
+import type { FlightMilesValue } from '@/lib/services/miles-value-comparison.service';
 import type { PromotionRating } from '@/lib/validators/cost-calculator.schema';
 import type { RedemptionAdvisorResult } from '@/lib/services/cost-calculator.service';
 
@@ -19,13 +21,15 @@ interface AwardFlightCardProps {
   flight: AwardFlight;
   /** Preloaded user avg cost from session. Passed in to avoid repeated DB calls per card. */
   userAvgCostPerMilheiro?: number;
-  /** Cash price for the same route/dates — used to compute miles value vs cash. */
+  /** Cash price for the same route/dates — used for on-demand Miles Value Advisor. */
   cashPrice?: number;
+  /** Pre-computed miles value comparison — always shown inline when available. PRD F4.10 */
+  milesValue?: FlightMilesValue;
 }
 
 // ==================== Component ====================
 
-export function AwardFlightCard({ flight, userAvgCostPerMilheiro, cashPrice }: AwardFlightCardProps) {
+export function AwardFlightCard({ flight, userAvgCostPerMilheiro, cashPrice, milesValue }: AwardFlightCardProps) {
   const [advisorResult, setAdvisorResult] = useState<RedemptionAdvisorResult | null>(null);
   const [showAdvisor, setShowAdvisor] = useState(false);
   const [advisorError, setAdvisorError] = useState<string | null>(null);
@@ -99,7 +103,20 @@ export function AwardFlightCard({ flight, userAvgCostPerMilheiro, cashPrice }: A
           <span>{flight.seatsAvailable} seat{flight.seatsAvailable !== 1 ? 's' : ''} available</span>
         </div>
 
-        {/* Advisor pre-computed badge (if already computed) */}
+        {/* Pre-computed miles value comparison — always visible when cash price is available */}
+        {milesValue != null && (
+          <>
+            <Separator />
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground">
+                vs cash {formatCurrency(milesValue.cashPriceBRL)}
+              </span>
+              <MilesValueBadge milesValue={milesValue} />
+            </div>
+          </>
+        )}
+
+        {/* On-demand Miles Value Advisor (expanded details) */}
         {advisorResult && showAdvisor && (
           <>
             <Separator />

@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CashFlightCard } from './cash-flight-card';
 import { AwardFlightCard } from './award-flight-card';
 import type { CashFlight, AwardFlight } from '@/lib/services/flight-search.service';
+import type { FlightMilesValue } from '@/lib/services/miles-value-comparison.service';
 
 // ==================== Types ====================
 
@@ -9,8 +10,10 @@ interface FlightResultsProps {
   cashFlights: readonly CashFlight[];
   awardFlights: readonly AwardFlight[];
   userAvgCostPerMilheiro?: number;
-  /** Lowest cash price found — passed to award cards for Miles Value Advisor */
+  /** Lowest cash price found — passed to award cards for on-demand Miles Value Advisor */
   lowestCashPrice?: number;
+  /** Pre-computed miles value per award flight (index matches awardFlights array) */
+  flightMilesValues?: readonly (FlightMilesValue | null)[];
 }
 
 // ==================== Helpers ====================
@@ -30,6 +33,7 @@ export function FlightResults({
   awardFlights,
   userAvgCostPerMilheiro,
   lowestCashPrice,
+  flightMilesValues,
 }: FlightResultsProps) {
   const cashCount = cashFlights.length;
   const awardCount = awardFlights.length;
@@ -65,6 +69,7 @@ export function FlightResults({
               flight={flight}
               userAvgCostPerMilheiro={userAvgCostPerMilheiro}
               cashPrice={lowestCashPrice}
+              milesValue={flightMilesValues?.[index] ?? undefined}
             />
           ))
         )}

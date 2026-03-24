@@ -7,6 +7,7 @@ import { FlightResults } from './flight-results';
 import { searchFlightsAction } from '@/actions/flights';
 import type { FlightSearchParams } from '@/lib/validators/flight-search.schema';
 import type { CashFlight, AwardFlight } from '@/lib/services/flight-search.service';
+import type { FlightMilesValue } from '@/lib/services/miles-value-comparison.service';
 
 // ==================== Types ====================
 
@@ -15,6 +16,7 @@ interface SearchState {
   awardFlights: readonly AwardFlight[];
   userAvgCostPerMilheiro?: number;
   lowestCashPrice?: number;
+  flightMilesValues: readonly (FlightMilesValue | null)[];
   searched: boolean;
   error: string | null;
 }
@@ -22,6 +24,7 @@ interface SearchState {
 const INITIAL_STATE: SearchState = {
   cashFlights: [],
   awardFlights: [],
+  flightMilesValues: [],
   searched: false,
   error: null,
 };
@@ -46,7 +49,7 @@ export function FlightSearchPage() {
         return;
       }
 
-      const { cashFlights, awardFlights, userAvgCostPerMilheiro } = response.data;
+      const { cashFlights, awardFlights, userAvgCostPerMilheiro, flightMilesValues } = response.data;
       const prices = cashFlights.map((f) => f.price);
       const lowestCashPrice = prices.length > 0 ? Math.min(...prices) : undefined;
 
@@ -55,6 +58,7 @@ export function FlightSearchPage() {
         awardFlights,
         userAvgCostPerMilheiro,
         lowestCashPrice,
+        flightMilesValues,
         searched: true,
         error: null,
       });
@@ -90,6 +94,7 @@ export function FlightSearchPage() {
             awardFlights={state.awardFlights}
             userAvgCostPerMilheiro={state.userAvgCostPerMilheiro}
             lowestCashPrice={state.lowestCashPrice}
+            flightMilesValues={state.flightMilesValues}
           />
         </div>
       )}
