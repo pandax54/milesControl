@@ -122,3 +122,18 @@ Files modified:
 - src/lib/services/flight-search.service.ts — Fixed stale comment (task 5.2 "pending" → "implemented")
 
 Verification: 1296 tests pass, TypeScript clean, coverage thresholds met, build PASS.
+
+## Task 5.4 — Flight Watchlist CRUD + Target Price Alerts (completed 2026-03-24)
+
+Files created:
+- src/lib/validators/watchlist.schema.ts — Zod schemas for create/update/delete/toggle; requiresatleast one target price (miles or cash); IATA validation
+- src/lib/services/flight-watchlist.service.ts — CRUD (list, get, create, update, toggle, delete); checkWatchlistItemPrices() searches flights and creates IN_APP notifications when prices <= target; resolves future departure date from earliestDate/latestDate
+- src/lib/services/flight-watchlist.service.test.ts — 18 unit tests for all CRUD ops + price check scenarios (miles target, cash target, preferred program filter, search failure, date resolution)
+- src/actions/watchlist.ts — Server Actions: addWatchlistItem, editWatchlistItem, removeWatchlistItem, setWatchlistItemActive
+- src/actions/watchlist.test.ts — 16 tests for actions (validation, not-found, auth error)
+- src/components/flights/add-watchlist-form.tsx — Form: origin/destination IATA, date range, cabin class, passengers, miles target, cash target, preferred program
+- src/components/flights/watchlist-item-card.tsx — Card: route, targets, cabin, status badge, last checked, pause/resume/delete actions
+- src/components/flights/watchlist-page.tsx — Client orchestration: add form toggle, items list, empty state
+- src/app/(dashboard)/flights/watchlist/page.tsx — RSC route at /flights/watchlist; fetches items server-side
+
+Verification: 1330 tests pass, TypeScript clean, coverage 97.81%, build PASS (/flights/watchlist route visible).
