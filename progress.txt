@@ -1,45 +1,3 @@
-2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
-
-Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
-
-## Task 3.12 — Miles Calendar Page (completed 2026-03-21)
-
-Files created:
-- src/lib/services/miles-calendar.service.ts — Service with listCalendarEvents, listUpcomingCalendarEvents, listEventsByMonth, groupEventsByMonth, PROMO_TYPE_LABELS. UTC-consistent date filtering.
-- src/lib/services/miles-calendar.service.test.ts — 13 unit tests covering all service functions and groupEventsByMonth edge cases
-- src/components/promotions/miles-calendar-event-card.tsx — Card component showing event title, date range, programs, expected promo type badge, description, and historical note
-- src/components/promotions/miles-calendar-view.tsx — View component that splits events into upcoming/past sections, groups by month, renders MonthSection grids
-- src/app/(dashboard)/promotions/calendar/page.tsx — Server component page at /promotions/calendar
-
-Key implementation details:
-- UTC-consistent date comparisons throughout (Date.UTC, setUTCHours) to avoid off-by-one timezone errors
-- Events grouped by month using reduce (no for...of loops, no non-null assertions)
-- Import order: external → @/ internal → relative
-- Upcoming events shown first, past events with reduced opacity
-
-Review: APPROVED WITH OBSERVATIONS — all 5 minor issues fixed before commit.
-All 964 tests pass. TypeScript compiles cleanly.
-
-## Task 3.12 — Review Fixes Applied (2026-03-21)
-
-Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED
-
-Minor issues resolved (commit 483cb8f):
-1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100` constant in calendar page
-2. Duplicated UTC midnight boundary (`new Date(); today.setUTCHours(0,0,0,0)`) extracted to exported `getUtcMidnightToday()` in miles-calendar.service.ts — used by both miles-calendar-event-card.tsx and miles-calendar-view.tsx (and internally by buildWhereClause)
-
-Verification: 964 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 3.12 — Final Review Verification (2026-03-21)
-
-Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED (final)
-
-All prior review recommendations were already resolved in commit 483cb8f:
-1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100`
-2. Duplicated UTC midnight boundary extracted to exported `getUtcMidnightToday()` in service
-
-Verification checks:
-- `npx tsc --noEmit` — PASS
 - `pnpm test` — PASS (964 tests, 0 failing)
 - `pnpm run test:coverage` — PASS (above 80% threshold on all metrics)
 - `miles-calendar.service.ts` — 100% coverage across all metrics
@@ -120,3 +78,21 @@ Test suite: 1152 tests passing (59 files), TypeScript clean, coverage 98.19%, bu
 All 4 alert channels verified: in-app, email (Resend), Telegram bot, web push (VAPID)
 Channel failures are isolated — one channel failure does not affect others
 Phase 5 (Flight Search) can proceed.
+
+## Task 5.0 — Flight Search UI (completed 2026-03-24)
+
+Files created:
+- src/lib/validators/flight-search.schema.ts — Zod schema for FlightSearchParams; IATA code validation, date format, cabin class enum, passengers range
+- src/lib/validators/flight-search.schema.test.ts — 11 tests covering valid/invalid inputs
+- src/lib/services/flight-search.service.ts — CashFlight, AwardFlight, FlightSearchResult types; placeholder searchFlights() (real impl in 5.1/5.2)
+- src/lib/services/flight-search.service.test.ts — 4 tests verifying placeholder behavior
+- src/actions/flights.ts — searchFlightsAction: validates params, runs search + fetches user avg cost concurrently for Miles Value Advisor
+- src/actions/flights.test.ts — 10 tests covering auth scenarios, validation errors, service errors
+- src/components/flights/flight-search-form.tsx — Client form: origin/destination (IATA), departure/return dates, passengers, cabin class; inline validation
+- src/components/flights/cash-flight-card.tsx — Cash flight result card: airline, price, route, duration, stops
+- src/components/flights/award-flight-card.tsx — Award flight card with inline Miles Value Advisor toggle using existing computeRedemptionAdvisorAction
+- src/components/flights/flight-results.tsx — Tabbed results container (Cash / Award tabs) with empty states
+- src/components/flights/flight-search-page.tsx — Client-side orchestration: form + results state management
+- src/app/(dashboard)/flights/search/page.tsx — Route at /flights/search under dashboard layout
+
+Verification: 1179 tests pass, TypeScript clean, coverage 98.2%, build PASS (/flights/search route visible).
