@@ -1,3 +1,4 @@
+// PRD F4.8: Explore destinations page — entry point for browse-by-region flight discovery
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { ExploreDestinationsPage } from '@/components/flights/explore-destinations-page';

@@ -1,3 +1,4 @@
+// PRD F4.8: Explore destinations UI — filter form with region, date type, cabin, sort options
 'use client';
 
 import { useState, useTransition } from 'react';

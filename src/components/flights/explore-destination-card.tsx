@@ -1,3 +1,4 @@
+// PRD F4.8: Destination card — displays cash price, miles required, and miles value rating per destination
 import { MapPin, Plane, DollarSign } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
