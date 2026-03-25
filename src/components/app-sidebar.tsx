@@ -61,6 +61,7 @@ const FLIGHT_ITEMS = [
 const ADMIN_ITEMS = [
   { title: 'Admin', href: '/admin', icon: Users },
   { title: 'Clients', href: '/admin/clients', icon: Users },
+  { title: 'Promo Matching', href: '/admin/promotions', icon: Megaphone },
   { title: 'Audit Log', href: '/admin/audit', icon: ClipboardList },
 ];
 
