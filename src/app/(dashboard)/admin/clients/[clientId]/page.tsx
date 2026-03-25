@@ -7,7 +7,7 @@ import { EditClientDialog } from '@/components/admin/edit-client-dialog';
 import { DeleteClientButton } from '@/components/admin/delete-client-button';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileBarChart } from 'lucide-react';
 import { ClientNotFoundError } from '@/lib/services/client-management.service';
 
 interface ClientDetailPageProps {
@@ -57,6 +57,10 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
           <p className="text-muted-foreground">{client.email}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" render={<Link href={`/admin/clients/${client.id}/report`} />}>
+            <FileBarChart className="mr-2 h-4 w-4" />
+            View Report
+          </Button>
           <EditClientDialog
             clientId={client.id}
             initialName={client.name}
