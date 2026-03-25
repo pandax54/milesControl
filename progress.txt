@@ -1,33 +1,3 @@
-No critical, major, or minor issues found. No fixes required.
-Verification: 977 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 4.1 — Review Fixes (2026-03-21)
-
-Review file: tasks/prd-milescontrol/4.1_task_review.md — Status: APPROVED WITH OBSERVATIONS
-Major issue resolved: integrated processNewPromotions() into runAllScrapers() post-storage step.
-- scrape-promos.service.ts — import prisma + processNewPromotions; after all scrapers run, fetch new promotions (createdAt >= runStartTime) and call processNewPromotions; add alertMatchResult to ScrapePromosResult
-- scrape-promos.service.test.ts — mocked prisma.promotion.findMany + processNewPromotions; 4 new tests covering alert matching trigger, skip when no creates, skip when query empty, graceful failure
-- scrape-promos route.ts — expose alertMatchResult in cron response
-Verification: 1025 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 4.2 — Telegram Bot (completed 2026-03-21)
-
-Files created:
-- src/lib/integrations/telegram.ts — sendMessage, sendAlertNotification, escapeHtml. Native fetch with 3-retry logic and 5s delay. HTML parse mode.
-- src/lib/integrations/telegram.test.ts — 12 tests covering escapeHtml, sendMessage (retry logic, network errors), sendAlertNotification
-- src/lib/services/telegram-notification.service.ts — findUserByChatId (via AlertConfig.telegramChatId), sendTelegramAlerts, getTopPromotionsForBot, getUserAlertConfigs
-- src/lib/services/telegram-notification.service.test.ts — 13 tests covering all service functions
-- src/app/api/webhook/telegram/route.ts — POST handler with CRON_SECRET validation, command routing: /start (show chat ID + instructions), /alerts (list active rules), /promos (top 5 active promos), /calc (cost per milheiro), unknown command fallback
-- src/app/api/webhook/telegram/route.test.ts — 22 tests covering authorization, all 4 commands, edge cases
-
-Key design decisions:
-- telegramChatId stored on AlertConfig (already in schema); user lookup via findFirst on AlertConfig.telegramChatId
-- /start shows user their chat ID to paste into the app UI (no deep-link needed)
-- Webhook secret uses CRON_SECRET header X-Telegram-Bot-Api-Secret-Token
-- Always returns 200 to Telegram to prevent retries on processing errors
-
-Verification: 1067 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
 ## Task 4.3 — Review Fixes (2026-03-22)
 
 Review file: tasks/prd-milescontrol/4.3_task_review.md — Status: APPROVED
@@ -108,3 +78,15 @@ Verification: 1296 tests pass, TypeScript clean, coverage 98.14% statements / 92
 Review file: tasks/prd-milescontrol/5.4_task_review.md — Status: APPROVED
 No critical, major, or minor issues found. No fixes required.
 Verification: 1330 tests pass, TypeScript clean, coverage 97.81% (watchlist modules at 100%), build PASS.
+
+## Task 6.0 — Admin Dashboard (completed 2026-03-24)
+
+Files created:
+- src/lib/services/admin-dashboard.service.ts — fetchAdminDashboardData(): queries clients by managedById, aggregates total miles/points/subscriptions, counts clients with expiring miles (30-day window), returns top 10 clients sorted by balance
+- src/lib/services/admin-dashboard.service.test.ts — 8 tests covering empty state, miles/points aggregation, subscription count, expiry detection, zero-balance exclusion, sorting, pagination limit, prisma query params
+- src/components/admin/admin-summary-cards.tsx — 4-card grid: total clients, total miles (with subscription count), total points, clients with expiring miles (red if > 0)
+- src/components/admin/admin-clients-table.tsx — Table showing top clients with miles, points, program count, subscription count, expiring miles warning
+- src/app/(dashboard)/admin/page.tsx — Admin dashboard route at /admin; redirects non-ADMIN users to /; renders summary cards + clients table
+- src/actions/helpers.ts — Added requireAdminRole() (throws AuthorizationError if not ADMIN) and AuthorizationError class
+
+Verification: 1412 tests pass, TypeScript clean, coverage 97.9%, build PASS (/admin route visible).
