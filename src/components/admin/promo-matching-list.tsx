@@ -72,6 +72,7 @@ function PromoMatchingCard({ item }: { item: PromotionWithClientMatches }) {
       {hasMatches && (
         <CardContent>
           <PromoMatchClientsDialog
+            promotionId={promotion.id}
             promotionTitle={promotion.title}
             matches={matches}
             totalClientCount={totalClientCount}

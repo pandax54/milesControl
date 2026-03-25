@@ -70,7 +70,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 6.0 Admin dashboard — Aggregated view: total clients, balances, expiring miles
 - [x] 6.1 Client management — Add/edit/view clients, impersonate client view
 - [x] 6.2 **Promo-client matching** — "This promo is relevant for 12 of your 30 clients." Batch recommendation UI. [Unique feature]
-- [ ] 6.3 Recommendation system — Send targeted promo recommendations to specific clients
+- [x] 6.3 Recommendation system — Send targeted promo recommendations to specific clients
 - [ ] 6.4 Audit logging — Track all admin actions, audit log page
 - [ ] 6.5 **Client reporting** — Per-client reports: total miles managed, avg cost/milheiro, savings vs market, expirations. [Unique feature]
 
