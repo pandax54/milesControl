@@ -104,3 +104,11 @@ Files created:
 - src/actions/helpers.ts — Added requireAdminRole() (throws AuthorizationError if not ADMIN) and AuthorizationError class
 
 Verification: 1412 tests pass, TypeScript clean, coverage 97.9%, build PASS (/admin route visible).
+
+## Phase 6 QA — APPROVED (2026-03-24)
+
+QA report: tasks/prd-milescontrol/qa-report-phase6.md
+Status: APPROVED — 8/8 requirements met, 0 bugs found
+Test suite: 1524 tests passing (83 files), TypeScript clean, coverage 97.73%/90.99%, build PASS
+All admin routes verified: /admin, /admin/clients, /admin/clients/[id], /admin/clients/[id]/report, /admin/audit-logs, /admin/promotions
+Admin isolation enforced via managedById; non-ADMIN users redirected; audit logging non-blocking
