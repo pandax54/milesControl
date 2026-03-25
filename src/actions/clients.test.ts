@@ -35,6 +35,19 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+vi.mock('@/lib/services/audit-log.service', () => ({
+  logAuditAction: vi.fn(),
+  AUDIT_ACTIONS: {
+    CREATE_CLIENT: 'CREATE_CLIENT',
+    UPDATE_CLIENT: 'UPDATE_CLIENT',
+    DELETE_CLIENT: 'DELETE_CLIENT',
+    SEND_RECOMMENDATION: 'SEND_RECOMMENDATION',
+    SEND_BATCH_RECOMMENDATIONS: 'SEND_BATCH_RECOMMENDATIONS',
+    IMPERSONATE_CLIENT: 'IMPERSONATE_CLIENT',
+    UPDATE_CLIENT_BALANCE: 'UPDATE_CLIENT_BALANCE',
+  },
+}));
+
 vi.mock('@/lib/services/client-management.service', () => ({
   createClient: vi.fn(),
   updateClient: vi.fn(),

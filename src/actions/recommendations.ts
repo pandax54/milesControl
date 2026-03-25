@@ -16,6 +16,7 @@ import {
 } from '@/lib/services/admin-recommendation.service';
 import { ClientNotFoundError } from '@/lib/services/client-management.service';
 import { PromotionNotFoundError } from '@/lib/services/promotion.service';
+import { logAuditAction, AUDIT_ACTIONS } from '@/lib/services/audit-log.service';
 import {
   requireAdminRole,
   isAuthenticationError,
@@ -44,6 +45,12 @@ export async function sendPromoRecommendation(
       parsed.data.clientId,
       parsed.data.promotionId,
       parsed.data.message,
+    );
+    await logAuditAction(
+      adminId,
+      AUDIT_ACTIONS.SEND_RECOMMENDATION,
+      { promotionId: parsed.data.promotionId },
+      parsed.data.clientId,
     );
     revalidatePath(PROMOTIONS_PATH);
     return { success: true };
@@ -83,6 +90,16 @@ export async function sendBatchPromoRecommendations(
       parsed.data.clientIds,
       parsed.data.promotionId,
       parsed.data.message,
+    );
+    await logAuditAction(
+      adminId,
+      AUDIT_ACTIONS.SEND_BATCH_RECOMMENDATIONS,
+      {
+        promotionId: parsed.data.promotionId,
+        clientCount: parsed.data.clientIds.length,
+        succeeded: summary.succeeded,
+        failed: summary.failed,
+      },
     );
     revalidatePath(PROMOTIONS_PATH);
     return { success: true, summary };

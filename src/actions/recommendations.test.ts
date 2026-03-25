@@ -59,6 +59,19 @@ vi.mock('@/lib/services/promotion.service', () => ({
   },
 }));
 
+vi.mock('@/lib/services/audit-log.service', () => ({
+  logAuditAction: vi.fn(),
+  AUDIT_ACTIONS: {
+    CREATE_CLIENT: 'CREATE_CLIENT',
+    UPDATE_CLIENT: 'UPDATE_CLIENT',
+    DELETE_CLIENT: 'DELETE_CLIENT',
+    SEND_RECOMMENDATION: 'SEND_RECOMMENDATION',
+    SEND_BATCH_RECOMMENDATIONS: 'SEND_BATCH_RECOMMENDATIONS',
+    IMPERSONATE_CLIENT: 'IMPERSONATE_CLIENT',
+    UPDATE_CLIENT_BALANCE: 'UPDATE_CLIENT_BALANCE',
+  },
+}));
+
 import { revalidatePath } from 'next/cache';
 import {
   sendRecommendation as sendRecommendationService,

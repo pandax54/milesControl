@@ -16,6 +16,7 @@ import {
   ClientNotFoundError,
   ClientEmailAlreadyExistsError,
 } from '@/lib/services/client-management.service';
+import { logAuditAction, AUDIT_ACTIONS } from '@/lib/services/audit-log.service';
 import {
   requireAdminRole,
   isAuthenticationError,
@@ -33,7 +34,8 @@ export async function addClient(input: CreateClientInput): Promise<ActionResult>
 
   try {
     const adminId = await requireAdminRole();
-    await createClientService(adminId, parsed.data);
+    const client = await createClientService(adminId, parsed.data);
+    await logAuditAction(adminId, AUDIT_ACTIONS.CREATE_CLIENT, { email: parsed.data.email }, client.id);
     revalidatePath(CLIENTS_PATH);
     return { success: true };
   } catch (error) {
@@ -60,6 +62,12 @@ export async function editClient(input: UpdateClientInput): Promise<ActionResult
   try {
     const adminId = await requireAdminRole();
     await updateClientService(adminId, parsed.data);
+    await logAuditAction(
+      adminId,
+      AUDIT_ACTIONS.UPDATE_CLIENT,
+      { name: parsed.data.name, email: parsed.data.email },
+      parsed.data.clientId,
+    );
     revalidatePath(CLIENTS_PATH);
     revalidatePath(`${CLIENTS_PATH}/${parsed.data.clientId}`);
     return { success: true };
@@ -90,6 +98,7 @@ export async function removeClient(clientId: string): Promise<ActionResult> {
   try {
     const adminId = await requireAdminRole();
     await deleteClientService(adminId, parsed.data.clientId);
+    await logAuditAction(adminId, AUDIT_ACTIONS.DELETE_CLIENT, {}, parsed.data.clientId);
     revalidatePath(CLIENTS_PATH);
     return { success: true };
   } catch (error) {
