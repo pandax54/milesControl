@@ -118,9 +118,10 @@ Test suite: 1524 tests passing (83 files), TypeScript clean, coverage 97.73%/90.
 All admin routes verified: /admin, /admin/clients, /admin/clients/[id], /admin/clients/[id]/report, /admin/audit-logs, /admin/promotions
 Admin isolation enforced via managedById; non-ADMIN users redirected; audit logging non-blocking
 
-## Task 7.0 — Onboarding wizard (2026-03-26)
-- Added a dashboard onboarding wizard that replaces the empty state and reappears until programs, subscriptions, and alerts are configured.
-- Added quick-add buttons for Smiles, Livelo, Latam Pass, and Azul, with optional deeper fields for balances, tiers, expirations, and alert filters.
-- Reused existing program, subscription, and alert actions so onboarding stays aligned with the main CRUD flows.
-- Added helper coverage plus component tests for quick program, subscription, and alert setup flows.
-- Verification: npx tsc --noEmit PASS, pnpm test PASS, pnpm run test:coverage PASS, pnpm build PASS.
+## Task 7.0 QA — APPROVED (2026-03-25)
+
+QA report: tasks/prd-milescontrol/qa-report-task-7.0.md
+Status: APPROVED — 8/8 requirements met, 0 bugs found
+Test suite: 1540 tests passing (85 files), TypeScript clean, coverage 95.63%/87.5%/92.53%/95.8%, build PASS
+Onboarding wizard: 3-step flow (programs → subscriptions → alerts) with quick-add + progressive disclosure
+Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defaults fully implemented
