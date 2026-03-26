@@ -2,7 +2,15 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { addAlertConfig } from '@/actions/alerts';
 import { enrollInProgram } from '@/actions/programs';
 import { addSubscription } from '@/actions/subscriptions';
@@ -55,6 +63,8 @@ interface ProgramFormValues {
   readonly expirationDate: string;
 }
 
+const STEP_IDS: readonly OnboardingStepId[] = ['programs', 'subscriptions', 'alerts'];
+
 const EMPTY_PROGRAM_FORM: ProgramFormValues = {
   programId: '',
   memberNumber: '',
@@ -88,6 +98,24 @@ function StepStatusBadge({ complete }: { complete: boolean }) {
   return complete ? <Badge>Done</Badge> : <Badge variant="outline">Pending</Badge>;
 }
 
+function StepErrorMessage({
+  id,
+  message,
+}: {
+  readonly id: string;
+  readonly message: string | null;
+}) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p id={id} role="alert" aria-live="polite" className="text-sm text-destructive">
+      {message}
+    </p>
+  );
+}
+
 export function OnboardingWizard({
   availablePrograms,
   clubTiers,
@@ -97,6 +125,7 @@ export function OnboardingWizard({
   enrolledProgramNames,
 }: OnboardingWizardProps) {
   const router = useRouter();
+  const wizardId = useId();
   const [isPending, startTransition] = useTransition();
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const onboardingStatus = useMemo(
@@ -140,6 +169,35 @@ export function OnboardingWizard({
   const [alertFormValues, setAlertFormValues] = useState<AlertConfigFormValues>(() =>
     buildInitialAlertFormValues(enrolledProgramNames),
   );
+  const stepButtonRefs = useRef<Record<OnboardingStepId, HTMLButtonElement | null>>({
+    programs: null,
+    subscriptions: null,
+    alerts: null,
+  });
+  const stepDomIds = useMemo(
+    () => ({
+      programs: {
+        tabId: `${wizardId}-tab-programs`,
+        panelId: `${wizardId}-panel-programs`,
+      },
+      subscriptions: {
+        tabId: `${wizardId}-tab-subscriptions`,
+        panelId: `${wizardId}-panel-subscriptions`,
+      },
+      alerts: {
+        tabId: `${wizardId}-tab-alerts`,
+        panelId: `${wizardId}-panel-alerts`,
+      },
+    }),
+    [wizardId],
+  );
+  const stepKeyboardHintId = `${wizardId}-step-keyboard-hint`;
+  const programDetailsId = `${wizardId}-program-details`;
+  const subscriptionDetailsId = `${wizardId}-subscription-details`;
+  const alertDetailsId = `${wizardId}-alert-details`;
+  const programErrorId = `${wizardId}-program-error`;
+  const subscriptionErrorId = `${wizardId}-subscription-error`;
+  const alertErrorId = `${wizardId}-alert-error`;
 
   useEffect(() => {
     if (onboardingStatus.firstIncompleteStep) {
@@ -300,6 +358,61 @@ export function OnboardingWizard({
     runAction(`alert-form:${parsed.data.name}`, setAlertErrorMessage, () => addAlertConfig(parsed.data));
   }
 
+  function focusStep(stepId: OnboardingStepId) {
+    setCurrentStep(stepId);
+    stepButtonRefs.current[stepId]?.focus();
+  }
+
+  function handleStepKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>, stepId: OnboardingStepId) {
+    const currentIndex = STEP_IDS.indexOf(stepId);
+
+    if (currentIndex === -1) {
+      return;
+    }
+
+    if (event.key === 'Home') {
+      const firstStepId = STEP_IDS[0];
+      if (!firstStepId) {
+        return;
+      }
+
+      event.preventDefault();
+      focusStep(firstStepId);
+      return;
+    }
+
+    if (event.key === 'End') {
+      const lastStepId = STEP_IDS[STEP_IDS.length - 1];
+      if (!lastStepId) {
+        return;
+      }
+
+      event.preventDefault();
+      focusStep(lastStepId);
+      return;
+    }
+
+    const offset =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown'
+        ? 1
+        : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+          ? -1
+          : 0;
+
+    if (offset === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const nextIndex = (currentIndex + offset + STEP_IDS.length) % STEP_IDS.length;
+    const nextStepId = STEP_IDS[nextIndex];
+    if (!nextStepId) {
+      return;
+    }
+
+    focusStep(nextStepId);
+  }
+
   const steps = [
     {
       id: 'programs' as const,
@@ -337,12 +450,29 @@ export function OnboardingWizard({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-3 md:grid-cols-3">
+        <p id={stepKeyboardHintId} className="sr-only">
+          Use arrow keys, Home, or End to move between onboarding steps.
+        </p>
+        <div
+          role="tablist"
+          aria-label="Onboarding steps"
+          aria-describedby={stepKeyboardHintId}
+          className="grid gap-3 md:grid-cols-3"
+        >
           {steps.map((step, index) => (
             <button
               key={step.id}
+              id={stepDomIds[step.id].tabId}
+              ref={(element) => {
+                stepButtonRefs.current[step.id] = element;
+              }}
               type="button"
+              role="tab"
+              tabIndex={currentStep === step.id ? 0 : -1}
+              aria-selected={currentStep === step.id}
+              aria-controls={stepDomIds[step.id].panelId}
               onClick={() => setCurrentStep(step.id)}
+              onKeyDown={(event) => handleStepKeyDown(event, step.id)}
               className={`rounded-lg border p-4 text-left transition-colors ${
                 currentStep === step.id ? 'border-primary bg-primary/5' : 'border-border'
               }`}
@@ -359,7 +489,12 @@ export function OnboardingWizard({
         </div>
 
         {currentStep === 'programs' && (
-          <div className="space-y-4">
+          <div
+            id={stepDomIds.programs.panelId}
+            role="tabpanel"
+            aria-labelledby={stepDomIds.programs.tabId}
+            className="space-y-4"
+          >
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Quick-add the most common Brazilian programs</h2>
               <p className="text-sm text-muted-foreground">
@@ -389,6 +524,8 @@ export function OnboardingWizard({
               <Button
                 type="button"
                 variant="secondary"
+                aria-expanded={showProgramDetails}
+                aria-controls={programDetailsId}
                 onClick={() => setShowProgramDetails((current) => !current)}
               >
                 {showProgramDetails ? 'Hide advanced program fields' : 'Customize program details'}
@@ -401,7 +538,7 @@ export function OnboardingWizard({
             </div>
 
             {showProgramDetails && (
-              <div className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
+              <div id={programDetailsId} className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="onboarding-program-id">Program</Label>
                   <div className="flex flex-wrap gap-2">
@@ -473,12 +610,17 @@ export function OnboardingWizard({
               </div>
             )}
 
-            {programError && <p className="text-sm text-destructive">{programError}</p>}
+            <StepErrorMessage id={programErrorId} message={programError} />
           </div>
         )}
 
         {currentStep === 'subscriptions' && (
-          <div className="space-y-4">
+          <div
+            id={stepDomIds.subscriptions.panelId}
+            role="tabpanel"
+            aria-labelledby={stepDomIds.subscriptions.tabId}
+            className="space-y-4"
+          >
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Add a starter club subscription</h2>
               <p className="text-sm text-muted-foreground">
@@ -516,6 +658,8 @@ export function OnboardingWizard({
               <Button
                 type="button"
                 variant="secondary"
+                aria-expanded={showSubscriptionDetails}
+                aria-controls={subscriptionDetailsId}
                 onClick={() => setShowSubscriptionDetails((current) => !current)}
               >
                 {showSubscriptionDetails ? 'Hide subscription details' : 'Customize subscription'}
@@ -528,7 +672,7 @@ export function OnboardingWizard({
             </div>
 
             {showSubscriptionDetails && (
-              <div className="space-y-4 rounded-lg border p-4">
+              <div id={subscriptionDetailsId} className="space-y-4 rounded-lg border p-4">
                 <div className="space-y-2">
                   <Label>Club tier</Label>
                   <div className="flex flex-wrap gap-2">
@@ -598,12 +742,17 @@ export function OnboardingWizard({
               </div>
             )}
 
-            {subscriptionError && <p className="text-sm text-destructive">{subscriptionError}</p>}
+            <StepErrorMessage id={subscriptionErrorId} message={subscriptionError} />
           </div>
         )}
 
         {currentStep === 'alerts' && (
-          <div className="space-y-4">
+          <div
+            id={stepDomIds.alerts.panelId}
+            role="tabpanel"
+            aria-labelledby={stepDomIds.alerts.tabId}
+            className="space-y-4"
+          >
             <div className="space-y-1">
               <h2 className="text-lg font-semibold">Set alerts before the first promo goes live</h2>
               <p className="text-sm text-muted-foreground">
@@ -656,6 +805,8 @@ export function OnboardingWizard({
               <Button
                 type="button"
                 variant="secondary"
+                aria-expanded={showAlertDetails}
+                aria-controls={alertDetailsId}
                 onClick={() => setShowAlertDetails((current) => !current)}
               >
                 {showAlertDetails ? 'Hide advanced alert fields' : 'Customize alert rule'}
@@ -668,7 +819,7 @@ export function OnboardingWizard({
             </div>
 
             {showAlertDetails && (
-              <div className="space-y-4 rounded-lg border p-4">
+              <div id={alertDetailsId} className="space-y-4 rounded-lg border p-4">
                 <AlertConfigFormFields values={alertFormValues} onChange={setAlertFormValues} idPrefix="onboarding-" />
                 <div className="flex justify-end">
                   <Button type="button" onClick={handleAlertFormSubmit} disabled={isPending}>
@@ -678,7 +829,7 @@ export function OnboardingWizard({
               </div>
             )}
 
-            {alertError && <p className="text-sm text-destructive">{alertError}</p>}
+            <StepErrorMessage id={alertErrorId} message={alertError} />
           </div>
         )}
       </CardContent>

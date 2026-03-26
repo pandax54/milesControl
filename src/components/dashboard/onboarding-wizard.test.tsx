@@ -91,6 +91,76 @@ describe('OnboardingWizard', () => {
     });
   });
 
+  it('should support arrow-key navigation across onboarding steps', () => {
+    render(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={0}
+        activeSubscriptionCount={0}
+        alertConfigCount={0}
+        enrolledProgramNames={[]}
+      />,
+    );
+
+    const programsTab = screen.getByRole('tab', { name: /Programs/i });
+
+    fireEvent.keyDown(programsTab, { key: 'ArrowRight' });
+
+    const subscriptionsTab = screen.getByRole('tab', { name: /Subscriptions/i });
+    expect(subscriptionsTab).toHaveAttribute('aria-selected', 'true');
+    expect(subscriptionsTab).toHaveFocus();
+    expect(screen.getByText('Add a starter club subscription')).toBeInTheDocument();
+
+    fireEvent.keyDown(subscriptionsTab, { key: 'End' });
+
+    const alertsTab = screen.getByRole('tab', { name: /Alerts/i });
+    expect(alertsTab).toHaveAttribute('aria-selected', 'true');
+    expect(alertsTab).toHaveFocus();
+    expect(screen.getByText('Set alerts before the first promo goes live')).toBeInTheDocument();
+
+    fireEvent.keyDown(alertsTab, { key: 'Home' });
+
+    expect(programsTab).toHaveAttribute('aria-selected', 'true');
+    expect(programsTab).toHaveFocus();
+    expect(screen.getByText('Quick-add the most common Brazilian programs')).toBeInTheDocument();
+  });
+
+  it('should expose advanced setup toggles with controlled sections', () => {
+    render(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={1}
+        activeSubscriptionCount={0}
+        alertConfigCount={0}
+      />,
+    );
+
+    const subscriptionToggle = screen.getByRole('button', { name: 'Customize subscription' });
+    const subscriptionDetailsId = subscriptionToggle.getAttribute('aria-controls');
+
+    expect(subscriptionToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(subscriptionDetailsId).not.toBeNull();
+
+    fireEvent.click(subscriptionToggle);
+
+    expect(subscriptionToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById(subscriptionDetailsId!)).toBeInTheDocument();
+
+    const subscriptionsTab = screen.getByRole('tab', { name: /Subscriptions/i });
+    fireEvent.keyDown(subscriptionsTab, { key: 'ArrowRight' });
+
+    const alertToggle = screen.getByRole('button', { name: 'Customize alert rule' });
+    const alertDetailsId = alertToggle.getAttribute('aria-controls');
+
+    expect(alertToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(alertDetailsId).not.toBeNull();
+
+    fireEvent.click(alertToggle);
+
+    expect(alertToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById(alertDetailsId!)).toBeInTheDocument();
+  });
+
   it('should start on subscriptions after programs are already configured', async () => {
     render(
       <OnboardingWizard
@@ -113,6 +183,55 @@ describe('OnboardingWizard', () => {
         accrualSchedule: [{ fromMonth: 1, toMonth: null, milesPerMonth: 1000 }],
       });
     });
+  });
+
+  it('should announce validation errors through alert live regions', () => {
+    const { rerender } = render(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={0}
+        activeSubscriptionCount={0}
+        alertConfigCount={0}
+        enrolledProgramNames={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Customize program details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save program' }));
+
+    let alertMessage = screen.getByRole('alert');
+    expect(alertMessage).toHaveTextContent('Choose a program to continue.');
+
+    rerender(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={1}
+        activeSubscriptionCount={0}
+        alertConfigCount={0}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Customize subscription' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save subscription' }));
+
+    alertMessage = screen.getByRole('alert');
+    expect(alertMessage).toHaveTextContent('Choose a club tier to continue.');
+
+    rerender(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={1}
+        activeSubscriptionCount={1}
+        alertConfigCount={0}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Customize alert rule' }));
+    fireEvent.change(screen.getByLabelText('Rule Name'), { target: { value: ' ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save alert rule' }));
+
+    alertMessage = screen.getByRole('alert');
+    expect(alertMessage).toHaveTextContent('Rule name is required');
   });
 
   it('should create the starter alert for the current programs', async () => {
