@@ -42,6 +42,15 @@ vi.mock('@/lib/services/program-enrollment.service', () => ({
   },
 }));
 
+vi.mock('@/lib/services/freemium.service', () => ({
+  ProgramEnrollmentLimitReachedError: class extends Error {
+    constructor(limit: number) {
+      super(`Free tier supports up to ${limit} programs. Upgrade to Premium for unlimited programs.`);
+      this.name = 'ProgramEnrollmentLimitReachedError';
+    }
+  },
+}));
+
 import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import {
@@ -53,6 +62,7 @@ import {
   ProgramNotFoundError,
   EnrollmentNotFoundError,
 } from '@/lib/services/program-enrollment.service';
+import { ProgramEnrollmentLimitReachedError } from '@/lib/services/freemium.service';
 import { enrollInProgram, editEnrollment, removeEnrollment, quickUpdateBalance } from './programs';
 
 const mockAuth = vi.mocked(auth);
@@ -134,6 +144,22 @@ describe('enrollInProgram', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Failed to enroll. Please try again.');
+  });
+
+  it('should return the free tier limit message when the user has no remaining slots', async () => {
+    mockCreateEnrollment.mockRejectedValue(
+      new ProgramEnrollmentLimitReachedError(5),
+    );
+
+    const result = await enrollInProgram({
+      programId: 'prog-123',
+      currentBalance: 0,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe(
+      'Free tier supports up to 5 programs. Upgrade to Premium for unlimited programs.',
+    );
   });
 
   it('should return authentication error when not logged in', async () => {

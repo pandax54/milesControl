@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { Separator } from '@/components/ui/separator';
 import { CalculatorForm } from '@/components/dashboard/calculator-form';
 import { RedemptionAdvisorForm } from '@/components/dashboard/redemption-advisor-form';
+import { canAccessPremiumFeature } from '@/lib/services/freemium.service';
+import { PremiumFeatureCard } from '@/components/freemium/premium-feature-card';
 
 export default async function CalculatorPage() {
   const session = await auth();
@@ -10,6 +12,11 @@ export default async function CalculatorPage() {
   if (!session?.user?.id) {
     redirect('/login');
   }
+
+  const canAccessMilesValueAdvisor = await canAccessPremiumFeature(
+    session.user.id,
+    'milesValueAdvisor',
+  );
 
   return (
     <div className="space-y-6">
@@ -29,7 +36,11 @@ export default async function CalculatorPage() {
           Should you use miles or pay cash? Get a personalized recommendation based on your actual cost history.
         </p>
       </div>
-      <RedemptionAdvisorForm />
+      {canAccessMilesValueAdvisor ? (
+        <RedemptionAdvisorForm />
+      ) : (
+        <PremiumFeatureCard feature="milesValueAdvisor" />
+      )}
     </div>
   );
 }

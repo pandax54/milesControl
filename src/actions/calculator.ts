@@ -21,6 +21,10 @@ import {
   type ScenarioComparison,
 } from '@/lib/services/cost-calculator.service';
 import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
+import {
+  assertPremiumFeatureAccess,
+  PremiumFeatureRequiredError,
+} from '@/lib/services/freemium.service';
 
 interface CalculateResult {
   success: boolean;
@@ -95,6 +99,10 @@ export async function computeRedemptionAdvisorAction(
     const session = await auth();
     let userAvgCost = parsed.data.userAvgCostPerMilheiro;
 
+    if (session?.user?.id) {
+      await assertPremiumFeatureAccess(session.user.id, 'milesValueAdvisor');
+    }
+
     // If user is authenticated and didn't provide a manual override, fetch from history
     if (userAvgCost == null && session?.user?.id) {
       userAvgCost = (await getUserAverageCostPerMilheiro(session.user.id, parsed.data.program)) ?? undefined;
@@ -107,6 +115,9 @@ export async function computeRedemptionAdvisorAction(
 
     return { success: true, data: result };
   } catch (error) {
+    if (error instanceof PremiumFeatureRequiredError) {
+      return { success: false, error: error.message };
+    }
     logger.error({ err: error }, 'Failed to compute redemption advisor');
     return { success: false, error: 'Redemption calculation failed. Please try again.' };
   }

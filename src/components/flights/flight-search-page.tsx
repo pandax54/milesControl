@@ -21,6 +21,10 @@ interface SearchState {
   error: string | null;
 }
 
+interface FlightSearchPageProps {
+  readonly canAccessAwardFlights: boolean;
+}
+
 const INITIAL_STATE: SearchState = {
   cashFlights: [],
   awardFlights: [],
@@ -31,7 +35,7 @@ const INITIAL_STATE: SearchState = {
 
 // ==================== Component ====================
 
-export function FlightSearchPage() {
+export function FlightSearchPage({ canAccessAwardFlights }: FlightSearchPageProps) {
   const [state, setState] = useState<SearchState>(INITIAL_STATE);
   const [isPending, startTransition] = useTransition();
 
@@ -95,6 +99,7 @@ export function FlightSearchPage() {
             userAvgCostPerMilheiro={state.userAvgCostPerMilheiro}
             lowestCashPrice={state.lowestCashPrice}
             flightMilesValues={state.flightMilesValues}
+            canAccessAwardFlights={canAccessAwardFlights}
           />
         </div>
       )}

@@ -33,40 +33,50 @@ export interface AlertConfigData {
 
 interface EditAlertConfigDialogProps {
   alertConfig: AlertConfigData;
+  canUseTelegram?: boolean;
 }
 
-function toFormValues(config: AlertConfigData): AlertConfigFormValues {
+function toFormValues(
+  config: AlertConfigData,
+  canUseTelegram: boolean,
+): AlertConfigFormValues {
   const maxCost = config.maxCostPerMilheiro;
   const maxCostStr = maxCost !== null && maxCost !== undefined ? String(maxCost) : '';
+  const channels = canUseTelegram
+    ? config.channels
+    : config.channels.filter((channel) => channel !== 'TELEGRAM');
 
   return {
     name: config.name,
-    channels: config.channels as AlertChannelValue[],
+    channels: channels as AlertChannelValue[],
     programNames: config.programNames.join(', '),
     promoTypes: config.promoTypes as PromoTypeValue[],
     minBonusPercent: config.minBonusPercent != null ? String(config.minBonusPercent) : '',
     maxCostPerMilheiro: maxCostStr,
-    telegramChatId: config.telegramChatId ?? '',
+    telegramChatId: canUseTelegram ? config.telegramChatId ?? '' : '',
   };
 }
 
-export function EditAlertConfigDialog({ alertConfig }: EditAlertConfigDialogProps) {
+export function EditAlertConfigDialog({
+  alertConfig,
+  canUseTelegram = true,
+}: EditAlertConfigDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<AlertConfigFormValues>(
-    toFormValues(alertConfig),
+    toFormValues(alertConfig, canUseTelegram),
   );
 
   function resetForm() {
-    setFormValues(toFormValues(alertConfig));
+    setFormValues(toFormValues(alertConfig, canUseTelegram));
     setError(null);
   }
 
   function handleSubmit() {
     setError(null);
 
-    const result = parseAlertConfigForm(formValues);
+    const result = parseAlertConfigForm(formValues, { canUseTelegram });
     if (!result.valid) {
       setError(result.error);
       return;
@@ -112,6 +122,7 @@ export function EditAlertConfigDialog({ alertConfig }: EditAlertConfigDialogProp
             values={formValues}
             onChange={setFormValues}
             idPrefix="edit-"
+            canUseTelegram={canUseTelegram}
           />
 
           {error && <p className="text-sm text-destructive">{error}</p>}

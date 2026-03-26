@@ -25,10 +25,15 @@ vi.mock('@/lib/services/miles-value-comparison.service', () => ({
   computeFlightMilesValues: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock('@/lib/services/freemium.service', () => ({
+  canAccessPremiumFeature: vi.fn(),
+}));
+
 import { auth } from '@/lib/auth';
 import { searchFlights } from '@/lib/services/flight-search.service';
 import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
 import { computeFlightMilesValues } from '@/lib/services/miles-value-comparison.service';
+import { canAccessPremiumFeature } from '@/lib/services/freemium.service';
 import { searchFlightsAction } from './flights';
 import type { FlightSearchResult, AwardFlight, CashFlight } from '@/lib/services/flight-search.service';
 import type { FlightSearchParams } from '@/lib/validators/flight-search.schema';
@@ -38,6 +43,7 @@ const mockAuth = vi.mocked(auth);
 const mockSearchFlights = vi.mocked(searchFlights);
 const mockGetUserAvgCost = vi.mocked(getUserAverageCostPerMilheiro);
 const mockComputeFlightMilesValues = vi.mocked(computeFlightMilesValues);
+const mockCanAccessPremiumFeature = vi.mocked(canAccessPremiumFeature);
 
 function buildParams(overrides?: Partial<FlightSearchParams>): FlightSearchParams {
   return {
@@ -102,6 +108,7 @@ function buildMilesValue(overrides?: Partial<FlightMilesValue>): FlightMilesValu
 beforeEach(() => {
   vi.clearAllMocks();
   mockComputeFlightMilesValues.mockReturnValue([]);
+  mockCanAccessPremiumFeature.mockResolvedValue(true);
 });
 
 describe('searchFlightsAction', () => {
@@ -116,6 +123,7 @@ describe('searchFlightsAction', () => {
     expect(response.success).toBe(true);
     expect(response.data?.cashFlights).toEqual([]);
     expect(response.data?.awardFlights).toEqual([]);
+    expect(response.data?.canAccessAwardFlights).toBe(true);
     expect(mockSearchFlights).toHaveBeenCalledOnce();
   });
 
@@ -153,6 +161,7 @@ describe('searchFlightsAction', () => {
     const response = await searchFlightsAction(buildParams());
 
     expect(response.success).toBe(true);
+    expect(response.data?.canAccessAwardFlights).toBe(false);
     expect(mockGetUserAvgCost).not.toHaveBeenCalled();
     expect(response.data?.isUsingPersonalData).toBe(false);
   });
@@ -202,26 +211,28 @@ describe('searchFlightsAction', () => {
   it('should pass cabin class and passengers to search service', async () => {
     const result = buildSearchResult();
     mockSearchFlights.mockResolvedValue(result);
-    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const params = buildParams({ cabinClass: 'BUSINESS', passengers: 2 });
     await searchFlightsAction(params);
 
     expect(mockSearchFlights).toHaveBeenCalledWith(
       expect.objectContaining({ cabinClass: 'BUSINESS', passengers: 2 }),
+      { includeAwardFlights: true },
     );
   });
 
   it('should include returnDate when provided', async () => {
     const result = buildSearchResult();
     mockSearchFlights.mockResolvedValue(result);
-    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
 
     const params = buildParams({ returnDate: '2026-05-10' });
     await searchFlightsAction(params);
 
     expect(mockSearchFlights).toHaveBeenCalledWith(
       expect.objectContaining({ returnDate: '2026-05-10' }),
+      { includeAwardFlights: true },
     );
   });
 
@@ -232,8 +243,9 @@ describe('searchFlightsAction', () => {
       cashFlights: [buildCashFlight()],
     });
     mockSearchFlights.mockResolvedValue(result);
-    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
     mockComputeFlightMilesValues.mockReturnValue([milesValue]);
+    mockGetUserAvgCost.mockResolvedValue(null);
 
     const response = await searchFlightsAction(buildParams());
 
@@ -259,25 +271,24 @@ describe('searchFlightsAction', () => {
     );
   });
 
-  it('should call computeFlightMilesValues without user avg cost when unauthenticated', async () => {
+  it('should not compute flight miles values when award flights are unavailable', async () => {
     const result = buildSearchResult({ awardFlights: [buildAwardFlight()] });
     mockSearchFlights.mockResolvedValue(result);
     mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
 
-    await searchFlightsAction(buildParams());
+    const response = await searchFlightsAction(buildParams());
 
-    expect(mockComputeFlightMilesValues).toHaveBeenCalledWith(
-      expect.any(Array),
-      expect.any(Array),
-      undefined,
-    );
+    expect(response.data?.canAccessAwardFlights).toBe(false);
+    expect(response.data?.flightMilesValues).toEqual([]);
+    expect(mockComputeFlightMilesValues).not.toHaveBeenCalled();
   });
 
   it('should return empty flightMilesValues when no award flights', async () => {
     const result = buildSearchResult({ awardFlights: [], cashFlights: [buildCashFlight()] });
     mockSearchFlights.mockResolvedValue(result);
-    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
     mockComputeFlightMilesValues.mockReturnValue([]);
+    mockGetUserAvgCost.mockResolvedValue(null);
 
     const response = await searchFlightsAction(buildParams());
 
@@ -287,11 +298,33 @@ describe('searchFlightsAction', () => {
   it('should return null entries in flightMilesValues when no cash flights', async () => {
     const result = buildSearchResult({ awardFlights: [buildAwardFlight()], cashFlights: [] });
     mockSearchFlights.mockResolvedValue(result);
-    mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
     mockComputeFlightMilesValues.mockReturnValue([null]);
+    mockGetUserAvgCost.mockResolvedValue(null);
 
     const response = await searchFlightsAction(buildParams());
 
     expect(response.data?.flightMilesValues[0]).toBeNull();
+  });
+
+  it('should hide award flights for free users', async () => {
+    const awardFlight = buildAwardFlight();
+    const result = buildSearchResult({ awardFlights: [awardFlight], cashFlights: [buildCashFlight()] });
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockCanAccessPremiumFeature.mockResolvedValue(false);
+    mockSearchFlights.mockResolvedValue(result);
+
+    const response = await searchFlightsAction(buildParams());
+
+    expect(response.success).toBe(true);
+    expect(response.data?.canAccessAwardFlights).toBe(false);
+    expect(response.data?.awardFlights).toEqual([]);
+    expect(response.data?.flightMilesValues).toEqual([]);
+    expect(mockGetUserAvgCost).not.toHaveBeenCalled();
+    expect(mockComputeFlightMilesValues).not.toHaveBeenCalled();
+    expect(mockSearchFlights).toHaveBeenCalledWith(
+      expect.any(Object),
+      { includeAwardFlights: false },
+    );
   });
 });

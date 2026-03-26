@@ -18,6 +18,7 @@ import {
   AlertConfigNotFoundError,
 } from '@/lib/services/alert-config.service';
 import { requireUserId, isAuthenticationError, type ActionResult } from './helpers';
+import { PremiumFeatureRequiredError } from '@/lib/services/freemium.service';
 
 export async function addAlertConfig(input: CreateAlertConfigInput): Promise<ActionResult> {
   const parsed = createAlertConfigSchema.safeParse(input);
@@ -33,6 +34,9 @@ export async function addAlertConfig(input: CreateAlertConfigInput): Promise<Act
   } catch (error) {
     if (isAuthenticationError(error)) {
       return { success: false, error: 'You must be logged in to perform this action' };
+    }
+    if (error instanceof PremiumFeatureRequiredError) {
+      return { success: false, error: error.message };
     }
     logger.error({ err: error }, 'Failed to create alert config');
     return { success: false, error: 'Failed to create alert rule. Please try again.' };
@@ -56,6 +60,9 @@ export async function editAlertConfig(input: UpdateAlertConfigInput): Promise<Ac
     }
     if (error instanceof AlertConfigNotFoundError) {
       return { success: false, error: 'Alert rule not found' };
+    }
+    if (error instanceof PremiumFeatureRequiredError) {
+      return { success: false, error: error.message };
     }
     logger.error({ err: error }, 'Failed to update alert config');
     return { success: false, error: 'Failed to update alert rule. Please try again.' };

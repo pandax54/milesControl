@@ -8,6 +8,10 @@ import {
 } from '@/lib/validators/explore-destinations.schema';
 import { exploreDestinations, type ExploreDestination } from '@/lib/services/explore-destinations.service';
 import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
+import {
+  assertPremiumFeatureAccess,
+  PremiumFeatureRequiredError,
+} from '@/lib/services/freemium.service';
 
 // ==================== Types ====================
 
@@ -41,6 +45,10 @@ export async function exploreDestinationsAction(
   try {
     const session = await auth();
 
+    if (session?.user?.id) {
+      await assertPremiumFeatureAccess(session.user.id, 'exploreDestinations');
+    }
+
     const userAvgCost = session?.user?.id
       ? await getUserAverageCostPerMilheiro(session.user.id, undefined)
       : null;
@@ -71,6 +79,9 @@ export async function exploreDestinationsAction(
       },
     };
   } catch (error) {
+    if (error instanceof PremiumFeatureRequiredError) {
+      return { success: false, error: error.message };
+    }
     logger.error({ err: error }, 'Explore destinations action failed');
     return { success: false, error: 'Explore search failed. Please try again.' };
   }

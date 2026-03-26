@@ -35,6 +35,16 @@ vi.mock('@/lib/services/transfer.service', () => ({
   getUserAverageCostPerMilheiro: vi.fn(),
 }));
 
+vi.mock('@/lib/services/freemium.service', () => ({
+  assertPremiumFeatureAccess: vi.fn(),
+  PremiumFeatureRequiredError: class extends Error {
+    constructor(feature: string) {
+      super(`${feature} premium`);
+      this.name = 'PremiumFeatureRequiredError';
+    }
+  },
+}));
+
 import {
   calculateCostPerMilheiro,
   compareScenarios,
@@ -44,6 +54,10 @@ import {
 } from '@/lib/services/cost-calculator.service';
 import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
 import { auth } from '@/lib/auth';
+import {
+  assertPremiumFeatureAccess,
+  PremiumFeatureRequiredError,
+} from '@/lib/services/freemium.service';
 import { calculateCostPerMilheiroAction, compareScenariosAction, computeRedemptionAdvisorAction } from './calculator';
 import type { CostCalculation, ScenarioComparison, RedemptionAdvisorResult } from '@/lib/services/cost-calculator.service';
 import type { CalculatorInput } from '@/lib/validators/cost-calculator.schema';
@@ -53,6 +67,7 @@ const mockCompare = vi.mocked(compareScenarios);
 const mockRedemption = vi.mocked(computeRedemptionAdvisor);
 const mockGetUserAvgCost = vi.mocked(getUserAverageCostPerMilheiro);
 const mockAuth = vi.mocked(auth);
+const mockAssertPremiumFeatureAccess = vi.mocked(assertPremiumFeatureAccess);
 
 function buildCalculation(overrides?: Partial<CostCalculation>): CostCalculation {
   return {
@@ -75,6 +90,7 @@ function buildInput(overrides?: Partial<CalculatorInput>): CalculatorInput {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
 });
 
 describe('calculateCostPerMilheiroAction', () => {
@@ -288,6 +304,7 @@ describe('computeRedemptionAdvisorAction', () => {
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual(redemptionResult);
+    expect(mockAssertPremiumFeatureAccess).toHaveBeenCalledWith('user-1', 'milesValueAdvisor');
     expect(mockRedemption).toHaveBeenCalledWith({
       cashPriceBRL: 3500,
       milesRequired: 35000,
@@ -398,6 +415,24 @@ describe('computeRedemptionAdvisorAction', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Redemption calculation failed. Please try again.');
+  });
+
+  it('should return a premium error for free users', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'user-1' } } as unknown as Awaited<ReturnType<typeof auth>>);
+    mockAssertPremiumFeatureAccess.mockRejectedValue(
+      new PremiumFeatureRequiredError('milesValueAdvisor'),
+    );
+
+    const result = await computeRedemptionAdvisorAction({
+      cashPriceBRL: 3500,
+      milesRequired: 35000,
+      taxesBRL: 120,
+      program: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('milesValueAdvisor premium');
+    expect(mockRedemption).not.toHaveBeenCalled();
   });
 
   it('should default taxesBRL to 0 when not provided', async () => {

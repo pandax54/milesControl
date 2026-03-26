@@ -4,6 +4,7 @@ import { listAlertConfigs } from '@/lib/services/alert-config.service';
 import { AlertConfigFormDialog } from '@/components/alerts/alert-config-form-dialog';
 import { AlertConfigCard } from '@/components/alerts/alert-config-card';
 import type { AlertChannelValue, PromoTypeValue } from '@/lib/validators/alert-config.schema';
+import { canAccessPremiumFeature } from '@/lib/services/freemium.service';
 
 function decimalToNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null;
@@ -19,7 +20,10 @@ export default async function AlertsPage() {
     redirect('/login');
   }
 
-  const alertConfigs = await listAlertConfigs(session.user.id);
+  const [alertConfigs, canUseTelegram] = await Promise.all([
+    listAlertConfigs(session.user.id),
+    canAccessPremiumFeature(session.user.id, 'telegramAlerts'),
+  ]);
 
   const activeConfigs = alertConfigs.filter((c) => c.isActive);
   const pausedConfigs = alertConfigs.filter((c) => !c.isActive);
@@ -33,8 +37,13 @@ export default async function AlertsPage() {
           <p className="text-muted-foreground">
             Configure when and how you receive promotion alerts.
           </p>
+          {!canUseTelegram && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Telegram alerts are available on MilesControl Premium.
+            </p>
+          )}
         </div>
-        {hasConfigs && <AlertConfigFormDialog />}
+        {hasConfigs && <AlertConfigFormDialog canUseTelegram={canUseTelegram} />}
       </div>
 
       {!hasConfigs ? (
@@ -44,7 +53,7 @@ export default async function AlertsPage() {
             Create your first rule to receive notifications when promotions match your criteria.
           </p>
           <div className="mt-4">
-            <AlertConfigFormDialog />
+            <AlertConfigFormDialog canUseTelegram={canUseTelegram} />
           </div>
         </div>
       ) : (
@@ -62,14 +71,15 @@ export default async function AlertsPage() {
                       isActive: config.isActive,
                       channels: config.channels as AlertChannelValue[],
                       programNames: config.programNames,
-                      promoTypes: config.promoTypes as PromoTypeValue[],
-                      minBonusPercent: config.minBonusPercent,
-                      maxCostPerMilheiro: decimalToNumber(config.maxCostPerMilheiro),
-                      telegramChatId: config.telegramChatId,
-                    }}
-                  />
-                ))}
-              </div>
+                        promoTypes: config.promoTypes as PromoTypeValue[],
+                        minBonusPercent: config.minBonusPercent,
+                        maxCostPerMilheiro: decimalToNumber(config.maxCostPerMilheiro),
+                        telegramChatId: config.telegramChatId,
+                      }}
+                      canUseTelegram={canUseTelegram}
+                    />
+                  ))}
+                </div>
             </section>
           )}
 
@@ -86,14 +96,15 @@ export default async function AlertsPage() {
                       isActive: config.isActive,
                       channels: config.channels as AlertChannelValue[],
                       programNames: config.programNames,
-                      promoTypes: config.promoTypes as PromoTypeValue[],
-                      minBonusPercent: config.minBonusPercent,
-                      maxCostPerMilheiro: decimalToNumber(config.maxCostPerMilheiro),
-                      telegramChatId: config.telegramChatId,
-                    }}
-                  />
-                ))}
-              </div>
+                        promoTypes: config.promoTypes as PromoTypeValue[],
+                        minBonusPercent: config.minBonusPercent,
+                        maxCostPerMilheiro: decimalToNumber(config.maxCostPerMilheiro),
+                        telegramChatId: config.telegramChatId,
+                      }}
+                      canUseTelegram={canUseTelegram}
+                    />
+                  ))}
+                </div>
             </section>
           )}
         </div>

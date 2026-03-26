@@ -21,6 +21,7 @@ import {
   ProgramNotFoundError,
   EnrollmentNotFoundError,
 } from '@/lib/services/program-enrollment.service';
+import { ProgramEnrollmentLimitReachedError } from '@/lib/services/freemium.service';
 
 interface ActionResult {
   success: boolean;
@@ -66,6 +67,9 @@ export async function enrollInProgram(input: EnrollProgramInput): Promise<Action
     }
     if (error instanceof ProgramNotFoundError) {
       return { success: false, error: 'Program not found' };
+    }
+    if (error instanceof ProgramEnrollmentLimitReachedError) {
+      return { success: false, error: error.message };
     }
     logger.error({ err: error }, 'Failed to enroll in program');
     return { success: false, error: 'Failed to enroll. Please try again.' };

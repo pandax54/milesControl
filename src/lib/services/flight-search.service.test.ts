@@ -226,4 +226,13 @@ describe('searchFlights', () => {
 
     expect(result.awardFlights).toHaveLength(2);
   });
+
+  it('should skip award flight search when award flights are disabled', async () => {
+    mockSearchCashFlights.mockResolvedValue([buildCashFlight()]);
+
+    const result = await searchFlights(buildParams(), { includeAwardFlights: false });
+
+    expect(result.awardFlights).toEqual([]);
+    expect(mockSearchAvailability).not.toHaveBeenCalled();
+  });
 });

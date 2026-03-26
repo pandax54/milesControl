@@ -36,6 +36,7 @@ interface AlertConfigFormFieldsProps {
   values: AlertConfigFormValues;
   onChange: (values: AlertConfigFormValues) => void;
   idPrefix?: string;
+  canUseTelegram?: boolean;
 }
 
 function toggleArrayItem<T>(arr: T[], item: T): T[] {
@@ -46,7 +47,12 @@ export function AlertConfigFormFields({
   values,
   onChange,
   idPrefix = '',
+  canUseTelegram = true,
 }: AlertConfigFormFieldsProps) {
+  const availableChannels = canUseTelegram
+    ? ALERT_CHANNELS
+    : ALERT_CHANNELS.filter((channel) => channel !== 'TELEGRAM');
+
   return (
     <>
       <div className="space-y-2">
@@ -62,7 +68,7 @@ export function AlertConfigFormFields({
       <div className="space-y-2">
         <Label>Notification Channels</Label>
         <div className="grid grid-cols-2 gap-2">
-          {ALERT_CHANNELS.map((channel) => (
+          {availableChannels.map((channel) => (
             <div key={channel} className="flex items-center gap-2">
               <Checkbox
                 id={`${idPrefix}channel-${channel}`}
@@ -80,6 +86,11 @@ export function AlertConfigFormFields({
             </div>
           ))}
         </div>
+        {!canUseTelegram && (
+          <p className="text-xs text-muted-foreground">
+            Telegram notifications are available on MilesControl Premium.
+          </p>
+        )}
       </div>
 
       {values.channels.includes('TELEGRAM') && (
@@ -171,6 +182,7 @@ export function AlertConfigFormFields({
 
 export function parseAlertConfigForm(
   values: AlertConfigFormValues,
+  options: { canUseTelegram?: boolean } = {},
 ):
   | {
       valid: true;
@@ -185,12 +197,18 @@ export function parseAlertConfigForm(
       };
     }
   | { valid: false; error: string } {
+  const canUseTelegram = options.canUseTelegram ?? true;
+
   if (!values.name.trim()) {
     return { valid: false, error: 'Rule name is required' };
   }
 
   if (values.channels.length === 0) {
     return { valid: false, error: 'At least one notification channel is required' };
+  }
+
+  if (!canUseTelegram && values.channels.includes('TELEGRAM')) {
+    return { valid: false, error: 'Telegram alerts are available on MilesControl Premium.' };
   }
 
   if (values.channels.includes('TELEGRAM') && !values.telegramChatId.trim()) {

@@ -5,6 +5,7 @@ import type {
   UpdateEnrollmentInput,
   QuickUpdateBalanceInput,
 } from '@/lib/validators/program.schema';
+import { assertProgramEnrollmentAvailable } from '@/lib/services/freemium.service';
 
 export async function listPrograms() {
   return prisma.program.findMany({
@@ -60,6 +61,8 @@ export async function createEnrollment(userId: string, input: EnrollProgramInput
   if (!program) {
     throw new ProgramNotFoundError(input.programId);
   }
+
+  await assertProgramEnrollmentAvailable(userId);
 
   try {
     const enrollment = await prisma.programEnrollment.create({

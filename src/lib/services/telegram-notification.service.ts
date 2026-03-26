@@ -45,6 +45,10 @@ export async function findUserByChatId(
     return null;
   }
 
+  if (alertConfig.user.freemiumTier !== 'PREMIUM') {
+    return null;
+  }
+
   return alertConfig.user as UserWithAlertConfigs;
 }
 
@@ -67,12 +71,20 @@ export async function sendTelegramAlerts(
 
   const alertConfigs = await prisma.alertConfig.findMany({
     where: { id: { in: alertConfigIds }, telegramChatId: { not: null } },
-    select: { id: true, telegramChatId: true },
+    select: {
+      id: true,
+      telegramChatId: true,
+      user: {
+        select: {
+          freemiumTier: true,
+        },
+      },
+    },
   });
 
   const chatIdByAlertConfigId = new Map(
     alertConfigs
-      .filter((ac) => ac.telegramChatId != null)
+      .filter((ac) => ac.telegramChatId != null && ac.user.freemiumTier === 'PREMIUM')
       .map((ac) => [ac.id, ac.telegramChatId as string]),
   );
 

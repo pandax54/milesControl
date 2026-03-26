@@ -32,6 +32,10 @@ export interface FlightSearchResult {
   readonly searchedAt: Date;
 }
 
+interface FlightSearchOptions {
+  readonly includeAwardFlights?: boolean;
+}
+
 // ==================== Service ====================
 
 /**
@@ -42,14 +46,17 @@ export interface FlightSearchResult {
  *
  * PRD F4.1-F4.3: Search cash and award flights by origin/destination/date/cabin/passengers.
  */
-export async function searchFlights(params: FlightSearchParams): Promise<FlightSearchResult> {
+export async function searchFlights(
+  params: FlightSearchParams,
+  options: FlightSearchOptions = {},
+): Promise<FlightSearchResult> {
   logger.info(
     { origin: params.origin, destination: params.destination, departureDate: params.departureDate },
     'Flight search started',
   );
 
   const [awardFlights, cashFlights] = await Promise.all([
-    fetchAwardFlights(params),
+    options.includeAwardFlights === false ? Promise.resolve([]) : fetchAwardFlights(params),
     fetchCashFlights(params),
   ]);
 

@@ -46,6 +46,16 @@ vi.mock('@/lib/services/tracked-benefit.service', () => ({
   },
 }));
 
+vi.mock('@/lib/services/freemium.service', () => ({
+  assertPremiumFeatureAccess: vi.fn(),
+  PremiumFeatureRequiredError: class extends Error {
+    constructor(feature: string) {
+      super(`${feature} premium`);
+      this.name = 'PremiumFeatureRequiredError';
+    }
+  },
+}));
+
 import { revalidatePath } from 'next/cache';
 import {
   createBenefit,
@@ -55,6 +65,10 @@ import {
   BenefitNotFoundError,
   BenefitAlreadyUsedError,
 } from '@/lib/services/tracked-benefit.service';
+import {
+  assertPremiumFeatureAccess,
+  PremiumFeatureRequiredError,
+} from '@/lib/services/freemium.service';
 import { requireUserId, AuthenticationError } from './helpers';
 import { addBenefit, editBenefit, removeBenefit, useBenefit } from './benefits';
 import type { TrackedBenefit, BenefitType } from '@/generated/prisma/client';
@@ -84,11 +98,13 @@ const mockUpdateBenefit = vi.mocked(updateBenefit);
 const mockDeleteBenefit = vi.mocked(deleteBenefit);
 const mockMarkBenefitUsed = vi.mocked(markBenefitUsed);
 const mockRevalidatePath = vi.mocked(revalidatePath);
+const mockAssertPremiumFeatureAccess = vi.mocked(assertPremiumFeatureAccess);
 
 describe('addBenefit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireUserId.mockResolvedValue('user-123');
+    mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
   });
 
   it('should create benefit successfully', async () => {
@@ -153,12 +169,30 @@ describe('addBenefit', () => {
     expect(result.success).toBe(false);
     expect(result.error).toBe('You must be logged in to perform this action');
   });
+
+  it('should return a premium error for free users', async () => {
+    mockAssertPremiumFeatureAccess.mockRejectedValue(
+      new PremiumFeatureRequiredError('benefits'),
+    );
+
+    const result = await addBenefit({
+      type: 'FREE_NIGHT',
+      programOrCard: 'Clube Smiles',
+      description: 'Free night',
+      quantity: 1,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('benefits premium');
+    expect(mockCreateBenefit).not.toHaveBeenCalled();
+  });
 });
 
 describe('editBenefit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireUserId.mockResolvedValue('user-123');
+    mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
   });
 
   it('should update benefit successfully', async () => {
@@ -212,6 +246,7 @@ describe('removeBenefit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireUserId.mockResolvedValue('user-123');
+    mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
   });
 
   it('should delete benefit successfully', async () => {
@@ -263,6 +298,7 @@ describe('useBenefit', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRequireUserId.mockResolvedValue('user-123');
+    mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
   });
 
   it('should mark benefit as used successfully', async () => {

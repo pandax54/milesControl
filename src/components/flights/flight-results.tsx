@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CashFlightCard } from './cash-flight-card';
 import { AwardFlightCard } from './award-flight-card';
+import { PremiumFeatureCard } from '@/components/freemium/premium-feature-card';
 import type { CashFlight, AwardFlight } from '@/lib/services/flight-search.service';
 import type { FlightMilesValue } from '@/lib/services/miles-value-comparison.service';
 
@@ -14,6 +15,7 @@ interface FlightResultsProps {
   lowestCashPrice?: number;
   /** Pre-computed miles value per award flight (index matches awardFlights array) */
   flightMilesValues?: readonly (FlightMilesValue | null)[];
+  canAccessAwardFlights: boolean;
 }
 
 // ==================== Helpers ====================
@@ -34,6 +36,7 @@ export function FlightResults({
   userAvgCostPerMilheiro,
   lowestCashPrice,
   flightMilesValues,
+  canAccessAwardFlights,
 }: FlightResultsProps) {
   const cashCount = cashFlights.length;
   const awardCount = awardFlights.length;
@@ -45,7 +48,8 @@ export function FlightResults({
           Cash Flights{cashCount > 0 ? ` (${cashCount})` : ''}
         </TabsTrigger>
         <TabsTrigger value="award">
-          Award Flights{awardCount > 0 ? ` (${awardCount})` : ''}
+          {canAccessAwardFlights ? 'Award Flights' : 'Award Flights (Premium)'}
+          {awardCount > 0 ? ` (${awardCount})` : ''}
         </TabsTrigger>
       </TabsList>
 
@@ -60,7 +64,12 @@ export function FlightResults({
       </TabsContent>
 
       <TabsContent value="award" className="mt-4 space-y-3">
-        {awardFlights.length === 0 ? (
+        {!canAccessAwardFlights ? (
+          <PremiumFeatureCard
+            feature="awardFlights"
+            description="Free plan includes cash flight search. Upgrade to see award availability and miles pricing."
+          />
+        ) : awardFlights.length === 0 ? (
           <EmptyState message="No award flights found. Award seat search via Seats.aero will be available soon." />
         ) : (
           awardFlights.map((flight, index) => (

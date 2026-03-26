@@ -9,6 +9,7 @@ import {
   computeFlightMilesValues,
   type FlightMilesValue,
 } from '@/lib/services/miles-value-comparison.service';
+import { canAccessPremiumFeature } from '@/lib/services/freemium.service';
 
 // ==================== Types ====================
 
@@ -18,6 +19,7 @@ interface FlightSearchActionResult {
     userAvgCostPerMilheiro?: number;
     isUsingPersonalData: boolean;
     flightMilesValues: readonly (FlightMilesValue | null)[];
+    canAccessAwardFlights: boolean;
   };
   error?: string;
 }
@@ -39,26 +41,29 @@ export async function searchFlightsAction(params: FlightSearchParams): Promise<F
 
   try {
     const session = await auth();
+    const canAccessAwardFlights = session?.user?.id
+      ? await canAccessPremiumFeature(session.user.id, 'awardFlights')
+      : false;
 
     const [result, userAvgCost] = await Promise.all([
-      searchFlights(parsed.data),
-      session?.user?.id
+      searchFlights(parsed.data, { includeAwardFlights: canAccessAwardFlights }),
+      canAccessAwardFlights && session?.user?.id
         ? getUserAverageCostPerMilheiro(session.user.id, undefined)
         : Promise.resolve(null),
     ]);
 
-    const flightMilesValues = computeFlightMilesValues(
-      result.awardFlights,
-      result.cashFlights,
-      userAvgCost ?? undefined,
-    );
+    const awardFlights = canAccessAwardFlights ? result.awardFlights : [];
+    const flightMilesValues = canAccessAwardFlights
+      ? computeFlightMilesValues(awardFlights, result.cashFlights, userAvgCost ?? undefined)
+      : [];
 
     logger.info(
       {
         origin: parsed.data.origin,
         destination: parsed.data.destination,
         cashFlights: result.cashFlights.length,
-        awardFlights: result.awardFlights.length,
+        awardFlights: awardFlights.length,
+        canAccessAwardFlights,
         milesValuesComputed: flightMilesValues.filter(Boolean).length,
       },
       'Flight search completed',
@@ -68,9 +73,11 @@ export async function searchFlightsAction(params: FlightSearchParams): Promise<F
       success: true,
       data: {
         ...result,
-        userAvgCostPerMilheiro: userAvgCost ?? undefined,
-        isUsingPersonalData: userAvgCost != null,
+        awardFlights,
+        userAvgCostPerMilheiro: canAccessAwardFlights ? userAvgCost ?? undefined : undefined,
+        isUsingPersonalData: canAccessAwardFlights && userAvgCost != null,
         flightMilesValues,
+        canAccessAwardFlights,
       },
     };
   } catch (error) {

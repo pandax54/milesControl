@@ -7,6 +7,7 @@ import type {
   PromoTypeValue,
 } from '@/lib/validators/alert-config.schema';
 import type { AlertChannel, PromoType } from '@/generated/prisma/client';
+import { assertPremiumFeatureAccess } from '@/lib/services/freemium.service';
 
 // ==================== Error classes ====================
 
@@ -41,6 +42,10 @@ export async function getAlertConfig(userId: string, alertConfigId: string) {
 // ==================== Mutations ====================
 
 export async function createAlertConfig(userId: string, input: CreateAlertConfigInput) {
+  if (input.channels.includes('TELEGRAM')) {
+    await assertPremiumFeatureAccess(userId, 'telegramAlerts');
+  }
+
   const config = await prisma.alertConfig.create({
     data: {
       userId,
@@ -66,6 +71,11 @@ export async function updateAlertConfig(userId: string, input: UpdateAlertConfig
 
   if (!existing) {
     throw new AlertConfigNotFoundError(input.alertConfigId);
+  }
+
+  const nextChannels = input.channels ?? existing.channels;
+  if (nextChannels.includes('TELEGRAM')) {
+    await assertPremiumFeatureAccess(userId, 'telegramAlerts');
   }
 
   const updated = await prisma.alertConfig.update({

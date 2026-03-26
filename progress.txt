@@ -1,3 +1,11 @@
+## Task 7.1 — Freemium gating (2026-03-26)
+Implemented free vs premium access control with a shared freemium service and persisted `User.freemiumTier`.
+Free plan is now limited to 5 programs, basic calculator, and cash flight search.
+Premium-only gates now cover Miles Value Advisor, award flights, Explore, Telegram alerts/bot access, and benefits tracking.
+Added upgrade/upsell UI across programs, calculator, flights, explore, alerts, benefits, plus `/upgrade`.
+Hardened Telegram delivery and webhook access for downgraded free users.
+Verification: `npx tsc --noEmit` PASS, `pnpm test` PASS, `pnpm run test:coverage` PASS, `pnpm build` PASS.
+
 ## Task 7.0 — Review Re-check (2026-03-26)
 Review file: tasks/prd-milescontrol/7.0_task_review.md — Status: APPROVED, 0 open issues.
 Accessibility recommendations already present: live-region step errors, accessible step tabs, disclosure wiring, and arrow-key navigation.

@@ -23,9 +23,23 @@ vi.mock('@/lib/logger', () => ({
   },
 }));
 
+vi.mock('@/lib/services/freemium.service', () => ({
+  assertPremiumFeatureAccess: vi.fn(),
+  PremiumFeatureRequiredError: class extends Error {
+    constructor(feature: string) {
+      super(`${feature} premium`);
+      this.name = 'PremiumFeatureRequiredError';
+    }
+  },
+}));
+
 import { auth } from '@/lib/auth';
 import { exploreDestinations } from '@/lib/services/explore-destinations.service';
 import { getUserAverageCostPerMilheiro } from '@/lib/services/transfer.service';
+import {
+  assertPremiumFeatureAccess,
+  PremiumFeatureRequiredError,
+} from '@/lib/services/freemium.service';
 
 // ==================== Fixtures ====================
 
@@ -57,12 +71,14 @@ describe('exploreDestinationsAction', () => {
   const mockAuth = vi.mocked(auth);
   const mockExploreDestinations = vi.mocked(exploreDestinations);
   const mockGetUserAvgCost = vi.mocked(getUserAverageCostPerMilheiro);
+  const mockAssertPremiumFeatureAccess = vi.mocked(assertPremiumFeatureAccess);
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuth.mockResolvedValue(null as never);
     mockExploreDestinations.mockResolvedValue([SAMPLE_DESTINATION]);
     mockGetUserAvgCost.mockResolvedValue(14);
+    mockAssertPremiumFeatureAccess.mockResolvedValue(undefined);
   });
 
   it('should return explore results for valid params', async () => {
@@ -81,6 +97,7 @@ describe('exploreDestinationsAction', () => {
 
     await exploreDestinationsAction(VALID_PARAMS);
 
+    expect(mockAssertPremiumFeatureAccess).toHaveBeenCalledWith('user-1', 'exploreDestinations');
     expect(mockExploreDestinations).toHaveBeenCalledWith(expect.objectContaining(VALID_PARAMS), 12);
   });
 
@@ -153,5 +170,18 @@ describe('exploreDestinationsAction', () => {
     const result = await exploreDestinationsAction(VALID_PARAMS);
 
     expect(result.data?.userAvgCostPerMilheiro).toBe(13.5);
+  });
+
+  it('should return a premium error for free users', async () => {
+    mockAuth.mockResolvedValue({ user: { id: 'user-1', role: 'USER' } } as never);
+    mockAssertPremiumFeatureAccess.mockRejectedValue(
+      new PremiumFeatureRequiredError('exploreDestinations'),
+    );
+
+    const result = await exploreDestinationsAction(VALID_PARAMS);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('exploreDestinations premium');
+    expect(mockExploreDestinations).not.toHaveBeenCalled();
   });
 });

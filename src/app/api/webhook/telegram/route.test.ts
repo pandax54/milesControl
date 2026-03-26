@@ -145,7 +145,7 @@ describe('POST /api/webhook/telegram — /alerts', () => {
 
     expect(mockSendMessage).toHaveBeenCalledOnce();
     const text = mockSendMessage.mock.calls[0][1];
-    expect(text).toContain('No alert rules found');
+    expect(text).toContain('MilesControl Premium');
   });
 
   it('should reply with no-alerts message when user has no active alerts', async () => {
@@ -187,6 +187,7 @@ describe('POST /api/webhook/telegram — /alerts', () => {
 
 describe('POST /api/webhook/telegram — /promos', () => {
   it('should reply with no-promos message when there are no active promotions', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     mockGetTopPromotionsForBot.mockResolvedValueOnce([]);
 
     const request = makeRequest(makeTelegramUpdate('/promos', 12345), 'test-secret');
@@ -197,6 +198,7 @@ describe('POST /api/webhook/telegram — /promos', () => {
   });
 
   it('should list top promotions', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     mockGetTopPromotionsForBot.mockResolvedValueOnce([
       {
         id: 'promo-1',
@@ -217,12 +219,24 @@ describe('POST /api/webhook/telegram — /promos', () => {
     expect(text).toContain('Smiles');
     expect(text).toContain('90');
   });
+
+  it('should require premium access for /promos', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce(null);
+
+    const request = makeRequest(makeTelegramUpdate('/promos', 12345), 'test-secret');
+    await POST(request);
+
+    const text = mockSendMessage.mock.calls[0][1];
+    expect(text).toContain('MilesControl Premium');
+    expect(mockGetTopPromotionsForBot).not.toHaveBeenCalled();
+  });
 });
 
 // ==================== /calc command ====================
 
 describe('POST /api/webhook/telegram — /calc', () => {
   it('should reply with usage when no args provided', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     const request = makeRequest(makeTelegramUpdate('/calc', 12345), 'test-secret');
     await POST(request);
 
@@ -231,6 +245,7 @@ describe('POST /api/webhook/telegram — /calc', () => {
   });
 
   it('should reply with usage when only one arg provided', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     const request = makeRequest(makeTelegramUpdate('/calc 28', 12345), 'test-secret');
     await POST(request);
 
@@ -239,6 +254,7 @@ describe('POST /api/webhook/telegram — /calc', () => {
   });
 
   it('should reply with error when args are not numbers', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     const request = makeRequest(makeTelegramUpdate('/calc abc xyz', 12345), 'test-secret');
     await POST(request);
 
@@ -247,6 +263,7 @@ describe('POST /api/webhook/telegram — /calc', () => {
   });
 
   it('should calculate and reply with cost per milheiro', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce({ id: 'user-1' } as never);
     mockCalculateCostPerMilheiro.mockReturnValueOnce({
       totalCost: 14.74,
       totalMiles: 1900,
@@ -267,6 +284,17 @@ describe('POST /api/webhook/telegram — /calc', () => {
     expect(text).toContain('7.76');
     expect(text).toContain('EXCELLENT');
     expect(text).toContain('🟢');
+  });
+
+  it('should require premium access for /calc', async () => {
+    mockFindUserByChatId.mockResolvedValueOnce(null);
+
+    const request = makeRequest(makeTelegramUpdate('/calc 28 90', 12345), 'test-secret');
+    await POST(request);
+
+    const text = mockSendMessage.mock.calls[0][1];
+    expect(text).toContain('MilesControl Premium');
+    expect(mockCalculateCostPerMilheiro).not.toHaveBeenCalled();
   });
 });
 
