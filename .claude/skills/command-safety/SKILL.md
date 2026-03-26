@@ -1,6 +1,11 @@
+---
+name: command-safety
+description: Command safety and permission gates for destructive file operations and migration execution. Use when operating with reduced safeguards or before running any destructive or migration command.
+---
+
 # Command Safety and Permission Gates
 
-Use this rule when operating with reduced safeguards (for example, `claude --dangerously-skip-permissions`).
+Use this skill when operating with reduced safeguards (for example, `claude --dangerously-skip-permissions`).
 
 ## Core policy
 
