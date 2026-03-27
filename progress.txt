@@ -140,3 +140,10 @@ Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defau
 - Added `src/lib/pwa/dashboard-offline-snapshot.ts` + tests and `src/components/pwa/dashboard-pwa-card.tsx` + tests to save dashboard snapshots locally and surface install/offline status on the dashboard.
 - Updated `src/app/(dashboard)/page.tsx` to expose the PWA card for both onboarding and populated dashboards.
 - Verification: `npx tsc --noEmit`, `pnpm test` (1570/1570), `pnpm run test:coverage` (All files 94.22% / 86.02% / 91.82% / 94.38%), and `pnpm build` all PASS.
+
+## Task 7.3 — SEO and landing page (completed 2026-03-27)
+- Added public landing, calculator, promotions, and miles calendar pages under `src/app/_public/` with a shared marketing shell and JSON-LD.
+- Rewrote signed-out requests for `/`, `/calculator`, `/promotions`, and `/promotions/calendar` to the new public pages while preserving authenticated app routes.
+- Added `src/app/robots.ts`, `src/app/sitemap.ts`, and richer root metadata for canonical URLs, robots, Open Graph, and Twitter cards.
+- Added focused tests for rewrite/SEO helpers plus `robots` and `sitemap`.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1577/1577), `pnpm run test:coverage` (All files 94.2% / 85.96% / 91.81% / 94.36%), and `pnpm build` all PASS.
