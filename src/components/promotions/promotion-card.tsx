@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { DeadlineCountdown } from './deadline-countdown';
 import { PersonalizedBadge } from './personalized-badge';
 import { PromoCalculatorEmbed } from '@/components/dashboard/promo-calculator-embed';
+import { captureAnalyticsEvent } from '@/lib/analytics/client';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
 import type { PromoMatch } from '@/lib/services/promo-matcher.service';
 import { PROMOTION_RATINGS, type PromotionRating } from '@/lib/validators/cost-calculator.schema';
@@ -63,6 +65,34 @@ export function PromotionCard({ promotion, match }: PromotionCardProps) {
     ? (promotion.rating as PromotionRating)
     : null;
   const costPerMilheiro = promotion.costPerMilheiro ? Number(promotion.costPerMilheiro) : null;
+  const analyticsContext = {
+    hasCalculator: Boolean(calculatorDefaults),
+    isPersonalized: Boolean(match),
+    promotionId: promotion.id,
+    promotionType: promotion.type,
+    sourceSiteName: promotion.sourceSiteName,
+  } as const;
+
+  function handleSourceClick() {
+    captureAnalyticsEvent(ANALYTICS_EVENTS.promoEngaged, {
+      action: 'source_link_clicked',
+      ...analyticsContext,
+    });
+  }
+
+  function handleCalculatorToggle() {
+    const nextShowCalculator = !showCalculator;
+    setShowCalculator(nextShowCalculator);
+
+    if (!nextShowCalculator) {
+      return;
+    }
+
+    captureAnalyticsEvent(ANALYTICS_EVENTS.promoEngaged, {
+      action: 'calculator_opened',
+      ...analyticsContext,
+    });
+  }
 
   return (
     <Card>
@@ -148,6 +178,7 @@ export function PromotionCard({ promotion, match }: PromotionCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={handleSourceClick}
             >
               {promotion.sourceSiteName}
               <ExternalLink className="h-3 w-3" />
@@ -162,7 +193,7 @@ export function PromotionCard({ promotion, match }: PromotionCardProps) {
               variant="ghost"
               size="sm"
               className="w-full text-xs"
-              onClick={() => setShowCalculator((prev) => !prev)}
+              onClick={handleCalculatorToggle}
             >
               {showCalculator ? (
                 <>Hide Calculator <ChevronUp className="h-3 w-3 ml-1" /></>
@@ -174,6 +205,12 @@ export function PromotionCard({ promotion, match }: PromotionCardProps) {
               <div className="mt-2">
                 <PromoCalculatorEmbed
                   defaultInput={calculatorDefaults}
+                  analyticsContext={{
+                    isPersonalized: analyticsContext.isPersonalized,
+                    promotionId: promotion.id,
+                    promotionType: promotion.type,
+                    sourceSiteName: promotion.sourceSiteName,
+                  }}
                   promoLabel={`Calculate: ${promotion.title}`}
                 />
               </div>

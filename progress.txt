@@ -155,3 +155,9 @@ Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defau
 - Added optimized program logo rendering with bundled Next Image assets plus remote-image fallback support on dashboard enrollment surfaces.
 - Extended dashboard offline snapshots and dashboard service coverage to preserve `logoUrl`, and added focused tests for the new loading/logo components.
 - Verification: `npx tsc --noEmit`, `pnpm test` (1587/1587), `pnpm run test:coverage` (All files 94.23% / 86% / 91.94% / 94.4%), and `pnpm build` all PASS.
+
+## Task 7.5 — Analytics (completed 2026-03-27)
+- Added optional PostHog client setup with a reusable analytics provider, route-based feature usage tracking, and authenticated user identification.
+- Instrumented onboarding completion plus promo engagement events for promotion filters, source link clicks, calculator opens, and calculator submissions.
+- Added focused tests for public analytics env parsing, feature route mapping, provider tracking, onboarding completion, promo card interactions, and promo calculator telemetry.
+- Verification: `npx tsc --noEmit` PASS, `pnpm test` PASS (1601/1601), `pnpm run test:coverage` PASS (93.68% / 84.82% / 90.89% / 93.92%), `pnpm build` PASS.

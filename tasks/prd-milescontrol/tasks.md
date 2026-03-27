@@ -81,7 +81,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 - [x] 7.2 PWA setup — Service worker, offline dashboard, installable on mobile
 - [x] 7.3 SEO and landing page — Public pages: calculator tool, miles calendar, active promos feed (drives organic traffic)
 - [x] 7.4 Performance optimization — RSC streaming, skeleton loaders, image optimization
-- [ ] 7.5 Analytics — Posthog or similar: track onboarding completion, feature usage, promo engagement
+- [x] 7.5 Analytics — Posthog or similar: track onboarding completion, feature usage, promo engagement
 
 ## Dependencies Graph
 

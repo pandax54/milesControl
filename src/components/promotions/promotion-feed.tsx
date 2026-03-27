@@ -5,6 +5,8 @@ import { Megaphone } from 'lucide-react';
 import { PromotionCard } from './promotion-card';
 import { PromotionFilters } from './promotion-filters';
 import { fetchPromotionsAction } from '@/actions/promotions';
+import { captureAnalyticsEvent } from '@/lib/analytics/client';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { matchPromotions } from '@/lib/services/promo-matcher.service';
 import type { EnrollmentSummary } from '@/lib/services/promo-matcher.service';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
@@ -37,6 +39,14 @@ export function PromotionFeed({ initialPromotions, programs, enrollments = EMPTY
 
   function handleFilterChange(newFilters: PromotionFeedFilter) {
     setFilters(newFilters);
+    captureAnalyticsEvent(ANALYTICS_EVENTS.promoEngaged, {
+      action: 'filters_applied',
+      programId: newFilters.programId ?? null,
+      promotionType: newFilters.type ?? null,
+      sortBy: newFilters.sortBy,
+      sortOrder: newFilters.sortOrder,
+      status: newFilters.status,
+    });
     startTransition(async () => {
       const result = await fetchPromotionsAction(newFilters);
       if (result.success && result.data) {

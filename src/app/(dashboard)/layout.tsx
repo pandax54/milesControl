@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { AnalyticsIdentity } from '@/components/analytics/analytics-identity';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
@@ -16,6 +17,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <TooltipProvider>
+      <AnalyticsIdentity
+        userId={session.user.id}
+        email={session.user.email}
+        role={session.user.role}
+        name={session.user.name}
+      />
       <SidebarProvider>
         <AppSidebar userRole={session.user.role} />
         <SidebarInset>

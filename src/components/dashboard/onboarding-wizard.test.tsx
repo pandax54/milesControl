@@ -23,14 +23,21 @@ vi.mock('@/actions/alerts', () => ({
   addAlertConfig: vi.fn(),
 }));
 
+vi.mock('@/lib/analytics/client', () => ({
+  captureAnalyticsEvent: vi.fn(),
+}));
+
 import { addAlertConfig } from '@/actions/alerts';
 import { enrollInProgram } from '@/actions/programs';
 import { addSubscription } from '@/actions/subscriptions';
+import { captureAnalyticsEvent } from '@/lib/analytics/client';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { OnboardingWizard } from './onboarding-wizard';
 
 const mockEnrollInProgram = vi.mocked(enrollInProgram);
 const mockAddSubscription = vi.mocked(addSubscription);
 const mockAddAlertConfig = vi.mocked(addAlertConfig);
+const mockCaptureAnalyticsEvent = vi.mocked(captureAnalyticsEvent);
 
 const baseProps = {
   availablePrograms: [
@@ -259,6 +266,36 @@ describe('OnboardingWizard', () => {
         telegramChatId: null,
       });
       expect(mockRefresh).toHaveBeenCalled();
+    });
+  });
+
+  it('should track onboarding completion after the final step is configured', () => {
+    const { rerender } = render(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={1}
+        activeSubscriptionCount={1}
+        alertConfigCount={0}
+      />,
+    );
+
+    expect(mockCaptureAnalyticsEvent).not.toHaveBeenCalled();
+
+    rerender(
+      <OnboardingWizard
+        {...baseProps}
+        enrollmentCount={1}
+        activeSubscriptionCount={1}
+        alertConfigCount={1}
+      />,
+    );
+
+    expect(mockCaptureAnalyticsEvent).toHaveBeenCalledWith(ANALYTICS_EVENTS.onboardingCompleted, {
+      activeSubscriptionCount: 1,
+      alertConfigCount: 1,
+      completedSteps: 3,
+      enrollmentCount: 1,
+      source: 'wizard',
     });
   });
 });

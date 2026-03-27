@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site-config';
 import './globals.css';
@@ -78,7 +79,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <AnalyticsProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </AnalyticsProvider>
       </body>
     </html>
   );

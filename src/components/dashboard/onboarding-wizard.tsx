@@ -14,6 +14,8 @@ import {
 import { addAlertConfig } from '@/actions/alerts';
 import { enrollInProgram } from '@/actions/programs';
 import { addSubscription } from '@/actions/subscriptions';
+import { captureAnalyticsEvent } from '@/lib/analytics/client';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import {
   AlertConfigFormFields,
   parseAlertConfigForm,
@@ -154,6 +156,7 @@ export function OnboardingWizard({
   const [currentStep, setCurrentStep] = useState<OnboardingStepId>(
     onboardingStatus.firstIncompleteStep ?? 'alerts',
   );
+  const wasOnboardingCompleteRef = useRef(onboardingStatus.firstIncompleteStep === null);
   const [showProgramDetails, setShowProgramDetails] = useState(false);
   const [showSubscriptionDetails, setShowSubscriptionDetails] = useState(false);
   const [showAlertDetails, setShowAlertDetails] = useState(false);
@@ -208,6 +211,27 @@ export function OnboardingWizard({
   useEffect(() => {
     setAlertFormValues(buildInitialAlertFormValues(enrolledProgramNames));
   }, [enrolledProgramNames]);
+
+  useEffect(() => {
+    const isOnboardingComplete = onboardingStatus.firstIncompleteStep === null;
+
+    if (isOnboardingComplete && !wasOnboardingCompleteRef.current) {
+      captureAnalyticsEvent(ANALYTICS_EVENTS.onboardingCompleted, {
+        activeSubscriptionCount,
+        alertConfigCount,
+        completedSteps: 3,
+        enrollmentCount,
+        source: 'wizard',
+      });
+    }
+
+    wasOnboardingCompleteRef.current = isOnboardingComplete;
+  }, [
+    activeSubscriptionCount,
+    alertConfigCount,
+    enrollmentCount,
+    onboardingStatus.firstIncompleteStep,
+  ]);
 
   const selectedTier = clubTiers.find((tier) => tier.id === selectedTierId) ?? null;
   const completedSteps = [
