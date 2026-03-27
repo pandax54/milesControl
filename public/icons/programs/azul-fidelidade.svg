@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Azul Fidelidade</title>
+  <rect width="64" height="64" rx="16" fill="#0f4c81" />
+  <circle cx="24" cy="26" r="8" fill="#ffffff" />
+  <circle cx="40" cy="22" r="6" fill="#7bd3ff" />
+  <circle cx="42" cy="38" r="9" fill="#62b0ff" />
+  <circle cx="24" cy="42" r="6" fill="#bfe8ff" />
+</svg>

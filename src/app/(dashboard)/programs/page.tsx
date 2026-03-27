@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -12,6 +13,7 @@ import {
   FREE_TIER_PROGRAM_LIMIT,
   getUserFreemiumTier,
 } from '@/lib/services/freemium.service';
+import { ProgramsPageSkeleton } from '@/components/dashboard/page-skeletons';
 
 export default async function ProgramsPage() {
   const session = await auth();
@@ -20,11 +22,19 @@ export default async function ProgramsPage() {
     redirect('/login');
   }
 
+  return (
+    <Suspense fallback={<ProgramsPageSkeleton />}>
+      <ProgramsPageContent userId={session.user.id} />
+    </Suspense>
+  );
+}
+
+async function ProgramsPageContent({ userId }: { userId: string }) {
   const [programs, enrollments, potentialBalances, freemiumTier] = await Promise.all([
     listPrograms(),
-    listEnrollments(session.user.id),
-    calculatePotentialBalances(session.user.id),
-    getUserFreemiumTier(session.user.id),
+    listEnrollments(userId),
+    calculatePotentialBalances(userId),
+    getUserFreemiumTier(userId),
   ]);
 
   const enrolledProgramIds = new Set(enrollments.map((e) => e.program.id));

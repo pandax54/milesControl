@@ -9,6 +9,7 @@ import { matchPromotions } from '@/lib/services/promo-matcher.service';
 import type { EnrollmentSummary } from '@/lib/services/promo-matcher.service';
 import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
 import type { PromotionFeedFilter } from '@/lib/validators/promotion-feed.schema';
+import { PromotionFeedSkeleton } from './promotion-feed-skeleton';
 
 interface PromotionFeedProps {
   initialPromotions: PromotionWithPrograms[];
@@ -53,23 +54,21 @@ export function PromotionFeed({ initialPromotions, programs, enrollments = EMPTY
         isLoading={isPending}
       />
 
-      {isPending && (
-        <div className="text-sm text-muted-foreground">Loading promotions...</div>
-      )}
-
-      {!isPending && promotions.length === 0 && (
+      {isPending ? (
+        <PromotionFeedSkeleton showFilters={false} />
+      ) : promotions.length === 0 ? (
         <EmptyState hasFilters={!!filters.type || !!filters.programId || filters.status !== DEFAULT_FILTERS.status} />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {promotions.map((promo) => (
+            <PromotionCard
+              key={promo.id}
+              promotion={promo}
+              match={promoMatches.get(promo.id)}
+            />
+          ))}
+        </div>
       )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {promotions.map((promo) => (
-          <PromotionCard
-            key={promo.id}
-            promotion={promo}
-            match={promoMatches.get(promo.id)}
-          />
-        ))}
-      </div>
     </div>
   );
 }

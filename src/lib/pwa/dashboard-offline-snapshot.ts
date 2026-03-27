@@ -15,6 +15,7 @@ const dashboardOfflineEnrollmentSchema = z.object({
     name: z.string(),
     type: z.string(),
     currency: z.string(),
+    logoUrl: z.string().nullable(),
     website: z.string().nullable(),
   }),
 });
@@ -88,6 +89,7 @@ export function createDashboardOfflineSnapshot(
         name: enrollment.program.name,
         type: enrollment.program.type,
         currency: enrollment.program.currency,
+        logoUrl: enrollment.program.logoUrl,
         website: enrollment.program.website,
       },
     })),

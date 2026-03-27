@@ -9,6 +9,7 @@ import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { formatNumber } from '@/lib/utils/format';
 import type { EnrollmentSummary, StalenessLevel } from '@/lib/services/dashboard.service';
+import { ProgramLogo } from './program-logo';
 
 interface DashboardBalancesProps {
   enrollments: readonly EnrollmentSummary[];
@@ -38,37 +39,46 @@ export function DashboardBalances({ enrollments }: DashboardBalancesProps) {
 
           return (
             <div key={enrollment.id} className="flex items-center justify-between gap-4">
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium truncate">{enrollment.program.name}</span>
-                  <Badge
-                    variant={enrollment.program.type === 'AIRLINE' ? 'default' : 'secondary'}
-                    className="shrink-0"
-                  >
-                    {enrollment.program.type === 'AIRLINE' ? 'Airline' : 'Banking'}
-                  </Badge>
-                  {enrollment.program.website && (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <a
-                            href={enrollment.program.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Open ${enrollment.program.name} website`}
-                            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-accent"
-                          />
-                        }
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-3">
+                  <ProgramLogo
+                    name={enrollment.program.name}
+                    logoUrl={enrollment.program.logoUrl}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{enrollment.program.name}</span>
+                      <Badge
+                        variant={enrollment.program.type === 'AIRLINE' ? 'default' : 'secondary'}
+                        className="shrink-0"
                       >
-                        <ExternalLink className="h-3 w-3" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Open {enrollment.program.name} website
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
+                        {enrollment.program.type === 'AIRLINE' ? 'Airline' : 'Banking'}
+                      </Badge>
+                      {enrollment.program.website && (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <a
+                                href={enrollment.program.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`Open ${enrollment.program.name} website`}
+                                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md hover:bg-accent"
+                              />
+                            }
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Open {enrollment.program.name} website
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                    <p className={`text-xs ${stalenessColor}`}>Updated {updatedAgo}</p>
+                  </div>
                 </div>
-                <p className={`text-xs ${stalenessColor}`}>Updated {updatedAgo}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold tabular-nums">

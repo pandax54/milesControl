@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -15,6 +16,7 @@ import { listAlertConfigs } from '@/lib/services/alert-config.service';
 import { listClubTiers } from '@/lib/services/club-subscription.service';
 import { fetchDashboardData } from '@/lib/services/dashboard.service';
 import { listPrograms } from '@/lib/services/program-enrollment.service';
+import { DashboardPageSkeleton } from '@/components/dashboard/page-skeletons';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -23,11 +25,19 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
+  return (
+    <Suspense fallback={<DashboardPageSkeleton />}>
+      <DashboardPageContent userId={session.user.id} />
+    </Suspense>
+  );
+}
+
+async function DashboardPageContent({ userId }: { userId: string }) {
   const [data, programs, clubTiers, alertConfigs] = await Promise.all([
-    fetchDashboardData(session.user.id),
+    fetchDashboardData(userId),
     listPrograms(),
     listClubTiers(),
-    listAlertConfigs(session.user.id),
+    listAlertConfigs(userId),
   ]);
 
   const enrolledProgramIds = new Set(data.enrollments.map((enrollment) => enrollment.program.id));

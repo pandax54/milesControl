@@ -147,3 +147,11 @@ Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defau
 - Added `src/app/robots.ts`, `src/app/sitemap.ts`, and richer root metadata for canonical URLs, robots, Open Graph, and Twitter cards.
 - Added focused tests for rewrite/SEO helpers plus `robots` and `sitemap`.
 - Verification: `npx tsc --noEmit`, `pnpm test` (1577/1577), `pnpm run test:coverage` (All files 94.2% / 85.96% / 91.81% / 94.36%), and `pnpm build` all PASS.
+
+## Task 7.4 — Performance optimization (completed 2026-03-27)
+- Added Suspense-backed streaming and route `loading.tsx` skeletons for dashboard, programs, promotions, and public pages.
+- Split the public landing page into streamed RSC sections and moved dashboard unread notification loading behind a Suspense boundary.
+- Added reusable dashboard, promotion, and public skeleton components and replaced the promotions pending text with skeleton cards.
+- Added optimized program logo rendering with bundled Next Image assets plus remote-image fallback support on dashboard enrollment surfaces.
+- Extended dashboard offline snapshots and dashboard service coverage to preserve `logoUrl`, and added focused tests for the new loading/logo components.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1587/1587), `pnpm run test:coverage` (All files 94.23% / 86% / 91.94% / 94.4%), and `pnpm build` all PASS.

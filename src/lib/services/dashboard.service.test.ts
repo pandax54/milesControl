@@ -70,6 +70,7 @@ interface MockEnrollmentWithProgram {
     name: string;
     type: string;
     currency: string;
+    logoUrl: string | null;
     website: string | null;
   };
 }
@@ -132,13 +133,14 @@ function buildMockEnrollment(overrides: Partial<MockEnrollmentWithProgram> = {})
     expirationDate: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    program: {
-      id: 'prog-1',
-      name: 'Smiles',
-      type: 'AIRLINE',
-      currency: 'miles',
-      website: 'https://smiles.com.br',
-    },
+      program: {
+        id: 'prog-1',
+        name: 'Smiles',
+        type: 'AIRLINE',
+        currency: 'miles',
+        logoUrl: null,
+        website: 'https://smiles.com.br',
+      },
     ...overrides,
   };
 }
@@ -256,12 +258,12 @@ describe('fetchDashboardData', () => {
     const airlineEnrollment = buildMockEnrollment({
       id: 'enr-airline',
       currentBalance: 25000,
-      program: { id: 'p1', name: 'Smiles', type: 'AIRLINE', currency: 'miles', website: null },
+      program: { id: 'p1', name: 'Smiles', type: 'AIRLINE', currency: 'miles', logoUrl: null, website: null },
     });
     const bankingEnrollment = buildMockEnrollment({
       id: 'enr-banking',
       currentBalance: 15000,
-      program: { id: 'p2', name: 'Livelo', type: 'BANKING', currency: 'points', website: null },
+      program: { id: 'p2', name: 'Livelo', type: 'BANKING', currency: 'points', logoUrl: null, website: null },
     });
 
     mockEnrollments([airlineEnrollment, bankingEnrollment]);
@@ -337,6 +339,28 @@ describe('fetchDashboardData', () => {
     expect(staleEnrollment?.stalenessLevel).toBe('stale');
   });
 
+  it('should keep the logo URL in enriched enrollments', async () => {
+    mockEnrollments([
+      buildMockEnrollment({
+        program: {
+          id: 'prog-logo',
+          name: 'Smiles',
+          type: 'AIRLINE',
+          currency: 'miles',
+          logoUrl: '/icons/programs/smiles.svg',
+          website: 'https://smiles.com.br',
+        },
+      }),
+    ]);
+    mockSubscriptions([]);
+    mockTransfers([]);
+    mockFetchProjection.mockResolvedValueOnce(mockProjection);
+
+    const result = await fetchDashboardData(MOCK_USER_ID);
+
+    expect(result.enrollments[0]?.program.logoUrl).toBe('/icons/programs/smiles.svg');
+  });
+
   it('should include projection data', async () => {
     mockEmptyPrisma();
 
@@ -380,6 +404,18 @@ describe('fetchDashboardData', () => {
     expect(mockEnrollmentFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: MOCK_USER_ID },
+        include: {
+          program: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              currency: true,
+              logoUrl: true,
+              website: true,
+            },
+          },
+        },
       }),
     );
     expect(mockSubscriptionFindMany).toHaveBeenCalledWith(

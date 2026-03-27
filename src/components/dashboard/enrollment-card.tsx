@@ -8,6 +8,7 @@ import { QuickUpdateBalance } from './quick-update-balance';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ProgramLogo } from './program-logo';
 
 interface EnrollmentCardProps {
   enrollment: {
@@ -50,16 +51,25 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-base font-semibold">
-            {enrollment.program.name}
-          </CardTitle>
-          <Badge variant={enrollment.program.type === 'AIRLINE' ? 'default' : 'secondary'}>
-            {enrollment.program.type === 'AIRLINE' ? 'Airline' : 'Banking'}
-          </Badge>
-          {enrollment.tier && (
-            <Badge variant="outline">{enrollment.tier}</Badge>
-          )}
+        <div className="flex items-start gap-3">
+          <ProgramLogo
+            name={enrollment.program.name}
+            logoUrl={enrollment.program.logoUrl}
+            size="lg"
+          />
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-base font-semibold">
+                {enrollment.program.name}
+              </CardTitle>
+              <Badge variant={enrollment.program.type === 'AIRLINE' ? 'default' : 'secondary'}>
+                {enrollment.program.type === 'AIRLINE' ? 'Airline' : 'Banking'}
+              </Badge>
+              {enrollment.tier && (
+                <Badge variant="outline">{enrollment.tier}</Badge>
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           {enrollment.program.website && (

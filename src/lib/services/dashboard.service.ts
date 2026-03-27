@@ -21,6 +21,7 @@ interface EnrollmentSummary {
     readonly name: string;
     readonly type: string;
     readonly currency: string;
+    readonly logoUrl: string | null;
     readonly website: string | null;
   };
 }
@@ -85,7 +86,7 @@ export async function fetchDashboardData(userId: string): Promise<DashboardData>
       where: { userId },
       include: {
         program: {
-          select: { id: true, name: true, type: true, currency: true, website: true },
+          select: { id: true, name: true, type: true, currency: true, logoUrl: true, website: true },
         },
       },
       orderBy: { currentBalance: 'desc' },

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, CalendarDays, Calculator, Megaphone } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
   buildSoftwareApplicationSchema,
   buildWebPageSchema,
 } from '@/lib/seo/public-pages';
+import { PublicCardSectionSkeleton } from '@/components/public/public-page-skeleton';
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: 'Miles & Points Tools',
@@ -47,12 +49,7 @@ const FEATURE_CARDS = [
   },
 ] as const;
 
-export default async function PublicLandingPage() {
-  const [featuredPromotions, upcomingEvents] = await Promise.all([
-    listPromotions({ status: 'ACTIVE', sortBy: 'detectedAt', sortOrder: 'desc', limit: 3 }),
-    listUpcomingCalendarEvents(3),
-  ]);
-
+export default function PublicLandingPage() {
   const schemas = [
     buildWebPageSchema({
       title: 'MilesControl public landing page',
@@ -119,33 +116,13 @@ export default async function PublicLandingPage() {
         </Card>
       </section>
 
-      <section className="space-y-5">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Latest active promotions</h2>
-          <p className="text-muted-foreground">
-            Recent promos stay visible to search engines and give visitors a clear reason to keep exploring.
-          </p>
-        </div>
-        <div className="grid gap-4 lg:grid-cols-3">
-          {featuredPromotions.map((promotion) => (
-            <PromotionCard key={promotion.id} promotion={promotion} />
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={<PublicCardSectionSkeleton />}>
+        <FeaturedPromotionsSection />
+      </Suspense>
 
-      <section className="space-y-5">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Upcoming calendar windows</h2>
-          <p className="text-muted-foreground">
-            Historical promo timing helps travelers decide whether to buy now or wait for a stronger campaign.
-          </p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {upcomingEvents.map((event) => (
-            <MilesCalendarEventCard key={event.id} event={event} />
-          ))}
-        </div>
-      </section>
+      <Suspense fallback={<PublicCardSectionSkeleton layout="calendar" />}>
+        <UpcomingCalendarSection />
+      </Suspense>
 
       <section>
         <Card className="bg-muted/30">
@@ -163,5 +140,50 @@ export default async function PublicLandingPage() {
         </Card>
       </section>
     </div>
+  );
+}
+
+async function FeaturedPromotionsSection() {
+  const featuredPromotions = await listPromotions({
+    status: 'ACTIVE',
+    sortBy: 'detectedAt',
+    sortOrder: 'desc',
+    limit: 3,
+  });
+
+  return (
+    <section className="space-y-5">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold tracking-tight">Latest active promotions</h2>
+        <p className="text-muted-foreground">
+          Recent promos stay visible to search engines and give visitors a clear reason to keep exploring.
+        </p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {featuredPromotions.map((promotion) => (
+          <PromotionCard key={promotion.id} promotion={promotion} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+async function UpcomingCalendarSection() {
+  const upcomingEvents = await listUpcomingCalendarEvents(3);
+
+  return (
+    <section className="space-y-5">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold tracking-tight">Upcoming calendar windows</h2>
+        <p className="text-muted-foreground">
+          Historical promo timing helps travelers decide whether to buy now or wait for a stronger campaign.
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {upcomingEvents.map((event) => (
+          <MilesCalendarEventCard key={event.id} event={event} />
+        ))}
+      </div>
+    </section>
   );
 }

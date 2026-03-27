@@ -1,9 +1,11 @@
+import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { listPromotions, listPromotionPrograms } from '@/lib/services/promotion.service';
 import { listEnrollments } from '@/lib/services/program-enrollment.service';
 import { PromotionFeed } from '@/components/promotions/promotion-feed';
 import type { EnrollmentSummary } from '@/lib/services/promo-matcher.service';
+import { PromotionsPageSkeleton } from '@/components/promotions/promotion-feed-skeleton';
 
 export default async function PromotionsPage() {
   const session = await auth();
@@ -12,10 +14,18 @@ export default async function PromotionsPage() {
     redirect('/login');
   }
 
+  return (
+    <Suspense fallback={<PromotionsPageSkeleton />}>
+      <PromotionsPageContent userId={session.user.id} />
+    </Suspense>
+  );
+}
+
+async function PromotionsPageContent({ userId }: { userId: string }) {
   const [promotions, programs, rawEnrollments] = await Promise.all([
     listPromotions({ status: 'ACTIVE', sortBy: 'detectedAt', sortOrder: 'desc' }),
     listPromotionPrograms(),
-    listEnrollments(session.user.id),
+    listEnrollments(userId),
   ]);
 
   const enrollments: EnrollmentSummary[] = rawEnrollments.map((e) => ({
