@@ -133,3 +133,10 @@ Status: APPROVED — 8/8 requirements met, 0 bugs found
 Test suite: 1540 tests passing (85 files), TypeScript clean, coverage 95.63%/87.5%/92.53%/95.8%, build PASS
 Onboarding wizard: 3-step flow (programs → subscriptions → alerts) with quick-add + progressive disclosure
 Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defaults fully implemented
+
+## Task 7.2 — PWA setup (completed 2026-03-27)
+- Added `src/app/manifest.ts`, mobile app icons, and root metadata/viewport so MilesControl is installable on supported browsers.
+- Extended `public/sw.js` to preserve push notifications while adding app-shell caching, runtime asset caching, and offline navigation fallback to `public/offline.html`.
+- Added `src/lib/pwa/dashboard-offline-snapshot.ts` + tests and `src/components/pwa/dashboard-pwa-card.tsx` + tests to save dashboard snapshots locally and surface install/offline status on the dashboard.
+- Updated `src/app/(dashboard)/page.tsx` to expose the PWA card for both onboarding and populated dashboards.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1570/1570), `pnpm run test:coverage` (All files 94.22% / 86.02% / 91.82% / 94.38%), and `pnpm build` all PASS.

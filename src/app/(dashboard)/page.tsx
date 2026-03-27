@@ -4,11 +4,13 @@ import { auth } from '@/lib/auth';
 import { OnboardingWizard } from '@/components/dashboard/onboarding-wizard';
 import { DashboardBalances } from '@/components/dashboard/dashboard-balances';
 import { DashboardProjections } from '@/components/dashboard/dashboard-projections';
+import { DashboardPwaCard } from '@/components/pwa/dashboard-pwa-card';
 import { DashboardStalenessAlerts } from '@/components/dashboard/dashboard-staleness-alerts';
 import { DashboardSubscriptions } from '@/components/dashboard/dashboard-subscriptions';
 import { DashboardSummaryCards } from '@/components/dashboard/dashboard-summary-cards';
 import { DashboardTransfers } from '@/components/dashboard/dashboard-transfers';
 import { Button } from '@/components/ui/button';
+import { createDashboardOfflineSnapshot } from '@/lib/pwa/dashboard-offline-snapshot';
 import { listAlertConfigs } from '@/lib/services/alert-config.service';
 import { listClubTiers } from '@/lib/services/club-subscription.service';
 import { fetchDashboardData } from '@/lib/services/dashboard.service';
@@ -33,6 +35,7 @@ export default async function DashboardPage() {
   const enrolledProgramNames = data.enrollments.map((enrollment) => enrollment.program.name);
   const showOnboardingWizard =
     data.enrollments.length === 0 || data.activeSubscriptionCount === 0 || alertConfigs.length === 0;
+  const offlineSnapshot = createDashboardOfflineSnapshot(data);
 
   if (data.enrollments.length === 0) {
     return (
@@ -43,6 +46,7 @@ export default async function DashboardPage() {
             Let&apos;s solve the cold start in a few clicks so MilesControl can start helping right away.
           </p>
         </div>
+        <DashboardPwaCard snapshot={offlineSnapshot} />
         <OnboardingWizard
           availablePrograms={availablePrograms}
           clubTiers={clubTiers}
@@ -70,6 +74,8 @@ export default async function DashboardPage() {
           <Button variant="outline">Manage programs</Button>
         </Link>
       </div>
+
+      <DashboardPwaCard snapshot={offlineSnapshot} />
 
       {showOnboardingWizard && (
         <OnboardingWizard

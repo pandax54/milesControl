@@ -78,7 +78,7 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 
 - [x] 7.0 **Onboarding wizard** — Step-by-step: suggest common Brazilian programs (show Smiles/Livelo/Latam Pass/Azul as quick-add buttons), add subscriptions, set alerts. Progressive disclosure — casual users see simple setup, power users go deep. [Addresses the "cold start" problem both competitors handle poorly]
 - [x] 7.1 **Freemium gating** — Free tier (5 programs, basic calculator, cash flights) vs Premium (unlimited, Miles Value Advisor, miles flights, explore, Telegram, benefits). [Follows Oktoplus model]
-- [ ] 7.2 PWA setup — Service worker, offline dashboard, installable on mobile
+- [x] 7.2 PWA setup — Service worker, offline dashboard, installable on mobile
 - [ ] 7.3 SEO and landing page — Public pages: calculator tool, miles calendar, active promos feed (drives organic traffic)
 - [ ] 7.4 Performance optimization — RSC streaming, skeleton loaders, image optimization
 - [ ] 7.5 Analytics — Posthog or similar: track onboarding completion, feature usage, promo engagement
