@@ -40,7 +40,7 @@ set -euo pipefail
 #
 # Supported CLIs:
 #   claude   → claude -p --dangerously-skip-permissions --model <model> "<prompt>"
-#   copilot  → gh copilot --model <model> "<prompt>"
+#   copilot  → copilot --model <model> "<prompt>"
 #   opencode → opencode --model <model> "<prompt>"
 #   codex    → codex --model <model> --full-auto "<prompt>"
 #
@@ -126,7 +126,7 @@ CTX_FIX="@${FEATURE_DIR}/tasks.md"
 if [[ -f ".env" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source <(grep -E '^(TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID)=' .env)
+  eval "$(grep -E '^(TELEGRAM_BOT_TOKEN|TELEGRAM_CHAT_ID)=' .env)"
   set +a
   TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
   TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
@@ -195,8 +195,26 @@ _$(date '+%Y-%m-%d %H:%M:%S')_"
 }
 
 # ─── Progress Checks ────────────────────────────────────────────
-# Track step results for final summary
-declare -A STEP_RESULTS
+# Track step results for final summary (bash 3.2-compatible using temp file)
+STEP_RESULTS_FILE=$(mktemp /tmp/ralph-step-results.XXXXXX)
+trap "rm -f '$STEP_RESULTS_FILE'" EXIT
+
+step_result_set() {
+  local key="$1" val="$2"
+  # Remove existing entry, then append
+  grep -v "^${key}=" "$STEP_RESULTS_FILE" > "${STEP_RESULTS_FILE}.tmp" 2>/dev/null || true
+  mv "${STEP_RESULTS_FILE}.tmp" "$STEP_RESULTS_FILE"
+  echo "${key}=${val}" >> "$STEP_RESULTS_FILE"
+}
+
+step_result_get() {
+  local key="$1"
+  grep "^${key}=" "$STEP_RESULTS_FILE" 2>/dev/null | head -1 | cut -d= -f2-
+}
+
+step_result_count() {
+  wc -l < "$STEP_RESULTS_FILE" 2>/dev/null | tr -d ' '
+}
 
 progress_check() {
   local step_name="$1"
@@ -213,11 +231,11 @@ progress_check() {
       latest_msg=$(git log --oneline -1 2>/dev/null || echo "")
       if [[ -n "$latest_msg" ]]; then
         log "${GREEN}  ✓ Latest commit: ${latest_msg}${RESET}"
-        STEP_RESULTS["${step_name}_git"]="pass: ${latest_msg}"
+        step_result_set "${step_name}_git" "pass: ${latest_msg}"
         return 0
       else
         log "${RED}  ✗ No commit found${RESET}"
-        STEP_RESULTS["${step_name}_git"]="fail: no commit"
+        step_result_set "${step_name}_git" "fail: no commit"
         return 1
       fi
       ;;
@@ -233,21 +251,21 @@ progress_check() {
         fi
       done
       if $all_found; then
-        STEP_RESULTS["${step_name}_files"]="pass"
+        step_result_set "${step_name}_files" "pass"
         return 0
       else
-        STEP_RESULTS["${step_name}_files"]="fail: missing files"
+        step_result_set "${step_name}_files" "fail: missing files"
         return 1
       fi
       ;;
     review_status)
       if review_passed; then
         log "${GREEN}  ✓ Review status: APPROVED${RESET}"
-        STEP_RESULTS["${step_name}_review"]="pass: approved"
+        step_result_set "${step_name}_review" "pass: approved"
         return 0
       else
         log "${YELLOW}  ⚠ Review status: NOT APPROVED${RESET}"
-        STEP_RESULTS["${step_name}_review"]="warning: not approved"
+        step_result_set "${step_name}_review" "warning: not approved"
         return 1
       fi
       ;;
@@ -255,11 +273,11 @@ progress_check() {
       # Check if task is marked as done in tasks.md
       if grep -qE "^\s*- \[x\] ${TASK_ID}" "${FEATURE_DIR}/tasks.md" 2>/dev/null; then
         log "${GREEN}  ✓ Task ${TASK_ID} marked complete in tasks.md${RESET}"
-        STEP_RESULTS["${step_name}_task_marked"]="pass"
+        step_result_set "${step_name}_task_marked" "pass"
         return 0
       else
         log "${YELLOW}  ⚠ Task ${TASK_ID} not yet marked in tasks.md${RESET}"
-        STEP_RESULTS["${step_name}_task_marked"]="warning: not marked"
+        step_result_set "${step_name}_task_marked" "warning: not marked"
         return 1
       fi
       ;;
@@ -268,11 +286,11 @@ progress_check() {
       log "${DIM}  Running: pnpm test (quick check)...${RESET}"
       if pnpm test > /dev/null 2>&1; then
         log "${GREEN}  ✓ Tests pass${RESET}"
-        STEP_RESULTS["${step_name}_tests"]="pass"
+        step_result_set "${step_name}_tests" "pass"
         return 0
       else
         log "${RED}  ✗ Tests failing${RESET}"
-        STEP_RESULTS["${step_name}_tests"]="fail: tests failing"
+        step_result_set "${step_name}_tests" "fail: tests failing"
         return 1
       fi
       ;;
@@ -280,11 +298,11 @@ progress_check() {
       log "${DIM}  Running: npx tsc --noEmit (quick check)...${RESET}"
       if npx tsc --noEmit > /dev/null 2>&1; then
         log "${GREEN}  ✓ Type check passes${RESET}"
-        STEP_RESULTS["${step_name}_typecheck"]="pass"
+        step_result_set "${step_name}_typecheck" "pass"
         return 0
       else
         log "${RED}  ✗ Type errors found${RESET}"
-        STEP_RESULTS["${step_name}_typecheck"]="fail: type errors"
+        step_result_set "${step_name}_typecheck" "fail: type errors"
         return 1
       fi
       ;;
@@ -292,11 +310,11 @@ progress_check() {
       log "${DIM}  Running: pnpm build (quick check)...${RESET}"
       if pnpm build > /dev/null 2>&1; then
         log "${GREEN}  ✓ Build succeeds${RESET}"
-        STEP_RESULTS["${step_name}_build"]="pass"
+        step_result_set "${step_name}_build" "pass"
         return 0
       else
         log "${RED}  ✗ Build failed${RESET}"
-        STEP_RESULTS["${step_name}_build"]="fail: build broken"
+        step_result_set "${step_name}_build" "fail: build broken"
         return 1
       fi
       ;;
@@ -305,11 +323,11 @@ progress_check() {
         local count
         count=$(grep -ciE "status:\s*(open|new|unfixed)" "${FEATURE_DIR}/bugs.md" 2>/dev/null || echo "0")
         log "${YELLOW}  ⚠ Open bugs: ${count}${RESET}"
-        STEP_RESULTS["${step_name}_bugs"]="warning: ${count} open bugs"
+        step_result_set "${step_name}_bugs" "warning: ${count} open bugs"
         return 1
       else
         log "${GREEN}  ✓ No open bugs${RESET}"
-        STEP_RESULTS["${step_name}_bugs"]="pass: no bugs"
+        step_result_set "${step_name}_bugs" "pass: no bugs"
         return 0
       fi
       ;;
@@ -325,9 +343,8 @@ progress_summary() {
   local fail_count=0
   local warn_count=0
 
-  for key in "${!STEP_RESULTS[@]}"; do
+  while IFS='=' read -r key val; do
     if [[ "$key" == ${step_name}* ]]; then
-      local val="${STEP_RESULTS[$key]}"
       local check_name="${key#${step_name}_}"
       if [[ "$val" == pass* ]]; then
         log "${GREEN}│  ✓ ${check_name}: ${val}${RESET}"
@@ -340,7 +357,7 @@ progress_summary() {
         ((fail_count++)) || true
       fi
     fi
-  done
+  done < "$STEP_RESULTS_FILE"
 
   local overall="PASS"
   if [[ $fail_count -gt 0 ]]; then overall="FAIL"; fi
@@ -373,7 +390,7 @@ confirm_step() {
   echo -n "  → "
 
   read -r response
-  case "${response,,}" in
+  case "$(echo "$response" | tr '[:upper:]' '[:lower:]')" in
     n|no|skip)
       log "${YELLOW}⏭  Skipped: ${step_name}${RESET}"
       return 1
@@ -405,7 +422,7 @@ run_ai() {
       return "${PIPESTATUS[0]}"
       ;;
     copilot)
-      gh copilot --model "$model" "$prompt" \
+      copilot -p "$prompt" --allow-all-tools --model "$model" \
         2>&1 | tee "$log_file"
       return "${PIPESTATUS[0]}"
       ;;
@@ -437,7 +454,7 @@ get_task_description() {
 review_passed() {
   local review_file="${FEATURE_DIR}/${TASK_ID}_task_review.md"
   [[ -f "$review_file" ]] \
-    && grep -qiE "(\*\*)?status(\*\*)?:\s*(\*\*)?(approved|approved with observations)" "$review_file" 2>/dev/null
+    && grep -qiE "(\*\*)?status(\*\*)?:\s*.*(approved|approved with observations)" "$review_file" 2>/dev/null
 }
 
 # Check for open bugs
@@ -768,12 +785,12 @@ log "${GREEN}║  Logs:         ${LOG_DIR}/ralph_${TASK_ID}_*${RESET}"
 log "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 
 # ── Final progress report ──
-if [[ ${#STEP_RESULTS[@]} -gt 0 ]]; then
+if [[ $(step_result_count) -gt 0 ]]; then
   echo ""
   log "${BOLD}Final Progress Report:${RESET}"
   total_pass=0; total_fail=0; total_warn=0
-  for key in $(echo "${!STEP_RESULTS[@]}" | tr ' ' '\n' | sort); do
-    val="${STEP_RESULTS[$key]}"
+  sort "$STEP_RESULTS_FILE" > "${STEP_RESULTS_FILE}.sorted"
+  while IFS='=' read -r key val; do
     if [[ "$val" == pass* ]]; then
       log "  ${GREEN}✓${RESET} ${key}: ${val}"
       ((total_pass++)) || true
@@ -784,7 +801,8 @@ if [[ ${#STEP_RESULTS[@]} -gt 0 ]]; then
       log "  ${RED}✗${RESET} ${key}: ${val}"
       ((total_fail++)) || true
     fi
-  done
+  done < "${STEP_RESULTS_FILE}.sorted"
+  rm -f "${STEP_RESULTS_FILE}.sorted"
   log "${BOLD}Totals: ${total_pass} passed, ${total_warn} warnings, ${total_fail} failed${RESET}"
 fi
 

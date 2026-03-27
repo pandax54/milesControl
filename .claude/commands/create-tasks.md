@@ -43,6 +43,7 @@ The feature you will be working on is identified by this slug:
 - Make each main task independently completable
 - Define clear scope and deliverables for each task
 - Include tests as subtasks within each main task
+  ** DO NOT REPEAT IMPLEMENTATION DETAILS FROM THE TECH SPEC; FOCUS ON THE TASKS AND TESTS **
 
 ## Output Specifications
 
