@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import {
   getTransferConversionData,
   type TransferConversionData,
@@ -21,15 +22,11 @@ export interface TransferConversionResult extends DerivedConversionValues {
   destCpm: number | null;
   activePromotion: TransferConversionPromotion | null;
   isLoading: boolean;
+  error: Error | null;
 }
 
 const DEBOUNCE_DELAY_MS = 300;
 const NET_VALUE_THRESHOLD_PERCENT = 5;
-const EMPTY_TRANSFER_CONVERSION_DATA: TransferConversionData = {
-  sourceCpm: null,
-  destCpm: null,
-  activePromotion: null,
-};
 const EMPTY_DERIVED_VALUES: DerivedConversionValues = {
   sourceBrl: null,
   destBrl: null,
@@ -87,68 +84,65 @@ function calculateNetValue(
   };
 }
 
+/**
+ * Fetches CPM data for the selected transfer route and derives debounced BRL values.
+ *
+ * The hook uses React Query to cache CPM and promotion lookups per source/destination
+ * program pair while keeping the 300ms debounce required for local BRL recalculation
+ * as the user edits transfer amounts.
+ *
+ * @param sourceProgramName - Selected source program name.
+ * @param destProgramName - Selected destination program name.
+ * @param pointsTransferred - Source points entered in the form.
+ * @param milesReceived - Destination miles expected after bonus.
+ * @returns Conversion data with BRL amounts, net value classification, loading state,
+ * and the latest query error when the lookup fails.
+ */
 export function useTransferConversion(
   sourceProgramName: string,
   destProgramName: string,
   pointsTransferred: number,
   milesReceived: number,
 ): TransferConversionResult {
-  const [conversionData, setConversionData] = useState<TransferConversionData>(EMPTY_TRANSFER_CONVERSION_DATA);
   const [derivedValues, setDerivedValues] = useState<DerivedConversionValues>(EMPTY_DERIVED_VALUES);
-  const [isLoading, setIsLoading] = useState(false);
-  const requestIdRef = useRef(0);
+  const trimmedSourceProgramName = sourceProgramName.trim();
+  const trimmedDestProgramName = destProgramName.trim();
+  const shouldFetch = trimmedSourceProgramName.length > 0 && trimmedDestProgramName.length > 0;
+
+  const queryKey = useMemo(
+    () => ['transfer-conversion', trimmedSourceProgramName, trimmedDestProgramName] as const,
+    [trimmedDestProgramName, trimmedSourceProgramName],
+  );
+  const {
+    data: conversionData,
+    error,
+    isFetching,
+  } = useQuery<TransferConversionData, Error>({
+    queryKey,
+    queryFn: async () =>
+      getTransferConversionData({
+        sourceProgramName: trimmedSourceProgramName,
+        destProgramName: trimmedDestProgramName,
+      }),
+    enabled: shouldFetch,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: false,
+  });
+  const hasConversionData = conversionData !== undefined;
+  const sourceCpm = conversionData?.sourceCpm ?? null;
+  const destCpm = conversionData?.destCpm ?? null;
+  const activePromotion = conversionData?.activePromotion ?? null;
 
   useEffect(() => {
-    const trimmedSourceProgramName = sourceProgramName.trim();
-    const trimmedDestProgramName = destProgramName.trim();
-
-    requestIdRef.current += 1;
-    const requestId = requestIdRef.current;
-
-    if (!trimmedSourceProgramName || !trimmedDestProgramName) {
-      setConversionData(EMPTY_TRANSFER_CONVERSION_DATA);
+    if (!shouldFetch || !hasConversionData) {
       setDerivedValues(EMPTY_DERIVED_VALUES);
-      setIsLoading(false);
       return;
     }
 
-    let isCancelled = false;
-
-    setConversionData(EMPTY_TRANSFER_CONVERSION_DATA);
-    setDerivedValues(EMPTY_DERIVED_VALUES);
-    setIsLoading(true);
-
-    void getTransferConversionData({
-      sourceProgramName: trimmedSourceProgramName,
-      destProgramName: trimmedDestProgramName,
-    })
-      .then((data) => {
-        if (isCancelled || requestIdRef.current !== requestId) {
-          return;
-        }
-
-        setConversionData(data);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (isCancelled || requestIdRef.current !== requestId) {
-          return;
-        }
-
-        setConversionData(EMPTY_TRANSFER_CONVERSION_DATA);
-        setDerivedValues(EMPTY_DERIVED_VALUES);
-        setIsLoading(false);
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [destProgramName, sourceProgramName]);
-
-  useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const sourceBrl = calculateBrlValue(pointsTransferred, conversionData.sourceCpm);
-      const destBrl = calculateBrlValue(milesReceived, conversionData.destCpm);
+      const sourceBrl = calculateBrlValue(pointsTransferred, sourceCpm);
+      const destBrl = calculateBrlValue(milesReceived, destCpm);
 
       setDerivedValues({
         sourceBrl,
@@ -160,7 +154,14 @@ export function useTransferConversion(
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [conversionData.destCpm, conversionData.sourceCpm, milesReceived, pointsTransferred]);
+  }, [
+    destCpm,
+    hasConversionData,
+    milesReceived,
+    pointsTransferred,
+    sourceCpm,
+    shouldFetch,
+  ]);
 
   return useMemo(
     () => ({
@@ -168,11 +169,23 @@ export function useTransferConversion(
       destBrl: derivedValues.destBrl,
       netValue: derivedValues.netValue,
       netValueType: derivedValues.netValueType,
-      sourceCpm: conversionData.sourceCpm,
-      destCpm: conversionData.destCpm,
-      activePromotion: conversionData.activePromotion,
-      isLoading,
+      sourceCpm,
+      destCpm,
+      activePromotion,
+      isLoading: shouldFetch && isFetching,
+      error: shouldFetch ? error ?? null : null,
     }),
-    [conversionData.activePromotion, conversionData.destCpm, conversionData.sourceCpm, derivedValues.destBrl, derivedValues.netValue, derivedValues.netValueType, derivedValues.sourceBrl, isLoading],
+    [
+      activePromotion,
+      destCpm,
+      derivedValues.destBrl,
+      derivedValues.netValue,
+      derivedValues.netValueType,
+      derivedValues.sourceBrl,
+      error,
+      isFetching,
+      sourceCpm,
+      shouldFetch,
+    ],
   );
 }

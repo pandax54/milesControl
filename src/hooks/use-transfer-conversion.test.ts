@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react';
+import { createElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTransferConversionData, type TransferConversionData } from '@/actions/transfers';
 import { useTransferConversion } from './use-transfer-conversion';
@@ -44,15 +46,42 @@ async function flushPromises() {
   });
 }
 
+async function flushQueryUpdates() {
+  await flushPromises();
+  act(() => {
+    vi.advanceTimersByTime(0);
+  });
+  await flushPromises();
+}
+
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+}
+
+function createWrapper(queryClient: QueryClient) {
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children);
+  };
+}
+
 describe('useTransferConversion', () => {
   const mockGetTransferConversionData = vi.mocked(getTransferConversionData);
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     vi.useFakeTimers();
     mockGetTransferConversionData.mockReset();
+    queryClient = createQueryClient();
   });
 
   afterEach(() => {
+    queryClient.clear();
     vi.clearAllTimers();
     vi.useRealTimers();
   });
@@ -68,17 +97,21 @@ describe('useTransferConversion', () => {
       },
     }));
 
-    const { result } = renderHook(() => useTransferConversion(' Livelo ', ' Smiles ', 10000, 19000));
+    const { result } = renderHook(
+      () => useTransferConversion(' Livelo ', ' Smiles ', 10000, 19000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
     expect(mockGetTransferConversionData).toHaveBeenCalledWith({
       sourceProgramName: 'Livelo',
       destProgramName: 'Smiles',
     });
     expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
     expect(result.current.sourceBrl).toBeNull();
     expect(result.current.destBrl).toBeNull();
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.sourceCpm).toBe(15);
@@ -107,9 +140,12 @@ describe('useTransferConversion', () => {
       destCpm: 12,
     }));
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 19000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 19000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -127,9 +163,12 @@ describe('useTransferConversion', () => {
       destCpm: null,
     }));
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 19000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 19000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -147,9 +186,12 @@ describe('useTransferConversion', () => {
       destCpm: 10,
     }));
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 10000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 10000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -165,9 +207,12 @@ describe('useTransferConversion', () => {
       destCpm: 15.4,
     }));
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 10000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 10000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -196,6 +241,7 @@ describe('useTransferConversion', () => {
         milesReceived: number;
       }) => useTransferConversion(sourceProgramName, destProgramName, pointsTransferred, milesReceived),
       {
+        wrapper: createWrapper(queryClient),
         initialProps: {
           sourceProgramName: 'Livelo',
           destProgramName: 'Smiles',
@@ -205,7 +251,7 @@ describe('useTransferConversion', () => {
       },
     );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -261,6 +307,7 @@ describe('useTransferConversion', () => {
         destProgramName: string;
       }) => useTransferConversion(sourceProgramName, destProgramName, 10000, 15000),
       {
+        wrapper: createWrapper(queryClient),
         initialProps: {
           sourceProgramName: 'Livelo',
           destProgramName: 'Smiles',
@@ -268,7 +315,7 @@ describe('useTransferConversion', () => {
       },
     );
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -290,7 +337,7 @@ describe('useTransferConversion', () => {
     expect(result.current.sourceBrl).toBeNull();
     expect(result.current.destBrl).toBeNull();
 
-    await flushPromises();
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
@@ -305,11 +352,15 @@ describe('useTransferConversion', () => {
     const deferred = createDeferred<TransferConversionData>();
     mockGetTransferConversionData.mockImplementation(() => deferred.promise);
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 19000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 19000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
     expect(result.current.isLoading).toBe(true);
     expect(result.current.sourceCpm).toBeNull();
     expect(result.current.destCpm).toBeNull();
+    expect(result.current.error).toBeNull();
 
     await act(async () => {
       deferred.resolve(buildConversionData({
@@ -318,6 +369,7 @@ describe('useTransferConversion', () => {
       }));
       await Promise.resolve();
     });
+    await flushQueryUpdates();
 
     expect(result.current.isLoading).toBe(false);
     expect(result.current.sourceCpm).toBe(15);
@@ -325,9 +377,13 @@ describe('useTransferConversion', () => {
   });
 
   it('should handle server action failures gracefully', async () => {
-    mockGetTransferConversionData.mockRejectedValue(new Error('Failed to fetch conversion data'));
+    const fetchError = new Error('Failed to fetch conversion data');
+    mockGetTransferConversionData.mockRejectedValue(fetchError);
 
-    const { result } = renderHook(() => useTransferConversion('Livelo', 'Smiles', 10000, 19000));
+    const { result } = renderHook(
+      () => useTransferConversion('Livelo', 'Smiles', 10000, 19000),
+      { wrapper: createWrapper(queryClient) },
+    );
 
     await flushPromises();
 
@@ -343,6 +399,7 @@ describe('useTransferConversion', () => {
     expect(result.current.destBrl).toBeNull();
     expect(result.current.netValue).toBeNull();
     expect(result.current.netValueType).toBeNull();
+    expect(result.current.error).toBe(fetchError);
   });
 
   it('should discard stale responses when programs change rapidly', async () => {
@@ -362,6 +419,7 @@ describe('useTransferConversion', () => {
         destProgramName: string;
       }) => useTransferConversion(sourceProgramName, destProgramName, 10000, 12000),
       {
+        wrapper: createWrapper(queryClient),
         initialProps: {
           sourceProgramName: 'Livelo',
           destProgramName: 'Smiles',
@@ -386,6 +444,7 @@ describe('useTransferConversion', () => {
       }));
       await Promise.resolve();
     });
+    await flushQueryUpdates();
 
     act(() => {
       vi.advanceTimersByTime(300);
