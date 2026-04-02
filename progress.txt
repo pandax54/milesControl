@@ -1,31 +1,3 @@
-## Task 5.2 — SerpApi Google Flights integration (completed 2026-03-24)
-
-Files created:
-- src/lib/validators/serp-api.schema.ts — Zod schemas for flight leg, flight option, full search response, and search params
-- src/lib/validators/serp-api.schema.test.ts — 14 tests validating all schemas (valid inputs, missing fields, optional fields)
-- src/lib/integrations/serp-api.ts — searchCashFlights() with 6h in-memory cache, cabin class mapping, retry on 5xx, Zod validation of response
-- src/lib/integrations/serp-api.test.ts — 23 tests covering response parsing, param mapping, cache TTL, retry logic, error types
-- src/lib/services/flight-search.service.ts — Updated: searchFlights() now calls SerpApi for cash flights via fetchCashFlights(); SerpApiError handled gracefully (returns [])
-- src/lib/services/flight-search.service.test.ts — Updated: mocks serp-api module, adds 5 new cash flight tests (results, params forwarding, SerpApiError fallback, re-throw on unexpected, combined results)
-
-Key design decisions:
-- Cache key: origin:destination:departureDate:returnDate:cabinClass:passengers
-- Retry: once on 5xx and network errors; 4xx and SerpApiError body errors not retried
-- Cabin class mapped to SerpApi travel_class: ECONOMY=1, PREMIUM_ECONOMY=2, BUSINESS=3, FIRST=4
-- clearCache() exported for test isolation
-
-Verification: 1269 tests pass, TypeScript clean, coverage thresholds met, build PASS.
-
-## Task 5.1 — Review Fixes (2026-03-24)
-
-Review file: tasks/prd-milescontrol/5.1_task_review.md — Status: CHANGES REQUESTED → fixed
-1. Dead code: `callSeatsAeroApi` retry loop now tracks `lastError`; unreachable throw kept with TypeScript-required comment
-2. Zod validation: created `src/lib/validators/seats-aero.schema.ts` with schemas for availability, response, segment, trip, and search params
-3. Input validation: `searchAvailability()` now calls `seatsAeroSearchParamsSchema.parse()` at boundary
-4. Response validation: `callSeatsAeroApi` accepts optional `z.ZodSchema<T>` and validates API responses
-Verification: 1226 tests pass, TypeScript clean, coverage 98.18% (all thresholds met), build PASS.
-
-## Task 5.3 — Review Fixes (2026-03-24)
 
 Review file: tasks/prd-milescontrol/5.3_task_review.md — Status: APPROVED
 No critical, major, or minor issues found. No fixes required.

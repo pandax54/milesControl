@@ -93,11 +93,20 @@ Note: TechSpec listed `/api/flights/search`, `/api/flights/watchlist`, etc. as R
 
 ## Test Suite
 
-- Unit tests: **ALL PASSING** (74 test files, 1403 tests)
+- Unit tests: **ALL PASSING** (99 test files, 1601 tests)
 - Integration tests: N/A (external APIs mocked)
 - Type checking: **NO ERRORS** (`npx tsc --noEmit` — clean)
-- Coverage: **97.87% statements, 90.79% branches, 97.73% functions** (threshold: 80% — all exceeded)
-- Build: **PASSED** — `✓ Compiled successfully in 3.8s`
+- Coverage: **93.68% statements, 84.82% branches, 90.89% functions, 93.92% lines** (threshold: 80% — all exceeded)
+- Build: **PASSED** — `✓ Compiled successfully in 4.2s`, 36 routes
+
+## Re-Verification (2026-04-02)
+
+| Check | Result | Details |
+|---|---|---|
+| `tsc --noEmit` | PASS | No type errors |
+| `vitest run` | PASS | 99 test files, 1601 tests |
+| `vitest run --coverage` | PASS | 93.68% stmts, 84.82% branches, 90.89% funcs, 93.92% lines |
+| `next build` | PASS | 36 routes compiled (stub env vars for CI) |
 
 ---
 
