@@ -35,9 +35,15 @@ export const deleteTransferSchema = z.object({
   transferId: z.string().min(1, 'Transfer ID is required'),
 });
 
+export const transferConversionSchema = z.object({
+  sourceProgramName: z.string().trim().min(1, 'Source program is required'),
+  destProgramName: z.string().trim().min(1, 'Destination program is required'),
+});
+
 export type CreateTransferInput = z.infer<typeof createTransferSchema>;
 export type UpdateTransferInput = z.infer<typeof updateTransferSchema>;
 export type DeleteTransferInput = z.infer<typeof deleteTransferSchema>;
+export type TransferConversionInput = z.infer<typeof transferConversionSchema>;
 
 export interface TransferData {
   id: string;

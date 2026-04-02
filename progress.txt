@@ -78,3 +78,9 @@ Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defau
 - Instrumented onboarding completion plus promo engagement events for promotion filters, source link clicks, calculator opens, and calculator submissions.
 - Added focused tests for public analytics env parsing, feature route mapping, provider tracking, onboarding completion, promo card interactions, and promo calculator telemetry.
 - Verification: `npx tsc --noEmit` PASS, `pnpm test` PASS (1601/1601), `pnpm run test:coverage` PASS (93.68% / 84.82% / 90.89% / 93.92%), `pnpm build` PASS.
+
+## Task 1.0 — Transfer conversion action (completed 2026-04-02)
+- Added `transferConversionSchema` to validate non-empty source/destination program names for conversion lookups.
+- Added `getTransferConversionData` in `src/actions/transfers.ts` to fetch both CPM values in parallel, resolve the destination program, and return the best matching active transfer bonus.
+- The action now filters promotions to exact destination matches and returns graceful `null` fallbacks for invalid input, missing CPM data, auth gaps, and service failures.
+- Extended transfer action tests and transfer schema tests to cover happy path, null fallbacks, exact destination filtering, debug/error logging, and trimmed input handling.

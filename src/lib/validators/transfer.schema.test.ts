@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { createTransferSchema, updateTransferSchema, deleteTransferSchema } from './transfer.schema';
+import {
+  createTransferSchema,
+  updateTransferSchema,
+  deleteTransferSchema,
+  transferConversionSchema,
+} from './transfer.schema';
 
 describe('createTransferSchema', () => {
   const VALID_INPUT = {
@@ -215,6 +220,56 @@ describe('deleteTransferSchema', () => {
 
   it('should reject empty transferId', () => {
     const result = deleteTransferSchema.safeParse({ transferId: '' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('transferConversionSchema', () => {
+  it('should accept valid source and destination programs', () => {
+    const result = transferConversionSchema.safeParse({
+      sourceProgramName: 'Livelo',
+      destProgramName: 'Smiles',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        sourceProgramName: 'Livelo',
+        destProgramName: 'Smiles',
+      });
+    }
+  });
+
+  it('should trim program names', () => {
+    const result = transferConversionSchema.safeParse({
+      sourceProgramName: '  Livelo  ',
+      destProgramName: '  Smiles  ',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        sourceProgramName: 'Livelo',
+        destProgramName: 'Smiles',
+      });
+    }
+  });
+
+  it('should reject empty source program name', () => {
+    const result = transferConversionSchema.safeParse({
+      sourceProgramName: '   ',
+      destProgramName: 'Smiles',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject empty destination program name', () => {
+    const result = transferConversionSchema.safeParse({
+      sourceProgramName: 'Livelo',
+      destProgramName: '',
+    });
+
     expect(result.success).toBe(false);
   });
 });

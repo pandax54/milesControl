@@ -7,19 +7,39 @@ import {
   createTransferSchema,
   updateTransferSchema,
   deleteTransferSchema,
+  transferConversionSchema,
   type CreateTransferInput,
+  type TransferConversionInput,
   type UpdateTransferInput,
 } from '@/lib/validators/transfer.schema';
 import {
   createTransfer as createTransferService,
   updateTransfer as updateTransferService,
   deleteTransfer as deleteTransferService,
+  getUserAverageCostPerMilheiro,
   TransferNotFoundError,
 } from '@/lib/services/transfer.service';
+import {
+  listPromotions,
+  resolveProgramId,
+} from '@/lib/services/promotion.service';
+import type { PromotionWithPrograms } from '@/lib/services/promotion.service';
 
 interface ActionResult {
   success: boolean;
   error?: string;
+}
+
+export interface TransferConversionPromotion {
+  id: string;
+  bonusPercent: number;
+  title: string;
+}
+
+export interface TransferConversionData {
+  sourceCpm: number | null;
+  destCpm: number | null;
+  activePromotion: TransferConversionPromotion | null;
 }
 
 class AuthenticationError extends Error {
@@ -41,6 +61,31 @@ function isAuthenticationError(error: unknown): boolean {
   return error instanceof AuthenticationError;
 }
 
+function buildEmptyTransferConversionData(): TransferConversionData {
+  return {
+    sourceCpm: null,
+    destCpm: null,
+    activePromotion: null,
+  };
+}
+
+function selectActivePromotion(
+  promotions: readonly PromotionWithPrograms[],
+  destProgramId: string,
+): TransferConversionPromotion | null {
+  const promotion = promotions.find((item) => item.destProgramId === destProgramId);
+
+  if (!promotion || promotion.bonusPercent == null) {
+    return null;
+  }
+
+  return {
+    id: promotion.id,
+    bonusPercent: promotion.bonusPercent,
+    title: promotion.title,
+  };
+}
+
 export async function logTransfer(input: CreateTransferInput): Promise<ActionResult> {
   const parsed = createTransferSchema.safeParse(input);
   if (!parsed.success) {
@@ -59,6 +104,63 @@ export async function logTransfer(input: CreateTransferInput): Promise<ActionRes
     }
     logger.error({ err: error }, 'Failed to log transfer');
     return { success: false, error: 'Failed to log transfer. Please try again.' };
+  }
+}
+
+export async function getTransferConversionData(
+  input: TransferConversionInput,
+): Promise<TransferConversionData> {
+  const parsed = transferConversionSchema.safeParse(input);
+  if (!parsed.success) {
+    return buildEmptyTransferConversionData();
+  }
+
+  try {
+    const userId = await requireUserId();
+    const { sourceProgramName, destProgramName } = parsed.data;
+
+    const [sourceCpm, destCpm, destProgramId] = await Promise.all([
+      getUserAverageCostPerMilheiro(userId, sourceProgramName),
+      getUserAverageCostPerMilheiro(userId, destProgramName),
+      resolveProgramId(destProgramName),
+    ]);
+
+    if (sourceCpm == null) {
+      logger.debug({ userId, program: sourceProgramName }, 'No CPM data available for conversion display');
+    }
+
+    if (destCpm == null) {
+      logger.debug({ userId, program: destProgramName }, 'No CPM data available for conversion display');
+    }
+
+    if (!destProgramId) {
+      return {
+        sourceCpm,
+        destCpm,
+        activePromotion: null,
+      };
+    }
+
+    const promotions = await listPromotions({
+      status: 'ACTIVE',
+      type: 'TRANSFER_BONUS',
+      programId: destProgramId,
+      sortBy: 'bonusPercent',
+      sortOrder: 'desc',
+    });
+
+    return {
+      sourceCpm,
+      destCpm,
+      activePromotion: selectActivePromotion(promotions, destProgramId),
+    };
+  } catch (error) {
+    if (isAuthenticationError(error)) {
+      return buildEmptyTransferConversionData();
+    }
+
+    logger.error({ err: error, input: parsed.data }, 'Failed to fetch transfer conversion data');
+    return buildEmptyTransferConversionData();
   }
 }
 
