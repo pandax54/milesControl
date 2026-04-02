@@ -82,7 +82,7 @@ async function handleAlerts(chatId: number): Promise<void> {
   if (!user) {
     await sendMessage(
       chatId,
-      '⚠️ No alert rules found for this chat.\n\nRegister your chat ID in the MilesControl app and configure alerts with the Telegram channel.',
+      '⭐ Telegram commands are available on MilesControl Premium.\n\nUpgrade in the app to unlock Telegram alerts, /promos, and /calc.',
     );
     return;
   }
@@ -115,6 +115,16 @@ async function handleAlerts(chatId: number): Promise<void> {
 }
 
 async function handlePromos(chatId: number): Promise<void> {
+  const user = await findUserByChatId(chatId.toString());
+
+  if (!user) {
+    await sendMessage(
+      chatId,
+      '⭐ Telegram commands are available on MilesControl Premium.\n\nUpgrade in the app to unlock Telegram alerts, /promos, and /calc.',
+    );
+    return;
+  }
+
   const promotions = await getTopPromotionsForBot();
 
   if (promotions.length === 0) {
@@ -148,6 +158,16 @@ async function handlePromos(chatId: number): Promise<void> {
 }
 
 async function handleCalc(chatId: number, args: readonly string[]): Promise<void> {
+  const user = await findUserByChatId(chatId.toString());
+
+  if (!user) {
+    await sendMessage(
+      chatId,
+      '⭐ Telegram commands are available on MilesControl Premium.\n\nUpgrade in the app to unlock Telegram alerts, /promos, and /calc.',
+    );
+    return;
+  }
+
   if (args.length < 2) {
     await sendMessage(
       chatId,

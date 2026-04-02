@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calculator } from 'lucide-react';
 import { calculateCostPerMilheiroAction } from '@/actions/calculator';
+import { captureAnalyticsEvent } from '@/lib/analytics/client';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { CompactCalculatorResult } from './calculator-result-card';
 import type { CostCalculation } from '@/lib/services/cost-calculator.service';
 import type { CalculatorInput } from '@/lib/validators/cost-calculator.schema';
@@ -13,6 +15,12 @@ import type { CalculatorInput } from '@/lib/validators/cost-calculator.schema';
 interface PromoCalculatorEmbedProps {
   defaultInput?: Partial<CalculatorInput>;
   promoLabel?: string;
+  analyticsContext?: {
+    readonly promotionId: string;
+    readonly promotionType: string;
+    readonly sourceSiteName: string;
+    readonly isPersonalized: boolean;
+  };
 }
 
 /**
@@ -20,7 +28,11 @@ interface PromoCalculatorEmbedProps {
  * Pre-fills fields from promotion data (bonus %, price) and lets users tweak quantity.
  * PRD F3.5: Embed into promotion cards for one-click evaluation.
  */
-export function PromoCalculatorEmbed({ defaultInput, promoLabel }: PromoCalculatorEmbedProps) {
+export function PromoCalculatorEmbed({
+  defaultInput,
+  promoLabel,
+  analyticsContext,
+}: PromoCalculatorEmbedProps) {
   const id = useId();
   const [quantity, setQuantity] = useState(
     String(defaultInput?.quantity ?? 10000),
@@ -45,6 +57,19 @@ export function PromoCalculatorEmbed({ defaultInput, promoLabel }: PromoCalculat
       const response = await calculateCostPerMilheiroAction(input);
       if (response.success && response.data) {
         setResult(response.data);
+        if (analyticsContext) {
+          captureAnalyticsEvent(ANALYTICS_EVENTS.promoEngaged, {
+            action: 'calculator_calculated',
+            costPerMilheiro: Number(response.data.costPerMilheiro.toFixed(2)),
+            isPersonalized: analyticsContext.isPersonalized,
+            promotionId: analyticsContext.promotionId,
+            promotionType: analyticsContext.promotionType,
+            quantity: input.quantity,
+            rating: response.data.rating,
+            sourceSiteName: analyticsContext.sourceSiteName,
+            transferBonusPercent: input.transferBonusPercent,
+          });
+        }
       } else {
         setError(response.error ?? 'Calculation failed');
         setResult(null);

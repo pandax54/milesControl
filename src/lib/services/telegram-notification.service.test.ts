@@ -43,7 +43,12 @@ beforeEach(() => {
 
 describe('findUserByChatId', () => {
   it('should return user when alert config with matching chatId exists', async () => {
-    const mockUser = { id: 'user-1', email: 'a@b.com', alertConfigs: [] };
+    const mockUser = {
+      id: 'user-1',
+      email: 'a@b.com',
+      freemiumTier: 'PREMIUM',
+      alertConfigs: [],
+    };
     mockAlertConfigFindFirst.mockResolvedValueOnce({
       id: 'alert-1',
       telegramChatId: '12345',
@@ -63,6 +68,23 @@ describe('findUserByChatId', () => {
     mockAlertConfigFindFirst.mockResolvedValueOnce(null);
 
     const result = await findUserByChatId('99999');
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null when the chat belongs to a free-tier user', async () => {
+    mockAlertConfigFindFirst.mockResolvedValueOnce({
+      id: 'alert-1',
+      telegramChatId: '12345',
+      user: {
+        id: 'user-1',
+        email: 'a@b.com',
+        freemiumTier: 'FREE',
+        alertConfigs: [],
+      },
+    } as never);
+
+    const result = await findUserByChatId('12345');
 
     expect(result).toBeNull();
   });
@@ -102,7 +124,7 @@ describe('sendTelegramAlerts', () => {
     ];
 
     mockAlertConfigFindMany.mockResolvedValueOnce([
-      { id: 'alert-1', telegramChatId: '12345' },
+      { id: 'alert-1', telegramChatId: '12345', user: { freemiumTier: 'PREMIUM' } },
     ] as never);
 
     mockSendAlertNotification.mockResolvedValueOnce(true);
@@ -147,7 +169,7 @@ describe('sendTelegramAlerts', () => {
     ];
 
     mockAlertConfigFindMany.mockResolvedValueOnce([
-      { id: 'alert-1', telegramChatId: '12345' },
+      { id: 'alert-1', telegramChatId: '12345', user: { freemiumTier: 'PREMIUM' } },
     ] as never);
 
     mockSendAlertNotification.mockResolvedValueOnce(false);
@@ -178,8 +200,8 @@ describe('sendTelegramAlerts', () => {
     ];
 
     mockAlertConfigFindMany.mockResolvedValueOnce([
-      { id: 'alert-1', telegramChatId: '11111' },
-      { id: 'alert-2', telegramChatId: '22222' },
+      { id: 'alert-1', telegramChatId: '11111', user: { freemiumTier: 'PREMIUM' } },
+      { id: 'alert-2', telegramChatId: '22222', user: { freemiumTier: 'PREMIUM' } },
     ] as never);
 
     mockSendAlertNotification.mockResolvedValue(true);
@@ -211,7 +233,7 @@ describe('sendTelegramAlerts', () => {
     ];
 
     mockAlertConfigFindMany.mockResolvedValueOnce([
-      { id: 'alert-1', telegramChatId: '12345' },
+      { id: 'alert-1', telegramChatId: '12345', user: { freemiumTier: 'PREMIUM' } },
     ] as never);
 
     mockSendAlertNotification.mockResolvedValue(true);
@@ -221,8 +243,38 @@ describe('sendTelegramAlerts', () => {
     // Should query with deduplicated IDs
     expect(mockAlertConfigFindMany).toHaveBeenCalledWith({
       where: { id: { in: ['alert-1'] }, telegramChatId: { not: null } },
-      select: { id: true, telegramChatId: true },
+      select: {
+        id: true,
+        telegramChatId: true,
+        user: {
+          select: {
+            freemiumTier: true,
+          },
+        },
+      },
     });
+  });
+
+  it('should skip Telegram notifications for free-tier users', async () => {
+    const matches: AlertMatchResult[] = [
+      {
+        alertConfigId: 'alert-1',
+        userId: 'user-1',
+        promotionId: 'promo-1',
+        channels: ['TELEGRAM'],
+        notificationTitle: 'Alert',
+        notificationBody: 'Body',
+      },
+    ];
+
+    mockAlertConfigFindMany.mockResolvedValueOnce([
+      { id: 'alert-1', telegramChatId: '12345', user: { freemiumTier: 'FREE' } },
+    ] as never);
+
+    const result = await sendTelegramAlerts(matches);
+
+    expect(result).toEqual({ attempted: 1, succeeded: 0, failed: 1 });
+    expect(mockSendAlertNotification).not.toHaveBeenCalled();
   });
 });
 

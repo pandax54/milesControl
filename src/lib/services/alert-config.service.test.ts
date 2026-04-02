@@ -3,6 +3,9 @@ import type { AlertConfig, AlertChannel, PromoType } from '@/generated/prisma/cl
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
     alertConfig: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -33,7 +36,9 @@ import {
   deleteAlertConfig,
   AlertConfigNotFoundError,
 } from './alert-config.service';
+import { PremiumFeatureRequiredError } from './freemium.service';
 
+const mockUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockFindMany = vi.mocked(prisma.alertConfig.findMany);
 const mockFindFirst = vi.mocked(prisma.alertConfig.findFirst);
 const mockCreate = vi.mocked(prisma.alertConfig.create);
@@ -62,7 +67,10 @@ function buildMockAlertConfig(overrides: Partial<AlertConfig> = {}): AlertConfig
 }
 
 describe('listAlertConfigs', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should return alert configs for user ordered by creation date', async () => {
     const mockConfigs = [buildMockAlertConfig()];
@@ -88,7 +96,10 @@ describe('listAlertConfigs', () => {
 });
 
 describe('listActiveAlertConfigs', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should return only active alert configs for user', async () => {
     const mockConfigs = [buildMockAlertConfig({ isActive: true })];
@@ -105,7 +116,10 @@ describe('listActiveAlertConfigs', () => {
 });
 
 describe('getAlertConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should return the alert config when found', async () => {
     const mockConfig = buildMockAlertConfig();
@@ -129,7 +143,10 @@ describe('getAlertConfig', () => {
 });
 
 describe('createAlertConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should create an alert config with required fields', async () => {
     const mockConfig = buildMockAlertConfig();
@@ -179,10 +196,29 @@ describe('createAlertConfig', () => {
       }),
     });
   });
+
+  it('should reject Telegram alerts for free users', async () => {
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'FREE' } as never);
+
+    await expect(
+      createAlertConfig(MOCK_USER_ID, {
+        name: 'Telegram alert',
+        channels: ['TELEGRAM'],
+        programNames: [],
+        promoTypes: [],
+        telegramChatId: '123',
+      }),
+    ).rejects.toThrow(PremiumFeatureRequiredError);
+
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
 });
 
 describe('updateAlertConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should update alert config fields', async () => {
     const mockConfig = buildMockAlertConfig({ name: 'Updated name' });
@@ -208,10 +244,28 @@ describe('updateAlertConfig', () => {
       updateAlertConfig(MOCK_USER_ID, { alertConfigId: 'nonexistent', name: 'x' }),
     ).rejects.toThrow(AlertConfigNotFoundError);
   });
+
+  it('should reject Telegram updates for free users', async () => {
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'FREE' } as never);
+    mockFindFirst.mockResolvedValue(buildMockAlertConfig({ channels: ['IN_APP'] as AlertChannel[] }));
+
+    await expect(
+      updateAlertConfig(MOCK_USER_ID, {
+        alertConfigId: MOCK_ALERT_ID,
+        channels: ['IN_APP', 'TELEGRAM'],
+        telegramChatId: '123',
+      }),
+    ).rejects.toThrow(PremiumFeatureRequiredError);
+
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
 });
 
 describe('toggleAlertConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should deactivate an active alert config', async () => {
     const mockConfig = buildMockAlertConfig({ isActive: false });
@@ -237,7 +291,10 @@ describe('toggleAlertConfig', () => {
 });
 
 describe('deleteAlertConfig', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+  });
 
   it('should delete alert config when found', async () => {
     mockFindFirst.mockResolvedValue(buildMockAlertConfig());

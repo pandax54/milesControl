@@ -1,9 +1,61 @@
 ---
 name: rest-api-reference
-description: Complete REST/HTTP standards reference with detailed Koa examples for routing, resource naming, mutations, data format, HTTP status codes (200/400/401/403/404/422/500), Axios HTTP client patterns, Koa middleware composition, and Zod request validation. Use when creating new API endpoints, implementing middleware, handling HTTP errors, setting up Axios clients, or when the condensed rules in .claude/rules/rest-http.md need clarification with examples.
+description: Complete REST/HTTP standards with condensed rules and detailed Koa examples for routing, resource naming, mutations, data format, HTTP status codes (200/400/401/403/404/422/500), Axios HTTP client patterns, Koa middleware composition, and Zod request validation. Use when creating new API endpoints, implementing middleware, handling HTTP errors, or setting up Axios clients.
 ---
 
 # REST/HTTP
+
+## Condensed Rules
+
+### Framework
+
+- Koa + `@koa/router` + `koa-bodyparser`
+
+### Resource Naming
+
+- English, plural, kebab-case: `GET /payment-methods`
+- Max 3 levels deep: `GET /playlists/:playlistId/videos` (not deeper)
+
+### Mutations
+
+- POST + verb for actions: `POST /orders/:orderId/cancel`
+- PUT only for full resource replacement
+- No generic PUT for specific actions
+
+### Request Validation
+
+- Zod schemas for all request payloads
+- Return 400 with `result.error.flatten().fieldErrors` on validation failure
+
+### Data Format
+
+- JSON for all request/response payloads
+- All dates in ISO 8601 format
+
+### Status Codes
+
+- `200` success
+- `400` malformed request / validation error
+- `401` not authenticated
+- `403` not authorized (authenticated but no permission)
+- `404` resource not found
+- `422` business rule violation
+- `500` unexpected server error
+
+### HTTP Client
+
+- Axios for external API calls
+- Create shared instance with `axios.create()` for base URL, timeout, interceptors
+
+### Middleware
+
+- One responsibility per middleware
+- Order: error handler → authentication → validation → route handler
+- Use `await next()` (Koa async middleware)
+
+---
+
+## Detailed Examples
 
 ## Framework
 

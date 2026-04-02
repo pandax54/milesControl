@@ -19,7 +19,11 @@ import {
   type AlertConfigFormValues,
 } from './alert-config-form-fields';
 
-export function AlertConfigFormDialog() {
+interface AlertConfigFormDialogProps {
+  readonly canUseTelegram?: boolean;
+}
+
+export function AlertConfigFormDialog({ canUseTelegram = true }: AlertConfigFormDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +37,7 @@ export function AlertConfigFormDialog() {
   function handleSubmit() {
     setError(null);
 
-    const result = parseAlertConfigForm(formValues);
+    const result = parseAlertConfigForm(formValues, { canUseTelegram });
     if (!result.valid) {
       setError(result.error);
       return;
@@ -74,7 +78,11 @@ export function AlertConfigFormDialog() {
           }}
           className="space-y-4"
         >
-          <AlertConfigFormFields values={formValues} onChange={setFormValues} />
+          <AlertConfigFormFields
+            values={formValues}
+            onChange={setFormValues}
+            canUseTelegram={canUseTelegram}
+          />
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

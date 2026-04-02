@@ -1,0 +1,20 @@
+# Implementation Tasks for MilesControl — v2
+
+## Overview
+
+Full task breakdown for the MilesControl miles management platform. Organized into 7 phases. Updated with competitive insights from AwardWallet and Oktoplus analysis.
+
+## Task List
+
+### Phase 1: Foundation
+### Phase 5: Flight Search
+
+- [x] 5.0 Flight search UI — Search form, results display with Miles Value Advisor integrated per card
+- [x] 5.1 Seats.aero integration — Client library, cached search, trip details, error handling
+- [x] 5.2 SerpApi Google Flights integration — Client library, flight search, result parsing, 6h cache
+- [x] 5.3 **Miles value comparison per result** — Each flight card shows: cash price, miles price, and "Miles value: R$X/k — [RATING]" using user's cost data. [Differentiator]
+- [x] 5.4 Flight watchlist — CRUD, target price alerts
+- [x] 5.5 Cron job: check-flights — Vercel Cron every 6h
+- [x] 5.6 **Explore destinations** — Browse flights by region, date type (holidays/weekends/flexible), sorted by best value. [Inspired by Oktoplus Explore + Google Flights Explore]
+- [x] 5.7 **Saved flight filters** — Save common searches for quick reuse. [Inspired by Oktoplus]
+

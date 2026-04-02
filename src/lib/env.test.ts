@@ -58,12 +58,14 @@ describe('env', () => {
   });
 
   it('should accept optional fields as undefined', async () => {
-    process.env = {
-      ...ORIGINAL_ENV,
-      DATABASE_URL: 'postgresql://localhost:5432/test',
-      NEXTAUTH_SECRET: 'test-secret',
-      NODE_ENV: 'test',
-    } as NodeJS.ProcessEnv;
+    const envCopy = { ...ORIGINAL_ENV } as Record<string, string | undefined>;
+    envCopy.DATABASE_URL = 'postgresql://localhost:5432/test';
+    envCopy.NEXTAUTH_SECRET = 'test-secret';
+    envCopy.NODE_ENV = 'test';
+    delete envCopy.GOOGLE_CLIENT_ID;
+    delete envCopy.SEATS_AERO_API_KEY;
+    delete envCopy.TELEGRAM_BOT_TOKEN;
+    process.env = envCopy as NodeJS.ProcessEnv;
 
     const { env } = await import('./env');
 

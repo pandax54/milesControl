@@ -39,8 +39,18 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const { pathname } = nextUrl;
 
-      const PUBLIC_ROUTES = ['/login', '/register', '/api/auth'];
-      const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+      const PUBLIC_EXACT_ROUTES = [
+        '/',
+        '/calculator',
+        '/login',
+        '/promotions',
+        '/promotions/calendar',
+        '/register',
+      ];
+      const PUBLIC_PREFIX_ROUTES = ['/api/auth', '/_public'];
+      const isPublicRoute =
+        PUBLIC_EXACT_ROUTES.includes(pathname) ||
+        PUBLIC_PREFIX_ROUTES.some((route) => pathname.startsWith(route));
 
       if (isPublicRoute) {
         return true;

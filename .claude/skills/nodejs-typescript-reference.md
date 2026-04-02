@@ -1,11 +1,93 @@
 ---
 name: nodejs-typescript-reference
-description: Complete Node.js and TypeScript standards reference with detailed examples for class properties, array methods, imports/exports, circular dependencies, utility types, Koa middleware patterns, PostgreSQL query patterns, Firebase auth integration, environment config with Zod, Docker conventions, and REST API response formats. Use when implementing Koa routes, writing database queries, setting up middleware, configuring Docker, or when the condensed rules in .claude/rules/nodejs-typescript.md need clarification with examples.
+description: Complete Node.js and TypeScript standards with condensed rules and detailed examples for class properties, array methods, imports/exports, circular dependencies, utility types, Koa middleware patterns, PostgreSQL query patterns, Firebase auth integration, environment config with Zod, Docker conventions, and REST API response formats. Use when implementing Koa routes, writing database queries, setting up middleware, or configuring Docker.
 ---
 
 # Node.js/TypeScript Standards
 
-> Language-agnostic coding standards (naming, formatting, conditionals, immutability, type safety, async/await, error handling, etc.) are defined in `code-standards.md`. This file covers **Node.js and TypeScript-specific** conventions only.
+## Condensed Rules
+
+### TypeScript
+
+- All source code in TypeScript (`.ts` files)
+- `strict: true` in `tsconfig.json`
+- Run `npx tsc --noEmit` before finishing any task
+- Install `@types/*` packages for untyped dependencies
+
+### Package Manager
+
+- pnpm only (no yarn, no npm)
+
+### Class Properties
+
+- Always `private` or `readonly`; avoid `public` properties
+- Use constructor injection for dependencies
+
+### Array Methods
+
+- Prefer `find`, `filter`, `map`, `reduce` over `for`/`while`
+
+### Imports & Exports
+
+- Always `import`/`export`; never `require`/`module.exports`
+- Single export → `export default`; multiple exports → named exports
+- No circular dependencies; extract shared logic into a third module
+
+### Utility Types
+
+- Use `Partial`, `Pick`, `Omit`, `Readonly`, `Record` when appropriate
+
+### Koa Patterns
+
+- One responsibility per middleware
+- `ctx.state.user` for authenticated user; typed with `AuthenticatedContext`
+- Error handler middleware at the top of the stack
+
+### Database (TypeORM + PostgreSQL)
+
+- Always parameterized queries; never string interpolation
+- Use transactions for multi-step operations
+- Use `select` or `QueryBuilder` to fetch only needed fields; avoid N+1 with eager relations or `leftJoinAndSelect`
+- Use TypeORM migrations: `typeorm migration:generate` for development; `typeorm migration:run` for production
+- Define entities as classes with decorators (`@Entity`, `@Column`, `@PrimaryGeneratedColumn`)
+- Use repository pattern via `DataSource.getRepository()` or custom repositories
+
+### Firebase Auth
+
+- Centralized `verifyFirebaseToken()` function
+- Typed `AuthenticatedState` interface on `ctx.state`
+
+### Environment Config
+
+- Never access `process.env` directly in code
+- Centralized config validated with Zod schema
+- Load with `dotenv`, validate with `z.object().parse(process.env)`
+
+### Docker
+
+- Multi-stage builds: builder → runner
+- `node:20-alpine` base image; `USER node` in production
+- `pnpm install --frozen-lockfile` for installs (not `pnpm install`)
+
+### REST API Responses
+
+- Consistent envelope: `{ data: T, meta?: { page, perPage, total } }`
+- Consistent errors: `{ error: { code: string, message: string } }`
+
+### Local toolchain lock
+
+Before installing dependencies or running scripts, use the pinned runtime versions:
+
+```bash
+nvm use
+pnpm install --frozen-lockfile
+```
+
+---
+
+## Detailed Examples
+
+> Language-agnostic coding standards (naming, formatting, conditionals, immutability, type safety, async/await, error handling, etc.) are defined in `code-standards-reference` skill. This file covers **Node.js and TypeScript-specific** conventions only.
 
 ## TypeScript
 

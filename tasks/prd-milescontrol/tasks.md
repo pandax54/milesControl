@@ -56,32 +56,32 @@ Full task breakdown for the MilesControl miles management platform. Organized in
 
 ### Phase 5: Flight Search
 
-- [ ] 5.0 Flight search UI — Search form, results display with Miles Value Advisor integrated per card
-- [ ] 5.1 Seats.aero integration — Client library, cached search, trip details, error handling
-- [ ] 5.2 SerpApi Google Flights integration — Client library, flight search, result parsing, 6h cache
-- [ ] 5.3 **Miles value comparison per result** — Each flight card shows: cash price, miles price, and "Miles value: R$X/k — [RATING]" using user's cost data. [Differentiator]
-- [ ] 5.4 Flight watchlist — CRUD, target price alerts
-- [ ] 5.5 Cron job: check-flights — Vercel Cron every 6h
-- [ ] 5.6 **Explore destinations** — Browse flights by region, date type (holidays/weekends/flexible), sorted by best value. [Inspired by Oktoplus Explore + Google Flights Explore]
-- [ ] 5.7 **Saved flight filters** — Save common searches for quick reuse. [Inspired by Oktoplus]
+- [x] 5.0 Flight search UI — Search form, results display with Miles Value Advisor integrated per card
+- [x] 5.1 Seats.aero integration — Client library, cached search, trip details, error handling
+- [x] 5.2 SerpApi Google Flights integration — Client library, flight search, result parsing, 6h cache
+- [x] 5.3 **Miles value comparison per result** — Each flight card shows: cash price, miles price, and "Miles value: R$X/k — [RATING]" using user's cost data. [Differentiator]
+- [x] 5.4 Flight watchlist — CRUD, target price alerts
+- [x] 5.5 Cron job: check-flights — Vercel Cron every 6h
+- [x] 5.6 **Explore destinations** — Browse flights by region, date type (holidays/weekends/flexible), sorted by best value. [Inspired by Oktoplus Explore + Google Flights Explore]
+- [x] 5.7 **Saved flight filters** — Save common searches for quick reuse. [Inspired by Oktoplus]
 
 ### Phase 6: Admin & Multi-Client
 
-- [ ] 6.0 Admin dashboard — Aggregated view: total clients, balances, expiring miles
-- [ ] 6.1 Client management — Add/edit/view clients, impersonate client view
-- [ ] 6.2 **Promo-client matching** — "This promo is relevant for 12 of your 30 clients." Batch recommendation UI. [Unique feature]
-- [ ] 6.3 Recommendation system — Send targeted promo recommendations to specific clients
-- [ ] 6.4 Audit logging — Track all admin actions, audit log page
-- [ ] 6.5 **Client reporting** — Per-client reports: total miles managed, avg cost/milheiro, savings vs market, expirations. [Unique feature]
+- [x] 6.0 Admin dashboard — Aggregated view: total clients, balances, expiring miles
+- [x] 6.1 Client management — Add/edit/view clients, impersonate client view
+- [x] 6.2 **Promo-client matching** — "This promo is relevant for 12 of your 30 clients." Batch recommendation UI. [Unique feature]
+- [x] 6.3 Recommendation system — Send targeted promo recommendations to specific clients
+- [x] 6.4 Audit logging — Track all admin actions, audit log page
+- [x] 6.5 **Client reporting** — Per-client reports: total miles managed, avg cost/milheiro, savings vs market, expirations. [Unique feature]
 
 ### Phase 7: Onboarding & Polish
 
-- [ ] 7.0 **Onboarding wizard** — Step-by-step: suggest common Brazilian programs (show Smiles/Livelo/Latam Pass/Azul as quick-add buttons), add subscriptions, set alerts. Progressive disclosure — casual users see simple setup, power users go deep. [Addresses the "cold start" problem both competitors handle poorly]
-- [ ] 7.1 **Freemium gating** — Free tier (5 programs, basic calculator, cash flights) vs Premium (unlimited, Miles Value Advisor, miles flights, explore, Telegram, benefits). [Follows Oktoplus model]
-- [ ] 7.2 PWA setup — Service worker, offline dashboard, installable on mobile
-- [ ] 7.3 SEO and landing page — Public pages: calculator tool, miles calendar, active promos feed (drives organic traffic)
-- [ ] 7.4 Performance optimization — RSC streaming, skeleton loaders, image optimization
-- [ ] 7.5 Analytics — Posthog or similar: track onboarding completion, feature usage, promo engagement
+- [x] 7.0 **Onboarding wizard** — Step-by-step: suggest common Brazilian programs (show Smiles/Livelo/Latam Pass/Azul as quick-add buttons), add subscriptions, set alerts. Progressive disclosure — casual users see simple setup, power users go deep. [Addresses the "cold start" problem both competitors handle poorly]
+- [x] 7.1 **Freemium gating** — Free tier (5 programs, basic calculator, cash flights) vs Premium (unlimited, Miles Value Advisor, miles flights, explore, Telegram, benefits). [Follows Oktoplus model]
+- [x] 7.2 PWA setup — Service worker, offline dashboard, installable on mobile
+- [x] 7.3 SEO and landing page — Public pages: calculator tool, miles calendar, active promos feed (drives organic traffic)
+- [x] 7.4 Performance optimization — RSC streaming, skeleton loaders, image optimization
+- [x] 7.5 Analytics — Posthog or similar: track onboarding completion, feature usage, promo engagement
 
 ## Dependencies Graph
 

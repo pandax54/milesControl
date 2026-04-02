@@ -1,14 +1,22 @@
-import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
-import { fetchDashboardData } from '@/lib/services/dashboard.service';
-import { DashboardSummaryCards } from '@/components/dashboard/dashboard-summary-cards';
-import { DashboardBalances } from '@/components/dashboard/dashboard-balances';
-import { DashboardSubscriptions } from '@/components/dashboard/dashboard-subscriptions';
-import { DashboardProjections } from '@/components/dashboard/dashboard-projections';
-import { DashboardTransfers } from '@/components/dashboard/dashboard-transfers';
-import { DashboardStalenessAlerts } from '@/components/dashboard/dashboard-staleness-alerts';
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { OnboardingWizard } from '@/components/dashboard/onboarding-wizard';
+import { DashboardBalances } from '@/components/dashboard/dashboard-balances';
+import { DashboardProjections } from '@/components/dashboard/dashboard-projections';
+import { DashboardPwaCard } from '@/components/pwa/dashboard-pwa-card';
+import { DashboardStalenessAlerts } from '@/components/dashboard/dashboard-staleness-alerts';
+import { DashboardSubscriptions } from '@/components/dashboard/dashboard-subscriptions';
+import { DashboardSummaryCards } from '@/components/dashboard/dashboard-summary-cards';
+import { DashboardTransfers } from '@/components/dashboard/dashboard-transfers';
 import { Button } from '@/components/ui/button';
+import { createDashboardOfflineSnapshot } from '@/lib/pwa/dashboard-offline-snapshot';
+import { listAlertConfigs } from '@/lib/services/alert-config.service';
+import { listClubTiers } from '@/lib/services/club-subscription.service';
+import { fetchDashboardData } from '@/lib/services/dashboard.service';
+import { listPrograms } from '@/lib/services/program-enrollment.service';
+import { DashboardPageSkeleton } from '@/components/dashboard/page-skeletons';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -17,30 +25,78 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const data = await fetchDashboardData(session.user.id);
+  return (
+    <Suspense fallback={<DashboardPageSkeleton />}>
+      <DashboardPageContent userId={session.user.id} />
+    </Suspense>
+  );
+}
+
+async function DashboardPageContent({ userId }: { userId: string }) {
+  const [data, programs, clubTiers, alertConfigs] = await Promise.all([
+    fetchDashboardData(userId),
+    listPrograms(),
+    listClubTiers(),
+    listAlertConfigs(userId),
+  ]);
+
+  const enrolledProgramIds = new Set(data.enrollments.map((enrollment) => enrollment.program.id));
+  const availablePrograms = programs.filter((program) => !enrolledProgramIds.has(program.id));
+  const enrolledProgramNames = data.enrollments.map((enrollment) => enrollment.program.name);
+  const showOnboardingWizard =
+    data.enrollments.length === 0 || data.activeSubscriptionCount === 0 || alertConfigs.length === 0;
+  const offlineSnapshot = createDashboardOfflineSnapshot(data);
 
   if (data.enrollments.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-          <p className="text-lg font-medium">Welcome to MilesControl</p>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Get started by adding your first loyalty program.
+            Let&apos;s solve the cold start in a few clicks so MilesControl can start helping right away.
           </p>
-          <Link href="/programs" className="mt-4">
-            <Button>Add Programs</Button>
-          </Link>
         </div>
+        <DashboardPwaCard snapshot={offlineSnapshot} />
+        <OnboardingWizard
+          availablePrograms={availablePrograms}
+          clubTiers={clubTiers}
+          enrollmentCount={data.enrollments.length}
+          activeSubscriptionCount={data.activeSubscriptionCount}
+          alertConfigCount={alertConfigs.length}
+          enrolledProgramNames={enrolledProgramNames}
+        />
       </div>
     );
   }
 
-  const staleEnrollments = data.enrollments.filter((e) => e.stalenessLevel === 'stale');
+  const staleEnrollments = data.enrollments.filter((enrollment) => enrollment.stalenessLevel === 'stale');
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Keep your balances, club subscriptions, and promo alerts ready for the next transfer window.
+          </p>
+        </div>
+        <Link href="/programs" className="inline-flex">
+          <Button variant="outline">Manage programs</Button>
+        </Link>
+      </div>
+
+      <DashboardPwaCard snapshot={offlineSnapshot} />
+
+      {showOnboardingWizard && (
+        <OnboardingWizard
+          availablePrograms={availablePrograms}
+          clubTiers={clubTiers}
+          enrollmentCount={data.enrollments.length}
+          activeSubscriptionCount={data.activeSubscriptionCount}
+          alertConfigCount={alertConfigs.length}
+          enrolledProgramNames={enrolledProgramNames}
+        />
+      )}
 
       {staleEnrollments.length > 0 && (
         <DashboardStalenessAlerts enrollments={staleEnrollments} />

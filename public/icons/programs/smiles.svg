@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Smiles</title>
+  <rect width="64" height="64" rx="16" fill="#ff6b00" />
+  <circle cx="32" cy="24" r="10" fill="#fff4e8" />
+  <path d="M18 40c4-5 10-8 14-8s10 3 14 8" fill="none" stroke="#fff4e8" stroke-width="6" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Latam Pass</title>
+  <rect width="64" height="64" rx="16" fill="#4b2e83" />
+  <path d="M18 20h28l-6 10H24l-6 14h-8z" fill="#ffffff" opacity="0.95" />
+  <path d="M30 34h16l-6 10H24z" fill="#ff4f81" />
+</svg>

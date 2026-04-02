@@ -74,6 +74,7 @@ function buildMockUser(overrides: Partial<User> & { id: string; email: string })
     passwordHash: null,
     image: null,
     role: 'USER' as UserRole,
+    freemiumTier: 'FREE',
     managedById: null,
     createdAt: now,
     updatedAt: now,

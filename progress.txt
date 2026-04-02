@@ -1,122 +1,108 @@
-2. Test description/mock value corrected — "more than 3 consecutive failures" test uses mock value 4 (strictly above threshold)
-
-Verification: 951 tests pass, TypeScript compiles cleanly, coverage 98.46% (above 80% threshold).
-
-## Task 3.12 — Miles Calendar Page (completed 2026-03-21)
+## Task 5.2 — SerpApi Google Flights integration (completed 2026-03-24)
 
 Files created:
-- src/lib/services/miles-calendar.service.ts — Service with listCalendarEvents, listUpcomingCalendarEvents, listEventsByMonth, groupEventsByMonth, PROMO_TYPE_LABELS. UTC-consistent date filtering.
-- src/lib/services/miles-calendar.service.test.ts — 13 unit tests covering all service functions and groupEventsByMonth edge cases
-- src/components/promotions/miles-calendar-event-card.tsx — Card component showing event title, date range, programs, expected promo type badge, description, and historical note
-- src/components/promotions/miles-calendar-view.tsx — View component that splits events into upcoming/past sections, groups by month, renders MonthSection grids
-- src/app/(dashboard)/promotions/calendar/page.tsx — Server component page at /promotions/calendar
-
-Key implementation details:
-- UTC-consistent date comparisons throughout (Date.UTC, setUTCHours) to avoid off-by-one timezone errors
-- Events grouped by month using reduce (no for...of loops, no non-null assertions)
-- Import order: external → @/ internal → relative
-- Upcoming events shown first, past events with reduced opacity
-
-Review: APPROVED WITH OBSERVATIONS — all 5 minor issues fixed before commit.
-All 964 tests pass. TypeScript compiles cleanly.
-
-## Task 3.12 — Review Fixes Applied (2026-03-21)
-
-Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED
-
-Minor issues resolved (commit 483cb8f):
-1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100` constant in calendar page
-2. Duplicated UTC midnight boundary (`new Date(); today.setUTCHours(0,0,0,0)`) extracted to exported `getUtcMidnightToday()` in miles-calendar.service.ts — used by both miles-calendar-event-card.tsx and miles-calendar-view.tsx (and internally by buildWhereClause)
-
-Verification: 964 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 3.12 — Final Review Verification (2026-03-21)
-
-Review file: tasks/prd-milescontrol/3.12_task_review.md — Status: APPROVED (final)
-
-All prior review recommendations were already resolved in commit 483cb8f:
-1. Magic number `100` extracted to `MAX_CALENDAR_PAGE_EVENTS = 100`
-2. Duplicated UTC midnight boundary extracted to exported `getUtcMidnightToday()` in service
-
-Verification checks:
-- `npx tsc --noEmit` — PASS
-- `pnpm test` — PASS (964 tests, 0 failing)
-- `pnpm run test:coverage` — PASS (above 80% threshold on all metrics)
-- `miles-calendar.service.ts` — 100% coverage across all metrics
-
-Review file updated to reflect final approved state with no outstanding issues.
-
-## Task 4.0 — Alert Configuration UI (completed 2026-03-21)
-
-Files created:
-- src/lib/validators/alert-config.schema.ts — Zod schemas for create/update/delete/toggle with ALERT_CHANNELS and PROMO_TYPES constants
-- src/lib/services/alert-config.service.ts — CRUD service: list, get, create, update, toggle, delete. Includes listAllActiveAlertConfigs for use by task 4.1 matching engine.
-- src/lib/services/alert-config.service.test.ts — 14 unit tests covering all CRUD operations and error cases
-- src/actions/alerts.ts — Server Actions: addAlertConfig, editAlertConfig, removeAlertConfig, setAlertConfigActive
-- src/components/alerts/alert-config-form-fields.tsx — Shared form fields with channel multi-select, promo type checkboxes, program names, threshold inputs
-- src/components/alerts/alert-config-form-dialog.tsx — Create dialog with form
-- src/components/alerts/edit-alert-config-dialog.tsx — Edit dialog pre-populated from existing config
-- src/components/alerts/alert-config-card.tsx — Card with active/paused toggle, edit, delete. Shows channels, program filters, promo type filters, thresholds.
-- src/components/alerts/delete-alert-config-button.tsx — Delete button with confirmation dialog
-- src/components/alerts/toggle-alert-config-button.tsx — Active/Paused toggle button
-- src/app/(alerts)/alerts/page.tsx — Server-rendered page at /alerts. Lists active/paused rules, empty state.
-- src/components/app-sidebar.tsx — Added "Alerts" nav group with Alert Rules link
-
-All 977 tests pass. TypeScript compiles cleanly. Coverage thresholds met.
-
-## Task 4.0 — Review Fixes (2026-03-21)
-
-Review file: tasks/prd-milescontrol/4.0_task_review.md — Status: APPROVED
-No critical, major, or minor issues found. No fixes required.
-Verification: 977 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 4.1 — Review Fixes (2026-03-21)
-
-Review file: tasks/prd-milescontrol/4.1_task_review.md — Status: APPROVED WITH OBSERVATIONS
-Major issue resolved: integrated processNewPromotions() into runAllScrapers() post-storage step.
-- scrape-promos.service.ts — import prisma + processNewPromotions; after all scrapers run, fetch new promotions (createdAt >= runStartTime) and call processNewPromotions; add alertMatchResult to ScrapePromosResult
-- scrape-promos.service.test.ts — mocked prisma.promotion.findMany + processNewPromotions; 4 new tests covering alert matching trigger, skip when no creates, skip when query empty, graceful failure
-- scrape-promos route.ts — expose alertMatchResult in cron response
-Verification: 1025 tests pass, TypeScript compiles cleanly, coverage thresholds met.
-
-## Task 4.2 — Telegram Bot (completed 2026-03-21)
-
-Files created:
-- src/lib/integrations/telegram.ts — sendMessage, sendAlertNotification, escapeHtml. Native fetch with 3-retry logic and 5s delay. HTML parse mode.
-- src/lib/integrations/telegram.test.ts — 12 tests covering escapeHtml, sendMessage (retry logic, network errors), sendAlertNotification
-- src/lib/services/telegram-notification.service.ts — findUserByChatId (via AlertConfig.telegramChatId), sendTelegramAlerts, getTopPromotionsForBot, getUserAlertConfigs
-- src/lib/services/telegram-notification.service.test.ts — 13 tests covering all service functions
-- src/app/api/webhook/telegram/route.ts — POST handler with CRON_SECRET validation, command routing: /start (show chat ID + instructions), /alerts (list active rules), /promos (top 5 active promos), /calc (cost per milheiro), unknown command fallback
-- src/app/api/webhook/telegram/route.test.ts — 22 tests covering authorization, all 4 commands, edge cases
+- src/lib/validators/serp-api.schema.ts — Zod schemas for flight leg, flight option, full search response, and search params
+- src/lib/validators/serp-api.schema.test.ts — 14 tests validating all schemas (valid inputs, missing fields, optional fields)
+- src/lib/integrations/serp-api.ts — searchCashFlights() with 6h in-memory cache, cabin class mapping, retry on 5xx, Zod validation of response
+- src/lib/integrations/serp-api.test.ts — 23 tests covering response parsing, param mapping, cache TTL, retry logic, error types
+- src/lib/services/flight-search.service.ts — Updated: searchFlights() now calls SerpApi for cash flights via fetchCashFlights(); SerpApiError handled gracefully (returns [])
+- src/lib/services/flight-search.service.test.ts — Updated: mocks serp-api module, adds 5 new cash flight tests (results, params forwarding, SerpApiError fallback, re-throw on unexpected, combined results)
 
 Key design decisions:
-- telegramChatId stored on AlertConfig (already in schema); user lookup via findFirst on AlertConfig.telegramChatId
-- /start shows user their chat ID to paste into the app UI (no deep-link needed)
-- Webhook secret uses CRON_SECRET header X-Telegram-Bot-Api-Secret-Token
-- Always returns 200 to Telegram to prevent retries on processing errors
+- Cache key: origin:destination:departureDate:returnDate:cabinClass:passengers
+- Retry: once on 5xx and network errors; 4xx and SerpApiError body errors not retried
+- Cabin class mapped to SerpApi travel_class: ECONOMY=1, PREMIUM_ECONOMY=2, BUSINESS=3, FIRST=4
+- clearCache() exported for test isolation
 
-Verification: 1067 tests pass, TypeScript compiles cleanly, coverage thresholds met.
+Verification: 1269 tests pass, TypeScript clean, coverage thresholds met, build PASS.
 
-## Task 4.3 — Review Fixes (2026-03-22)
+## Task 5.1 — Review Fixes (2026-03-24)
 
-Review file: tasks/prd-milescontrol/4.3_task_review.md — Status: APPROVED
-Optional recommendation applied: added inline comment in sendEmailAlerts() noting silent degradation when RESEND_API_KEY is not configured.
-Verification: npx tsc --noEmit PASS, pnpm test PASS (1094 tests), pnpm build PASS, coverage thresholds met.
+Review file: tasks/prd-milescontrol/5.1_task_review.md — Status: CHANGES REQUESTED → fixed
+1. Dead code: `callSeatsAeroApi` retry loop now tracks `lastError`; unreachable throw kept with TypeScript-required comment
+2. Zod validation: created `src/lib/validators/seats-aero.schema.ts` with schemas for availability, response, segment, trip, and search params
+3. Input validation: `searchAvailability()` now calls `seatsAeroSearchParamsSchema.parse()` at boundary
+4. Response validation: `callSeatsAeroApi` accepts optional `z.ZodSchema<T>` and validates API responses
+Verification: 1226 tests pass, TypeScript clean, coverage 98.18% (all thresholds met), build PASS.
 
-## Task 4.5 — Review Fixes (2026-03-22)
+## Task 5.3 — Review Fixes (2026-03-24)
 
-Review file: tasks/prd-milescontrol/4.5_task_review.md — Status: APPROVED
-Minor issues resolved (commit 50287d7):
-1. Added missing VAPID keys test in web-push.test.ts using vi.resetModules() + vi.doMock() pattern
-2. Created push-notification-toggle.test.tsx — 12 tests covering unsupported/denied/subscribed/unsubscribed states, subscribe/unsubscribe flows, permission denial, and fetch error handling
-Recommendation applied: expanded 410/404 comment in web-push.ts with RFC 8030 §8.1 reference.
-Verification: 1152 tests pass, TypeScript compiles cleanly, coverage 98.19% (all thresholds met), build PASS.
+Review file: tasks/prd-milescontrol/5.3_task_review.md — Status: APPROVED
+No critical, major, or minor issues found. No fixes required.
+Verification: 1296 tests pass, TypeScript clean, coverage 98.14% statements / 92.19% branches (all thresholds met), build PASS.
 
-## Phase 4 QA — APPROVED (2026-03-22)
+## Task 5.4 — Review Fixes (2026-03-24)
 
-QA report: tasks/prd-milescontrol/qa-report-phase4.md
-Status: APPROVED — 14/14 requirements met, 0 bugs found
-Test suite: 1152 tests passing (59 files), TypeScript clean, coverage 98.19%, build PASS
-All 4 alert channels verified: in-app, email (Resend), Telegram bot, web push (VAPID)
-Channel failures are isolated — one channel failure does not affect others
-Phase 5 (Flight Search) can proceed.
+Review file: tasks/prd-milescontrol/5.4_task_review.md — Status: APPROVED
+No critical, major, or minor issues found. No fixes required.
+Verification: 1330 tests pass, TypeScript clean, coverage 97.81% (watchlist modules at 100%), build PASS.
+
+## Task 6.2 — Review Fixes (2026-03-24)
+
+Review file: tasks/prd-milescontrol/6.2_task_review.md — Status: APPROVED
+No critical, major, or minor issues found. No fixes required.
+Optional recommendations noted for future: pagination for large client lists, caching for getPromotionsWithClientMatches(), task 6.3 can build on this service.
+Verification: 1457 tests pass, TypeScript clean, coverage 97.58% (all thresholds met), build PASS.
+
+## Task 6.4 — Review Fixes (2026-03-24)
+
+Review file: tasks/prd-milescontrol/6.4_task_review.md — Status: APPROVED
+No critical, major, or minor issues found. No fixes required.
+Optional recommendations noted for future: action type filter dropdown, CSV export for compliance, impersonation audit logging.
+Verification: 1508 tests pass, TypeScript clean, coverage 97.68% (all thresholds met), build PASS.
+
+## Task 6.0 — Admin Dashboard (completed 2026-03-24)
+
+Files created:
+- src/lib/services/admin-dashboard.service.ts — fetchAdminDashboardData(): queries clients by managedById, aggregates total miles/points/subscriptions, counts clients with expiring miles (30-day window), returns top 10 clients sorted by balance
+- src/lib/services/admin-dashboard.service.test.ts — 8 tests covering empty state, miles/points aggregation, subscription count, expiry detection, zero-balance exclusion, sorting, pagination limit, prisma query params
+- src/components/admin/admin-summary-cards.tsx — 4-card grid: total clients, total miles (with subscription count), total points, clients with expiring miles (red if > 0)
+- src/components/admin/admin-clients-table.tsx — Table showing top clients with miles, points, program count, subscription count, expiring miles warning
+- src/app/(dashboard)/admin/page.tsx — Admin dashboard route at /admin; redirects non-ADMIN users to /; renders summary cards + clients table
+- src/actions/helpers.ts — Added requireAdminRole() (throws AuthorizationError if not ADMIN) and AuthorizationError class
+
+Verification: 1412 tests pass, TypeScript clean, coverage 97.9%, build PASS (/admin route visible).
+
+## Phase 6 QA — APPROVED (2026-03-24)
+
+QA report: tasks/prd-milescontrol/qa-report-phase6.md
+Status: APPROVED — 8/8 requirements met, 0 bugs found
+Test suite: 1524 tests passing (83 files), TypeScript clean, coverage 97.73%/90.99%, build PASS
+All admin routes verified: /admin, /admin/clients, /admin/clients/[id], /admin/clients/[id]/report, /admin/audit-logs, /admin/promotions
+Admin isolation enforced via managedById; non-ADMIN users redirected; audit logging non-blocking
+
+## Task 7.0 QA — APPROVED (2026-03-25)
+
+QA report: tasks/prd-milescontrol/qa-report-task-7.0.md
+Status: APPROVED — 8/8 requirements met, 0 bugs found
+Test suite: 1540 tests passing (85 files), TypeScript clean, coverage 95.63%/87.5%/92.53%/95.8%, build PASS
+Onboarding wizard: 3-step flow (programs → subscriptions → alerts) with quick-add + progressive disclosure
+Progressive disclosure, accessibility (ARIA tabs, keyboard nav), and smart defaults fully implemented
+
+## Task 7.2 — PWA setup (completed 2026-03-27)
+- Added `src/app/manifest.ts`, mobile app icons, and root metadata/viewport so MilesControl is installable on supported browsers.
+- Extended `public/sw.js` to preserve push notifications while adding app-shell caching, runtime asset caching, and offline navigation fallback to `public/offline.html`.
+- Added `src/lib/pwa/dashboard-offline-snapshot.ts` + tests and `src/components/pwa/dashboard-pwa-card.tsx` + tests to save dashboard snapshots locally and surface install/offline status on the dashboard.
+- Updated `src/app/(dashboard)/page.tsx` to expose the PWA card for both onboarding and populated dashboards.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1570/1570), `pnpm run test:coverage` (All files 94.22% / 86.02% / 91.82% / 94.38%), and `pnpm build` all PASS.
+
+## Task 7.3 — SEO and landing page (completed 2026-03-27)
+- Added public landing, calculator, promotions, and miles calendar pages under `src/app/_public/` with a shared marketing shell and JSON-LD.
+- Rewrote signed-out requests for `/`, `/calculator`, `/promotions`, and `/promotions/calendar` to the new public pages while preserving authenticated app routes.
+- Added `src/app/robots.ts`, `src/app/sitemap.ts`, and richer root metadata for canonical URLs, robots, Open Graph, and Twitter cards.
+- Added focused tests for rewrite/SEO helpers plus `robots` and `sitemap`.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1577/1577), `pnpm run test:coverage` (All files 94.2% / 85.96% / 91.81% / 94.36%), and `pnpm build` all PASS.
+
+## Task 7.4 — Performance optimization (completed 2026-03-27)
+- Added Suspense-backed streaming and route `loading.tsx` skeletons for dashboard, programs, promotions, and public pages.
+- Split the public landing page into streamed RSC sections and moved dashboard unread notification loading behind a Suspense boundary.
+- Added reusable dashboard, promotion, and public skeleton components and replaced the promotions pending text with skeleton cards.
+- Added optimized program logo rendering with bundled Next Image assets plus remote-image fallback support on dashboard enrollment surfaces.
+- Extended dashboard offline snapshots and dashboard service coverage to preserve `logoUrl`, and added focused tests for the new loading/logo components.
+- Verification: `npx tsc --noEmit`, `pnpm test` (1587/1587), `pnpm run test:coverage` (All files 94.23% / 86% / 91.94% / 94.4%), and `pnpm build` all PASS.
+
+## Task 7.5 — Analytics (completed 2026-03-27)
+- Added optional PostHog client setup with a reusable analytics provider, route-based feature usage tracking, and authenticated user identification.
+- Instrumented onboarding completion plus promo engagement events for promotion filters, source link clicks, calculator opens, and calculator submissions.
+- Added focused tests for public analytics env parsing, feature route mapping, provider tracking, onboarding completion, promo card interactions, and promo calculator telemetry.
+- Verification: `npx tsc --noEmit` PASS, `pnpm test` PASS (1601/1601), `pnpm run test:coverage` PASS (93.68% / 84.82% / 90.89% / 93.92%), `pnpm build` PASS.

@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    user: {
+      findUnique: vi.fn(),
+    },
     program: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -10,6 +13,7 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       findFirst: vi.fn(),
+      count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -39,12 +43,18 @@ import {
   EnrollmentAlreadyExistsError,
   EnrollmentNotFoundError,
 } from './program-enrollment.service';
+import {
+  FREE_TIER_PROGRAM_LIMIT,
+  ProgramEnrollmentLimitReachedError,
+} from './freemium.service';
 
+const mockUserFindUnique = vi.mocked(prisma.user.findUnique);
 const mockProgramFindMany = vi.mocked(prisma.program.findMany);
 const mockProgramFindUnique = vi.mocked(prisma.program.findUnique);
 const mockEnrollmentFindMany = vi.mocked(prisma.programEnrollment.findMany);
 const mockEnrollmentFindUnique = vi.mocked(prisma.programEnrollment.findUnique);
 const mockEnrollmentFindFirst = vi.mocked(prisma.programEnrollment.findFirst);
+const mockEnrollmentCount = vi.mocked(prisma.programEnrollment.count);
 const mockEnrollmentCreate = vi.mocked(prisma.programEnrollment.create);
 const mockEnrollmentUpdate = vi.mocked(prisma.programEnrollment.update);
 const mockEnrollmentDelete = vi.mocked(prisma.programEnrollment.delete);
@@ -149,7 +159,11 @@ describe('listEnrollments', () => {
 });
 
 describe('createEnrollment', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'PREMIUM' } as never);
+    mockEnrollmentCount.mockResolvedValue(0);
+  });
 
   it('should create enrollment successfully', async () => {
     mockEnrollmentFindUnique.mockResolvedValue(null);
@@ -221,6 +235,37 @@ describe('createEnrollment', () => {
 
     const createCall = mockEnrollmentCreate.mock.calls[0][0];
     expect(createCall.data.expirationDate).toEqual(new Date('2026-12-31T00:00:00.000Z'));
+  });
+
+  it('should reject free users when they already reached the program limit', async () => {
+    mockEnrollmentFindUnique.mockResolvedValue(null);
+    mockProgramFindUnique.mockResolvedValue(mockProgram as never);
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'FREE' } as never);
+    mockEnrollmentCount.mockResolvedValue(FREE_TIER_PROGRAM_LIMIT);
+
+    await expect(
+      createEnrollment(MOCK_USER_ID, {
+        programId: MOCK_PROGRAM_ID,
+        currentBalance: 1000,
+      }),
+    ).rejects.toThrow(ProgramEnrollmentLimitReachedError);
+
+    expect(mockEnrollmentCreate).not.toHaveBeenCalled();
+  });
+
+  it('should allow free users to create an enrollment when they still have slots', async () => {
+    mockEnrollmentFindUnique.mockResolvedValue(null);
+    mockProgramFindUnique.mockResolvedValue(mockProgram as never);
+    mockUserFindUnique.mockResolvedValue({ freemiumTier: 'FREE' } as never);
+    mockEnrollmentCount.mockResolvedValue(FREE_TIER_PROGRAM_LIMIT - 1);
+    mockEnrollmentCreate.mockResolvedValue(mockEnrollment as never);
+
+    await expect(
+      createEnrollment(MOCK_USER_ID, {
+        programId: MOCK_PROGRAM_ID,
+        currentBalance: 1000,
+      }),
+    ).resolves.toEqual(mockEnrollment);
   });
 });
 

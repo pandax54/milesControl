@@ -14,6 +14,7 @@ import { ToggleAlertConfigButton } from './toggle-alert-config-button';
 
 interface AlertConfigCardProps {
   alertConfig: AlertConfigData;
+  canUseTelegram?: boolean;
 }
 
 function formatCostPerMilheiro(value: number | string | null): string | null {
@@ -23,7 +24,7 @@ function formatCostPerMilheiro(value: number | string | null): string | null {
   return `R$${num.toFixed(2)}/k`;
 }
 
-export function AlertConfigCard({ alertConfig }: AlertConfigCardProps) {
+export function AlertConfigCard({ alertConfig, canUseTelegram = true }: AlertConfigCardProps) {
   const hasPrograms = alertConfig.programNames.length > 0;
   const hasPromoTypes = alertConfig.promoTypes.length > 0;
   const hasCriteria =
@@ -47,7 +48,10 @@ export function AlertConfigCard({ alertConfig }: AlertConfigCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-1 ml-2">
-          <EditAlertConfigDialog alertConfig={alertConfig} />
+          <EditAlertConfigDialog
+            alertConfig={alertConfig}
+            canUseTelegram={canUseTelegram}
+          />
           <DeleteAlertConfigButton
             alertConfigId={alertConfig.id}
             alertConfigName={alertConfig.name}

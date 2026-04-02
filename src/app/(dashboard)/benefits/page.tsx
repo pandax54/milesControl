@@ -3,12 +3,31 @@ import { redirect } from 'next/navigation';
 import { listBenefits } from '@/lib/services/tracked-benefit.service';
 import { BenefitFormDialog } from '@/components/dashboard/benefit-form-dialog';
 import { BenefitCard, type BenefitData } from '@/components/dashboard/benefit-card';
+import { canAccessPremiumFeature } from '@/lib/services/freemium.service';
+import { PremiumFeatureCard } from '@/components/freemium/premium-feature-card';
 
 export default async function BenefitsPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
     redirect('/login');
+  }
+
+  const canAccessBenefits = await canAccessPremiumFeature(session.user.id, 'benefits');
+
+  if (!canAccessBenefits) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Benefits</h1>
+          <p className="text-muted-foreground">
+            Track your free nights, companion passes, upgrade credits, and more.
+          </p>
+        </div>
+
+        <PremiumFeatureCard feature="benefits" />
+      </div>
+    );
   }
 
   const benefits = await listBenefits(session.user.id);
