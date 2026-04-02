@@ -1,0 +1,5 @@
+Task 2.0 completed: created the shared NetValueBadge dashboard component.
+Added positive, negative, and neutral badge rendering with accessible text labels.
+Used the shared BRL currency formatter and existing Badge primitive.
+Added co-located unit tests covering all visual states and null rendering behavior.
+Marked task 2.0 complete in tasks.md.

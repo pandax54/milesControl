@@ -9,7 +9,7 @@ Add BRL (Brazilian Real) equivalent values alongside miles amounts in both the T
 ### Phase 1: Foundation
 
 - [x] 1.0 Create `getTransferConversionData` server action
-- [ ] 2.0 Create `NetValueBadge` component
+- [x] 2.0 Create `NetValueBadge` component
 
 ### Phase 2: Core Implementation
 
