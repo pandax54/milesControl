@@ -3,24 +3,28 @@
 ## Inherited from ai-setup (copy these to your project)
 
 ### Commands (existing)
+
 - `commands/create-prd.md` — Define product requirements
 - `commands/create-techspec.md` — Design technical architecture
 - `commands/create-tasks.md` — Break down work into tasks
 - `commands/execute-task.md` — Execute an implementation task
+- `commands/execute-qa.md` — Execute QA flow
 - `commands/execute-bugfix.md` — Execute bug fixing flow
 - `commands/execute-review.md` — Execute review flow
-- `commands/execute-qa.md` — Execute QA flow
 
 ### Templates (existing)
+
 - `templates/prd.md`
 - `templates/techspec.md`
 - `templates/tasks.md`
 - `templates/task.md`
 
 ### Agents (existing)
+
 - `agents/task-reviewer.md`
 
 ### Rules (existing)
+
 - `rules/code-standards.md`
 - `rules/http.md`
 - `rules/logging.md`
@@ -28,6 +32,7 @@
 - `rules/tests.md`
 
 ### Skills (existing)
+
 - `skills/architecture.md`
 - `skills/code-standards-reference.md`
 - `skills/nextjs.md`
@@ -42,13 +47,16 @@
 ## New for MilesControl
 
 ### Commands (new)
+
 - `commands/create-scraper.md` — Build web scrapers for promotion tracking
 - `commands/create-calculator.md` — Build financial calculators for miles cost analysis
 
 ### Agents (new)
+
 - `agents/miles-analyst.md` — Analyze promotions, calculate costs, recommend transfers
 
 ### Skills (new)
+
 - `skills/miles-domain.md` — Brazil miles ecosystem: programs, formulas, calendar, APIs
 - `skills/web-scraping.md` — Cheerio/Puppeteer patterns, rate limiting, extraction
 - `skills/notifications.md` — Telegram bot, Resend email, Web Push patterns

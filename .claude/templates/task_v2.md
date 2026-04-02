@@ -8,6 +8,14 @@
 
 [2–3 sentences. What is being built, why it exists, and what system/user problem it solves.]
 
+### What does success look like?
+
+[Concrete outcome — what should the API consumer, UI, or system be able to do when this is done?]
+
+### How does it connect to everything else?
+
+[Where does data flow from/to? What other services, databases, or components does this touch?]
+
 ---
 
 ## ⚠️ Pre-Conditions — Read Before Writing Any Code

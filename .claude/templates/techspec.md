@@ -1,27 +1,33 @@
-# Technical Specification Template
+# Technical Specification — [Feature Name]
 
 ## Executive Summary
 
-[Provide a brief technical overview of the solution approach. Summarize the key architectural decisions and implementation strategy in 1-2 paragraphs.]
+[1–2 paragraphs: solution approach, key architectural decisions, implementation strategy.]
 
 ## System Architecture
 
 ### Component Overview
 
-[Brief description of the main components and their responsibilities:
+[Main components and responsibilities:
 
-- Component names and primary functions **Be sure to list each new or modified component**
-- Key relationships between components
-- Data flow overview]
+- Component name → primary function
+- Key relationships and data flow between components
+- New vs. modified components clearly labeled]
+
+### Component Diagram
+
+```
+[User] → [Component A] → [Component B] → [Database]
+                ↘ [External Service]
+```
 
 ## Implementation Design
 
 ### Key Interfaces
 
-[Define main service interfaces (≤20 lines per example):
+[Service interfaces (≤20 lines per example):
 
 ```typescript
-// Example interface definition
 interface ServiceName {
   methodName(input: InputType): Promise<OutputType>
 }
@@ -31,109 +37,106 @@ interface ServiceName {
 
 ### Data Models
 
-[Define essential data structures:
+[Core entities and schemas:
 
-- Core domain entities (if applicable)
-- Request/response types
-- Database schemas (if applicable)]
+```prisma
+model EntityName {
+  id        String   @id @default(cuid())
+  field     Type     @description
+  createdAt DateTime @default(now())
+}
+```
+
+]
 
 ### API Endpoints
 
-[List API endpoints if applicable:
+[Endpoints with request/response shapes:
 
-- Method and path (e.g., `POST /api/v0/resource`)
-- Brief description
-- Request/response format references]
+| Method | Path                | Description      | Auth     |
+| ------ | ------------------- | ---------------- | -------- |
+| POST   | `/api/resource`     | Creates resource | Required |
+| GET    | `/api/resource/:id` | Gets resource    | Required |
+
+]
 
 ## Integration Points
 
-[Include only if the feature requires external integrations:
+[External services, APIs, authentication requirements, error handling approach.
+Include only if the feature requires external integrations.]
 
-- External services or APIs
-- Authentication requirements
-- Error handling approach]
+## Key Decisions
 
-## Testing Approach
+[For each significant technical choice:
+
+### Decision: [What was decided]
+
+**Options considered:**
+
+1. [Option A] — [pros/cons]
+2. [Option B] — [pros/cons]
+
+**Chosen:** [option and justification]
+**Trade-off:** [what was given up]
+]
+
+## Testing Strategy
 
 ### Unit Tests
 
-[Describe unit testing strategy:
-
-- Services, controllers, and utility functions to test in isolation
-- Mock/stub requirements (databases, external APIs, message queues)
-- Edge cases and error handling scenarios (invalid input, timeouts, auth failures)
-- Coverage targets for critical business logic
-- Testing framework and assertion library (Vitest)]
+[Services and utilities to test in isolation. Mock boundaries. Edge cases. Coverage targets.]
 
 ### Integration Tests
 
-[If needed, describe integration tests:
-
-- API endpoint flows to validate (request → middleware → controller → service → response)
-- Inter-service communication scenarios (queues, events, webhooks)
-- Test database setup and teardown strategy (containers, fixtures)
-- Seed data requirements and factory/fixture definitions
-- Authentication and authorization flow verification]
+[API flows to validate. Database setup/teardown. Auth verification.]
 
 ### E2E Tests
 
-[If needed, describe E2E tests:
-
-- Critical API workflows to cover end-to-end (e.g., create → read → update → delete)
-- Database and seed data provisioning strategy
-- External service stubs and mocks for E2E environment
-- Authentication flow and token management in tests
-- Performance or load thresholds to validate
-- CI pipeline integration (when tests run, parallelization)]
+[Critical workflows. External service stubs. Performance thresholds. Only if needed.]
 
 ## Development Sequencing
 
 ### Build Order
 
-[Define implementation sequence:
+[Implementation sequence with dependency reasoning:
 
-1. First component/feature (why first)
-2. Second component/feature (dependencies)
-3. Subsequent components
-4. Integration and testing]
+1. [Component] — [why first: no dependencies, blocks others]
+2. [Component] — [depends on #1]
+3. [Component] — [can parallel with #2]
+   ]
 
-### Technical Dependencies
+### Blocking Dependencies
 
-[List any blocking dependencies:
+[Required infrastructure, external service availability, env vars needed]
 
-- Required infrastructure
-- External service availability]
+## Monitoring & Observability
 
-## Monitoring and Observability
+[Key logs and levels. Metrics to track (latency, error rates). Alerting thresholds.]
 
-[Define monitoring approach using existing infrastructure:
+## Known Risks
 
-- Key logs and log levels
-- Integration with log aggregation tools (e.g., Datadog)
-- Metrics to track (e.g., request latency, error rates)
+| Risk   | Impact       | Likelihood   | Mitigation |
+| ------ | ------------ | ------------ | ---------- |
+| [risk] | High/Med/Low | High/Med/Low | [approach] |
 
-## Technical Considerations
+## Standards Compliance
 
-### Key Decisions
+[Rules from @.claude/rules that apply:
 
-[Document important technical decisions:
+| Rule        | Applies To         |
+| ----------- | ------------------ |
+| [rule file] | [which components] |
 
-- Chosen approach and justification
-- Trade-offs considered
-- Rejected alternatives and why]
+]
 
-### Known Risks
+## Relevant Files
 
-[Identify technical risks:
+[Files to create, modify, or reference:
 
-- Potential challenges
-- Mitigation approaches
-- Areas needing research]
+| Status  | Path      | Purpose          |
+| ------- | --------- | ---------------- |
+| 🆕 New  | `src/...` | [what]           |
+| ✏️ Edit | `src/...` | [what changes]   |
+| 📖 Read | `src/...` | [reference only] |
 
-### Standards Compliance
-
-[Research the rules in the @.claude/rules folder that fit and apply to this tech spec and list them below:]
-
-### Relevant and Dependent Files
-
-[List relevant and dependent files here]
+]

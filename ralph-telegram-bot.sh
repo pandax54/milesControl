@@ -227,11 +227,138 @@ ${tail_content}
 \`\`\`"
 }
 
+handle_jira() {
+  local chat_id="$1"
+  shift
+  local args=("$@")
+
+  if [[ ${#args[@]} -lt 1 ]]; then
+    send_message "$chat_id" "❌ Usage: \`/jira <command> [args]\`
+Commands: \`my\`, \`show <KEY>\`, \`move <KEY> <status>\`"
+    return
+  fi
+
+  local subcmd="${args[0]}"
+  case "$subcmd" in
+    my|mine|assigned)
+      local output
+      output=$("${SCRIPT_DIR}/jira.sh" my-issues 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+      send_message "$chat_id" "📋 *My Jira Issues*
+\`\`\`
+${output}
+\`\`\`"
+      ;;
+    show|issue|get)
+      local key="${args[1]:-}"
+      if [[ -z "$key" ]]; then
+        send_message "$chat_id" "❌ Usage: \`/jira show <ISSUE_KEY>\`"
+        return
+      fi
+      local output
+      output=$("${SCRIPT_DIR}/jira.sh" issue "$key" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+      send_message "$chat_id" "\`\`\`
+${output}
+\`\`\`"
+      ;;
+    move|transition|status)
+      local key="${args[1]:-}"
+      local status="${args[2]:-}"
+      if [[ -z "$key" || -z "$status" ]]; then
+        send_message "$chat_id" "❌ Usage: \`/jira move <ISSUE_KEY> <status>\`
+Statuses: in-progress, code-review, qa, done"
+        return
+      fi
+      local output
+      output=$("${SCRIPT_DIR}/jira.sh" transition "$key" "$status" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+      send_message "$chat_id" "$output"
+      ;;
+    *)
+      send_message "$chat_id" "❌ Unknown jira command: \`${subcmd}\`
+Try: \`my\`, \`show\`, \`move\`"
+      ;;
+  esac
+}
+
+handle_workflow() {
+  local chat_id="$1"
+  shift
+  local args=("$@")
+
+  if [[ ${#args[@]} -lt 1 ]]; then
+    send_message "$chat_id" "❌ Usage: \`/workflow <ISSUE_KEY> [options]\`
+Example: \`/workflow LD-14\`
+Example: \`/workflow LD-14 --resume\`
+Example: \`/workflow LD-14 --skip-to implement\`"
+    return
+  fi
+
+  if is_running; then
+    local running_pid
+    running_pid=$(cat "$PID_FILE")
+    local running_type
+    running_type=$(cat "$PID_TYPE_FILE" 2>/dev/null || echo "task")
+    send_message "$chat_id" "⚠️ Already running a ${running_type} (PID: ${running_pid}).
+Use \`/status\` to check progress."
+    return
+  fi
+
+  local issue_key="${args[0]}"
+  local extra_args=("${args[@]:1}")
+
+  send_message "$chat_id" "🚀 Starting workflow for \`${issue_key}\`
+Options: --auto --telegram ${extra_args[*]:-}"
+
+  cd "$SCRIPT_DIR"
+  nohup ./workflow.sh "$issue_key" \
+    --auto --telegram "${extra_args[@]}" \
+    > "/tmp/ralph-workflow-${issue_key}.out" 2>&1 &
+
+  echo $! > "$PID_FILE"
+  echo "workflow:${issue_key}" > "$PID_TYPE_FILE"
+
+  send_message "$chat_id" "✅ Workflow started for \`${issue_key}\`! PID: $!
+Use \`/status\` to check, \`/logs workflow-${issue_key}\` for output."
+}
+
+handle_next() {
+  local chat_id="$1"
+
+  if is_running; then
+    local running_pid
+    running_pid=$(cat "$PID_FILE")
+    send_message "$chat_id" "⚠️ Something is already running (PID: ${running_pid}).
+Finish current task first."
+    return
+  fi
+
+  # Show available issues and prompt for selection
+  local output
+  output=$("${SCRIPT_DIR}/jira.sh" my-issues 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+
+  send_message "$chat_id" "📋 *Pick your next task:*
+\`\`\`
+${output}
+\`\`\`
+
+Reply with: \`/workflow <ISSUE_KEY>\` to start"
+}
+
 handle_help() {
   local chat_id="$1"
   send_message "$chat_id" "🤖 *ralph Telegram Bot*
 
-*Single Task:*
+*🔄 Full Workflow (Jira → PR):*
+\`/workflow <ISSUE_KEY>\` — Run full pipeline
+\`/workflow <ISSUE_KEY> --resume\` — Resume from checkpoint
+\`/workflow <ISSUE_KEY> --skip-to prd\` — Skip to phase
+\`/next\` — Pick next assigned Jira task
+
+*🎫 Jira:*
+\`/jira my\` — List my assigned issues
+\`/jira show <KEY>\` — Show issue details
+\`/jira move <KEY> <status>\` — Transition issue
+
+*⚡ Single Task:*
 \`/run <phase> <task_id>\` — Run one task
 \`/run <phase> <task_id> --skip-to qa\` — Skip to step
 \`/run <phase> <task_id> --cli opencode\` — Use opencode CLI
@@ -248,12 +375,14 @@ handle_help() {
 \`/logs phase-<number>\` — Get phase log output
 \`/help\` — Show this message
 
+*Workflow phases:*
+pick → branch → clarify → prd → techspec → tasks → implement → pr → qa
+
 *Examples:*
-\`/run 6 6.1\`
-\`/phase 7\`
-\`/phase 7 20 --cli claude --review-model claude-haiku-4-5\`
-\`/stop 7\`
-\`/logs phase-7\`"
+\`/next\`
+\`/workflow LD-14\`
+\`/workflow LD-14 --skip-to implement\`
+\`/jira move LD-14 qa\`"
 }
 
 # ─── Main Loop ───────────────────────────────────────────────────
@@ -301,11 +430,14 @@ if data.get('ok') and data.get('result'):
     read -ra cmd_args <<< "$args_str"
 
     case "$cmd" in
-      /run)    handle_run "$chat_id" "${cmd_args[@]}" ;;
-      /phase)  handle_phase "$chat_id" "${cmd_args[@]}" ;;
-      /stop)   handle_stop "$chat_id" "${cmd_args[0]:-}" ;;
-      /status) handle_status "$chat_id" ;;
-      /logs)   handle_logs "$chat_id" "${cmd_args[0]:-}" ;;
+      /run)      handle_run "$chat_id" "${cmd_args[@]}" ;;
+      /phase)    handle_phase "$chat_id" "${cmd_args[@]}" ;;
+      /stop)     handle_stop "$chat_id" "${cmd_args[0]:-}" ;;
+      /status)   handle_status "$chat_id" ;;
+      /logs)     handle_logs "$chat_id" "${cmd_args[0]:-}" ;;
+      /jira)     handle_jira "$chat_id" "${cmd_args[@]}" ;;
+      /workflow) handle_workflow "$chat_id" "${cmd_args[@]}" ;;
+      /next)     handle_next "$chat_id" ;;
       /help|/start)  handle_help "$chat_id" ;;
       *)
         # Ignore non-command messages

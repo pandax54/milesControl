@@ -1,70 +1,76 @@
-# Product Requirements Document (PRD) Template
+# Product Requirements Document (PRD) — [Feature Name]
 
 ## Overview
 
-[Provide a high-level overview of your product/feature. Explain what problem it solves, who it is for, and why it is valuable.]
+[2–3 sentences: what problem this solves, who it's for, why it's valuable.]
 
 ## Objectives
 
-[List specific, measurable objectives for this feature:
+[Specific, measurable objectives:
 
-- What success looks like
-- Key metrics to track
-- Business objectives to achieve]
+- What success looks like (concrete metrics)
+- Key KPIs to track
+- Business outcomes to achieve]
 
 ## User Stories
 
-[Detail user narratives describing usage and benefits of the feature:
+[User narratives describing usage and benefits:
 
-- As a [user type], I want to [perform an action] so that [benefit]
-- Include primary and secondary user personas
-- Cover main flows and edge cases]
+- As a [user type], I want to [action] so that [benefit]
+- Cover primary personas and main flows
+- Include edge cases and error scenarios]
 
-## Core Features
+## Functional Requirements
 
-[List and describe the core features of your product. For each feature, include:
+[Numbered, testable requirements. Each must be verifiable:
 
-- What it does
-- Why it is important
-- How it works at a high level
-- Functional requirements (numbered for clarity)]
+- RF-01: [requirement — specific, measurable, unambiguous]
+- RF-02: [requirement]
+- RF-03: [requirement]
+
+Use "must" for required, "should" for recommended, "may" for optional.]
 
 ## User Experience
 
-[Describe the user journey and experience:
+[User journey and interaction design:
 
-- User personas and their needs
-- Main user flows and interactions
-- UI/UX considerations and requirements
+- Main user flows (step by step)
+- UI/UX considerations
+- Loading, empty, and error states
 - Accessibility requirements]
 
 ## High-Level Technical Constraints
 
-[Capture only high-level constraints and considerations (**avoid design solutions — those belong in the Tech Spec**):
+[Only high-level constraints — implementation details belong in the Tech Spec:
 
-- Required external integrations or existing systems to interface with
+- Required external integrations or existing systems
 - Compliance, regulatory, or security mandates
-- Performance/scalability targets (e.g., expected TPS, upper latency limits)
+- Performance targets (e.g., response time, throughput)
 - Data sensitivity/privacy considerations
-- Non-negotiable technology or protocol requirements
+- Non-negotiable technology requirements]
 
-Implementation details will be addressed in the Technical Specification.]
+## Acceptance Criteria
+
+[How to verify the feature is complete:
+
+- [ ] [Testable criterion tied to RF-XX]
+- [ ] [Testable criterion]
+- [ ] [Testable criterion]
+
+Each criterion should be binary: pass or fail, no interpretation needed.]
 
 ## Out of Scope
 
-[Clearly state what this feature will NOT include to manage scope:
+[Explicit boundaries:
 
-- Explicitly excluded features
-- Future considerations that are out of scope
-- Boundaries and limitations
-
-(Note: Technical implementation risks will be detailed in the Tech Spec.)]
+- What this feature will NOT include
+- Future considerations deferred to later phases
+- Related features that are separate work items]
 
 ## Open Questions
 
-[List any remaining questions or areas needing additional clarification:
+[Remaining unknowns:
 
 - Unclear requirements or edge cases
-- Questions about user needs or business objectives
-- Dependencies on external business factors
-- Areas requiring design or user research]
+- Questions for stakeholders
+- Areas needing user research or design exploration]
