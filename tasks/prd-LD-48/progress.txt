@@ -3,3 +3,9 @@ Added positive, negative, and neutral badge rendering with accessible text label
 Used the shared BRL currency formatter and existing Badge primitive.
 Added co-located unit tests covering all visual states and null rendering behavior.
 Marked task 2.0 complete in tasks.md.
+
+Task 3.0 completed: created the useTransferConversion hook for transfer BRL conversion state.
+Fetches CPM and promotion data only when the selected source or destination program changes.
+Debounces local BRL and net value calculations by 300ms with cleanup for rapid input changes.
+Added race-condition protection so stale async responses cannot overwrite newer program selections.
+Added co-located unit tests for debounce timing, loading state, null CPM handling, promotion passthrough, and stale responses.
