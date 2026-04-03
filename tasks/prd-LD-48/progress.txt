@@ -1,3 +1,10 @@
+Task 5.0 completed on 2026-04-02.
+- Added `useEffect` in `TransferFormDialog` watching `activePromotion` from hook; auto-fills `bonusPercent` when a promotion is detected.
+- Added promotion indicator (`data-testid="promotion-indicator"`) below bonus input showing title and bonus percentage.
+- Manual override remains fully functional — user can change the field at any time.
+- Added 7 integration tests covering auto-fill, indicator display, manual override, program change trigger, and BRL recalculation.
+- All 102 test files pass (1653 tests total). TypeScript: clean. Coverage/build failures are pre-existing worktree environment issues.
+
 Task 4.0 completed on 2026-04-02.
 - Integrated `useTransferConversion` hook into `TransferFormDialog` with BRL display below both miles inputs.
 - Added `BrlValueDisplay` sub-component with muted styling, loading skeleton, and "Sem dados de custo" no-data placeholder.

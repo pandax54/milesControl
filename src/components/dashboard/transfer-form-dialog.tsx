@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -66,8 +66,15 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
     netValueType,
     sourceCpm,
     destCpm,
+    activePromotion,
     isLoading: isConversionLoading,
   } = useTransferConversion(sourceProgramName, destProgramName, pointsNum, milesNum);
+
+  useEffect(() => {
+    if (activePromotion !== null) {
+      setBonusPercent(String(activePromotion.bonusPercent));
+    }
+  }, [activePromotion]);
 
   function resetForm() {
     setSourceProgramName('');
@@ -207,6 +214,14 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
                 onChange={(e) => setBonusPercent(e.target.value)}
                 placeholder="e.g., 90"
               />
+              {activePromotion && (
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="promotion-indicator"
+                >
+                  Auto: {activePromotion.title} — {activePromotion.bonusPercent}%
+                </p>
+              )}
             </div>
           </div>
 

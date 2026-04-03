@@ -190,6 +190,134 @@ describe('TransferFormDialog — BRL display integration', () => {
     expect(screen.getByTestId('brl-loading')).toBeInTheDocument();
   });
 
+  it('should auto-fill bonus field when active promotion exists for destination program', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({
+        activePromotion: { id: 'promo-1', bonusPercent: 100, title: 'Smiles Duplo' },
+      }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    await waitFor(() => {
+      const bonusInput = screen.getByLabelText('Bonus %') as HTMLInputElement;
+      expect(bonusInput.value).toBe('100');
+    });
+  });
+
+  it('should show promotion indicator when bonus is auto-filled', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({
+        activePromotion: { id: 'promo-1', bonusPercent: 100, title: 'Smiles Duplo' },
+      }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('promotion-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('promotion-indicator')).toHaveTextContent('Smiles Duplo');
+      expect(screen.getByTestId('promotion-indicator')).toHaveTextContent('100%');
+    });
+  });
+
+  it('should not change bonus field when no active promotion exists', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({ activePromotion: null }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    const bonusInput = screen.getByLabelText('Bonus %') as HTMLInputElement;
+    expect(bonusInput.value).toBe('0');
+    expect(screen.queryByTestId('promotion-indicator')).not.toBeInTheDocument();
+  });
+
+  it('should allow user to manually override auto-filled bonus', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({
+        activePromotion: { id: 'promo-1', bonusPercent: 100, title: 'Smiles Duplo' },
+      }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    await waitFor(() => {
+      const bonusInput = screen.getByLabelText('Bonus %') as HTMLInputElement;
+      expect(bonusInput.value).toBe('100');
+    });
+
+    fireEvent.change(screen.getByLabelText('Bonus %'), { target: { value: '50' } });
+
+    const bonusInput = screen.getByLabelText('Bonus %') as HTMLInputElement;
+    expect(bonusInput.value).toBe('50');
+  });
+
+  it('should auto-fill with new promotion when destination program changes', async () => {
+    mockUseTransferConversion
+      .mockReturnValueOnce(buildConversion({ activePromotion: null }))
+      .mockReturnValue(
+        buildConversion({
+          activePromotion: { id: 'promo-2', bonusPercent: 80, title: 'Livelo Bônus' },
+        }),
+      );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    // Re-render with new promotion data (destination changed)
+    selectDestProgram('Livelo');
+
+    await waitFor(() => {
+      const bonusInput = screen.getByLabelText('Bonus %') as HTMLInputElement;
+      expect(bonusInput.value).toBe('80');
+    });
+  });
+
+  it('should update destination BRL when bonus is auto-filled', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({
+        destBrl: 200,
+        destCpm: 10,
+        activePromotion: { id: 'promo-1', bonusPercent: 100, title: 'Smiles Duplo' },
+      }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+
+    const destBrl = screen.getByLabelText('Destination value in BRL');
+    expect(destBrl.textContent).toContain('200');
+  });
+
+  it('should update destination BRL when user overrides bonus', async () => {
+    mockUseTransferConversion.mockReturnValue(
+      buildConversion({
+        destBrl: 120,
+        destCpm: 12,
+        activePromotion: { id: 'promo-1', bonusPercent: 100, title: 'Smiles Duplo' },
+      }),
+    );
+
+    render(<TransferFormDialog programs={PROGRAMS} />);
+    openDialog();
+    selectDestProgram('Smiles');
+    fireEvent.change(screen.getByLabelText('Miles Received'), { target: { value: '10000' } });
+
+    const lastCall = mockUseTransferConversion.mock.calls.at(-1);
+    expect(lastCall?.[3]).toBe(10000);
+  });
+
   it('should still allow form submission with BRL display active', async () => {
     mockUseTransferConversion.mockReturnValue(
       buildConversion({ sourceBrl: 150, destBrl: 120, sourceCpm: 15, destCpm: 12 }),
