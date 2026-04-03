@@ -1,3 +1,11 @@
+Task 6.0 completed on 2026-04-02.
+- Extended `TransfersPage` server component to batch-fetch CPM for all unique programs (deduplicated via Set + Promise.all).
+- Added `computeBrlValue` and `computeNetValue` helpers with ±5% threshold logic (mirrors hook logic).
+- Added `EnrichedTransfer` interface extending `TransferData` with `sourceBrl`, `destBrl`, `netValue`, `netValueType`.
+- Rendered BRL sub-text (or "Sem dados") in Points and Received table columns; added new "Net Value" column with `NetValueBadge`.
+- Wrote 16 integration tests in `page.test.tsx`: redirect, empty state, BRL display, net badges, no-data, deduplication.
+- All 103 test files pass (1662 tests total). TypeScript: clean. Coverage/build failures are pre-existing worktree environment issues.
+
 Task 5.0 completed on 2026-04-02.
 - Added `useEffect` in `TransferFormDialog` watching `activePromotion` from hook; auto-fills `bonusPercent` when a promotion is detected.
 - Added promotion indicator (`data-testid="promotion-indicator"`) below bonus input showing title and bonus percentage.

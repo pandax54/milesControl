@@ -19,7 +19,7 @@ Add BRL (Brazilian Real) equivalent values alongside miles amounts in both the T
 
 ### Phase 3: Integration
 
-- [ ] 6.0 Add BRL values and net value badges to Transfer History Table
+- [x] 6.0 Add BRL values and net value badges to Transfer History Table
 
 ## Dependency Graph
 
