@@ -14,7 +14,7 @@ Add BRL (Brazilian Real) equivalent values alongside miles amounts in both the T
 ### Phase 2: Core Implementation
 
 - [x] 3.0 Create `useTransferConversion` hook
-- [ ] 4.0 Integrate BRL display and net value badge into Transfer Form Dialog
+- [x] 4.0 Integrate BRL display and net value badge into Transfer Form Dialog
 - [ ] 5.0 Add promotion auto-detection and bonus pre-fill to Transfer Form Dialog
 
 ### Phase 3: Integration

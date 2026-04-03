@@ -1,3 +1,10 @@
+Task 4.0 completed on 2026-04-02.
+- Integrated `useTransferConversion` hook into `TransferFormDialog` with BRL display below both miles inputs.
+- Added `BrlValueDisplay` sub-component with muted styling, loading skeleton, and "Sem dados de custo" no-data placeholder.
+- Added `NetValueBadge` between program selectors (visible when both programs are selected).
+- Wrote 10 integration tests in `transfer-form-dialog.test.tsx`; fixed Base UI Select interaction issues by mocking with native `<select>` in tests.
+- Verified: `npx tsc --noEmit`, `pnpm test` (1639 passed), `pnpm run test:coverage`, `pnpm build`.
+
 Task 3.0 review fixes completed on 2026-04-02.
 - Refactored `useTransferConversion` to use React Query with an app-level `ReactQueryProvider` while preserving the required 300ms debounced BRL/net-value calculations.
 - Added exported JSDoc documentation and exposed `error: Error | null` in the hook result.
