@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
+import { ReactQueryProvider } from '@/components/react-query-provider';
 import { ThemeProvider } from '@/components/theme-provider';
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo/site-config';
 import './globals.css';
@@ -80,7 +81,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AnalyticsProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ReactQueryProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </ReactQueryProvider>
         </AnalyticsProvider>
       </body>
     </html>

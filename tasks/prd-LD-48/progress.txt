@@ -1,0 +1,27 @@
+Task 6.0 completed on 2026-04-02.
+- Extended `TransfersPage` server component to batch-fetch CPM for all unique programs (deduplicated via Set + Promise.all).
+- Added `computeBrlValue` and `computeNetValue` helpers with ±5% threshold logic (mirrors hook logic).
+- Added `EnrichedTransfer` interface extending `TransferData` with `sourceBrl`, `destBrl`, `netValue`, `netValueType`.
+- Rendered BRL sub-text (or "Sem dados") in Points and Received table columns; added new "Net Value" column with `NetValueBadge`.
+- Wrote 16 integration tests in `page.test.tsx`: redirect, empty state, BRL display, net badges, no-data, deduplication.
+- All 103 test files pass (1662 tests total). TypeScript: clean. Coverage/build failures are pre-existing worktree environment issues.
+
+Task 5.0 completed on 2026-04-02.
+- Added `useEffect` in `TransferFormDialog` watching `activePromotion` from hook; auto-fills `bonusPercent` when a promotion is detected.
+- Added promotion indicator (`data-testid="promotion-indicator"`) below bonus input showing title and bonus percentage.
+- Manual override remains fully functional — user can change the field at any time.
+- Added 7 integration tests covering auto-fill, indicator display, manual override, program change trigger, and BRL recalculation.
+- All 102 test files pass (1653 tests total). TypeScript: clean. Coverage/build failures are pre-existing worktree environment issues.
+
+Task 4.0 completed on 2026-04-02.
+- Integrated `useTransferConversion` hook into `TransferFormDialog` with BRL display below both miles inputs.
+- Added `BrlValueDisplay` sub-component with muted styling, loading skeleton, and "Sem dados de custo" no-data placeholder.
+- Added `NetValueBadge` between program selectors (visible when both programs are selected).
+- Wrote 10 integration tests in `transfer-form-dialog.test.tsx`; fixed Base UI Select interaction issues by mocking with native `<select>` in tests.
+- Verified: `npx tsc --noEmit`, `pnpm test` (1639 passed), `pnpm run test:coverage`, `pnpm build`.
+
+Task 3.0 review fixes completed on 2026-04-02.
+- Refactored `useTransferConversion` to use React Query with an app-level `ReactQueryProvider` while preserving the required 300ms debounced BRL/net-value calculations.
+- Added exported JSDoc documentation and exposed `error: Error | null` in the hook result.
+- Updated co-located tests for QueryClient wiring, loading/error states, and React Query timing with fake timers.
+- Verification passed: `npx tsc --noEmit`, `pnpm test`, `pnpm run test:coverage`, and `pnpm build`.

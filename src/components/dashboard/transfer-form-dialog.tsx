@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,8 +19,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { logTransfer } from '@/actions/transfers';
-import { Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/format';
+import { useTransferConversion } from '@/hooks/use-transfer-conversion';
+import { Plus, Info } from 'lucide-react';
+import { NetValueBadge } from './net-value-badge';
 import { parseTransferFormValues } from './transfer-form-utils';
 
 interface ProgramOption {
@@ -46,6 +55,26 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
   const [transferDate, setTransferDate] = useState(
     new Date().toISOString().split('T')[0],
   );
+
+  const pointsNum = parseInt(pointsTransferred, 10) || 0;
+  const milesNum = parseInt(milesReceived, 10) || 0;
+
+  const {
+    sourceBrl,
+    destBrl,
+    netValue,
+    netValueType,
+    sourceCpm,
+    destCpm,
+    activePromotion,
+    isLoading: isConversionLoading,
+  } = useTransferConversion(sourceProgramName, destProgramName, pointsNum, milesNum);
+
+  useEffect(() => {
+    if (activePromotion !== null) {
+      setBonusPercent(String(activePromotion.bonusPercent));
+    }
+  }, [activePromotion]);
 
   function resetForm() {
     setSourceProgramName('');
@@ -148,6 +177,12 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
             </div>
           </div>
 
+          {sourceProgramName && destProgramName && (
+            <div className="flex justify-center" data-testid="net-value-badge-container">
+              <NetValueBadge netValue={netValue} netValueType={netValueType} />
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="pointsTransferred">Points Transferred</Label>
@@ -158,6 +193,13 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
                 value={pointsTransferred}
                 onChange={(e) => setPointsTransferred(e.target.value)}
                 placeholder="e.g., 10000"
+              />
+              <BrlValueDisplay
+                brlValue={sourceBrl}
+                cpm={sourceCpm}
+                isLoading={isConversionLoading}
+                showPlaceholder={sourceProgramName.length > 0}
+                label="Source value in BRL"
               />
             </div>
 
@@ -172,6 +214,14 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
                 onChange={(e) => setBonusPercent(e.target.value)}
                 placeholder="e.g., 90"
               />
+              {activePromotion && (
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="promotion-indicator"
+                >
+                  Auto: {activePromotion.title} — {activePromotion.bonusPercent}%
+                </p>
+              )}
             </div>
           </div>
 
@@ -185,6 +235,13 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
                 value={milesReceived}
                 onChange={(e) => setMilesReceived(e.target.value)}
                 placeholder="e.g., 19000"
+              />
+              <BrlValueDisplay
+                brlValue={destBrl}
+                cpm={destCpm}
+                isLoading={isConversionLoading}
+                showPlaceholder={destProgramName.length > 0}
+                label="Destination value in BRL"
               />
             </div>
 
@@ -240,5 +297,50 @@ export function TransferFormDialog({ programs }: TransferFormDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface BrlValueDisplayProps {
+  brlValue: number | null;
+  cpm: number | null;
+  isLoading: boolean;
+  showPlaceholder: boolean;
+  label: string;
+}
+
+function BrlValueDisplay({ brlValue, cpm, isLoading, showPlaceholder, label }: BrlValueDisplayProps) {
+  if (!showPlaceholder) {
+    return null;
+  }
+
+  if (isLoading) {
+    return <Skeleton className="h-4 w-20" data-testid="brl-loading" />;
+  }
+
+  if (cpm === null) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+          aria-label="No cost data available"
+        >
+          <span>Sem dados de custo</span>
+          <Info className="h-3 w-3" />
+        </TooltipTrigger>
+        <TooltipContent>
+          Registre transferências para calcular o valor em R$
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (brlValue === null) {
+    return null;
+  }
+
+  return (
+    <p className="text-sm text-muted-foreground" aria-label={label}>
+      ~{formatCurrency(brlValue)}
+    </p>
   );
 }
